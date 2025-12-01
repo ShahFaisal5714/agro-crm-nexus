@@ -1,33 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface Dealer {
+export interface Supplier {
   id: string;
-  dealer_name: string;
+  name: string;
   contact_person?: string;
   email?: string;
   phone?: string;
   address?: string;
   gst_number?: string;
-  territory_id?: string | null;
 }
 
-export const useDealers = () => {
-  const { data: dealers, isLoading } = useQuery({
-    queryKey: ["dealers"],
+export const useSuppliers = () => {
+  const { data: suppliers, isLoading } = useQuery({
+    queryKey: ["suppliers"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("dealers")
+        .from("suppliers")
         .select("*")
-        .order("dealer_name");
+        .order("name");
 
       if (error) throw error;
-      return data as Dealer[];
+      return data as Supplier[];
     },
   });
 
   return {
-    dealers: dealers || [],
+    suppliers: suppliers || [],
     isLoading,
   };
 };
