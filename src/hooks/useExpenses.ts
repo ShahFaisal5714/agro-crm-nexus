@@ -1,0 +1,69 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export interface Expense {
+  id: string;
+  category: string;
+  amount: number;
+  expense_date: string;
+  description?: string;
+  territory?: string;
+  created_at: string;
+}
+
+export const useExpenses = () => {
+  const queryClient = useQueryClient();
+
+  const { data: expenses, isLoading } = useQuery({
+    queryKey: ["expenses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .order("expense_date", { ascending: false });
+
+      if (error) throw error;
+      return data as Expense[];
+    },
+  });
+
+  const createExpense = useMutation({
+    mutationFn: async (expenseData: {
+      category: string;
+      amount: number;
+      expense_date: string;
+      description?: string;
+      territory?: string;
+    }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("expenses")
+        .insert({
+          ...expenseData,
+          created_by: user.user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      toast.success("Expense added successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to add expense");
+      console.error(error);
+    },
+  });
+
+  return {
+    expenses: expenses || [],
+    isLoading,
+    createExpense: createExpense.mutateAsync,
+  };
+};
