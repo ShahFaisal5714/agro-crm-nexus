@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useProducts } from "@/hooks/useProducts";
@@ -163,7 +164,7 @@ export const NewPurchaseDialog = () => {
                   />
                 </div>
                 <div className="w-32 text-sm font-medium">
-                  ₹{(item.quantity * item.unitPrice).toFixed(2)}
+                  {formatCurrency(item.quantity * item.unitPrice)}
                 </div>
                 <Button
                   type="button"
@@ -177,7 +178,7 @@ export const NewPurchaseDialog = () => {
               </div>
             ))}
             <div className="text-right text-lg font-bold">
-              Total: ₹{totalAmount.toFixed(2)}
+              Total: {formatCurrency(totalAmount)}
             </div>
           </div>
 

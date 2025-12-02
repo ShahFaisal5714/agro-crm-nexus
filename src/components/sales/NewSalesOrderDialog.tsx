@@ -36,7 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useDealers } from "@/hooks/useDealers";
 import { useProducts } from "@/hooks/useProducts";
 import { useSalesOrders, SalesOrderItem } from "@/hooks/useSalesOrders";
@@ -226,7 +226,7 @@ export const NewSalesOrderDialog = () => {
                       <SelectContent>
                         {products.map((product) => (
                           <SelectItem key={product.id} value={product.id}>
-                            {product.name} - ₹{product.unit_price}
+                            {product.name} - {formatCurrency(product.unit_price)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -279,8 +279,7 @@ export const NewSalesOrderDialog = () => {
               {items.length > 0 && (
                 <div className="flex justify-end pt-4 border-t">
                   <div className="text-lg font-semibold">
-                    Total: ₹
-                    {items.reduce((sum, item) => sum + item.total, 0).toFixed(2)}
+                    Total: {formatCurrency(items.reduce((sum, item) => sum + item.total, 0))}
                   </div>
                 </div>
               )}

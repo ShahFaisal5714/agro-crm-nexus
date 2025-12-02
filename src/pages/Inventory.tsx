@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, Edit, Package, Search } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { AddProductDialog } from "@/components/inventory/AddProductDialog";
 import { EditProductDialog } from "@/components/inventory/EditProductDialog";
@@ -64,7 +65,7 @@ const Inventory = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ₹{products.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0).toFixed(2)}
+                {formatCurrency(products.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
               </div>
             </CardContent>
           </Card>
@@ -114,10 +115,10 @@ const Inventory = () => {
                       <TableRow key={product.id}>
                         <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>₹{product.unit_price.toFixed(2)}</TableCell>
+                        <TableCell>{formatCurrency(product.unit_price)}</TableCell>
                         <TableCell>{product.stock_quantity}</TableCell>
                         <TableCell>{product.unit}</TableCell>
-                        <TableCell>₹{(product.unit_price * product.stock_quantity).toFixed(2)}</TableCell>
+                        <TableCell>{formatCurrency(product.unit_price * product.stock_quantity)}</TableCell>
                         <TableCell>
                           <Badge variant={isOutOfStock ? "destructive" : isLowStock ? "secondary" : "default"}>
                             {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}

@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { formatCurrency } from "@/lib/utils";
 import { 
   TrendingUp, 
   ShoppingCart, 
@@ -24,21 +25,21 @@ const Dashboard = () => {
   const stats: StatCard[] = [
     {
       title: "Total Sales",
-      value: "₹12,45,890",
+      value: formatCurrency(1245890),
       change: "+12.5%",
       icon: ShoppingCart,
       trend: "up",
     },
     {
       title: "Total Purchase",
-      value: "₹8,34,560",
+      value: formatCurrency(834560),
       change: "+8.2%",
       icon: Package,
       trend: "up",
     },
     {
       title: "Expenses",
-      value: "₹2,45,890",
+      value: formatCurrency(245890),
       change: "-3.1%",
       icon: Wallet,
       trend: "down",
@@ -100,7 +101,7 @@ const Dashboard = () => {
                       <p className="text-sm text-muted-foreground">Dealer Name {i}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">₹{(12000 + i * 1000).toLocaleString()}</p>
+                      <p className="font-semibold">{formatCurrency(12000 + i * 1000)}</p>
                       <p className="text-xs text-muted-foreground">Today</p>
                     </div>
                   </div>

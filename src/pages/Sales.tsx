@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
 import { NewSalesOrderDialog } from "@/components/sales/NewSalesOrderDialog";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
 import { format } from "date-fns";
@@ -67,7 +68,7 @@ const Sales = () => {
                       <TableCell>
                         {format(new Date(order.order_date), "MMM dd, yyyy")}
                       </TableCell>
-                      <TableCell>₹{order.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>{formatCurrency(order.total_amount)}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"

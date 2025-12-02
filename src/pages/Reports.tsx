@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, Users, Package, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
 import { useProducts } from "@/hooks/useProducts";
 import { useDealers } from "@/hooks/useDealers";
@@ -54,7 +55,7 @@ const Reports = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             </CardContent>
           </Card>
 
@@ -64,7 +65,7 @@ const Reports = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{totalExpenses.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
             </CardContent>
           </Card>
 
@@ -74,7 +75,7 @@ const Reports = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{netProfit.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(netProfit)}</div>
             </CardContent>
           </Card>
 
@@ -164,7 +165,7 @@ const Reports = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Stock Value</p>
                 <p className="text-2xl font-bold">
-                  ₹{products.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0).toFixed(2)}
+                  {formatCurrency(products.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
                 </p>
               </div>
             </div>
