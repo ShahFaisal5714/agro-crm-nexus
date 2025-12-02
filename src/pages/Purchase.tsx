@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Package, ShoppingCart, TrendingUp } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { NewPurchaseDialog } from "@/components/purchase/NewPurchaseDialog";
@@ -73,7 +74,7 @@ const Purchase = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{totalPurchases.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalPurchases)}</div>
             </CardContent>
           </Card>
         </div>
@@ -106,7 +107,7 @@ const Purchase = () => {
                       <TableCell className="font-mono text-sm">{purchase.purchase_number}</TableCell>
                       <TableCell>{getSupplierName(purchase.supplier_id)}</TableCell>
                       <TableCell>{format(new Date(purchase.purchase_date), "MMM dd, yyyy")}</TableCell>
-                      <TableCell>₹{purchase.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>{formatCurrency(purchase.total_amount)}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusColor(purchase.status)}>
                           {purchase.status}

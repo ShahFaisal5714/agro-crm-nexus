@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, Calendar } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { useExpenses } from "@/hooks/useExpenses";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { format } from "date-fns";
@@ -44,7 +45,7 @@ const Expenses = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{totalExpenses.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
             </CardContent>
           </Card>
 
@@ -54,7 +55,7 @@ const Expenses = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{thisMonthExpenses.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(thisMonthExpenses)}</div>
             </CardContent>
           </Card>
 
@@ -69,7 +70,7 @@ const Expenses = () => {
               </div>
               {topCategory && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  ₹{topCategory[1].toFixed(2)}
+                  {formatCurrency(topCategory[1])}
                 </p>
               )}
             </CardContent>
@@ -105,7 +106,7 @@ const Expenses = () => {
                         <Badge variant="outline">{expense.category}</Badge>
                       </TableCell>
                       <TableCell>{expense.description || "-"}</TableCell>
-                      <TableCell className="font-medium">₹{expense.amount.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(expense.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
