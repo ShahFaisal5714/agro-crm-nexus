@@ -8,11 +8,11 @@ import {
   BarChart3, 
   Users, 
   Settings,
-  Sprout,
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import logo from "@/assets/logo.png";
 
 interface NavItem {
   title: string;
@@ -44,9 +44,7 @@ export const Sidebar = () => {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-sidebar-primary rounded-lg">
-            <Sprout className="h-6 w-6 text-sidebar-primary-foreground" />
-          </div>
+          <img src={logo} alt="Agraicy Logo" className="h-10 w-10 object-contain" />
           <div>
             <h2 className="font-bold text-lg">Agraicy</h2>
             <p className="text-xs text-sidebar-foreground/60">Life Sciences</p>
