@@ -62,41 +62,20 @@ export const useUsers = () => {
       role: 'admin' | 'territory_sales_manager' | 'dealer' | 'finance' | 'employee';
       territory?: string;
     }) => {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName,
-        },
+      // Call the secure edge function instead of client-side admin API
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password, fullName, phone, role, territory },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create user");
-
-      // Update profile with phone
-      if (phone) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ phone })
-          .eq("id", authData.user.id);
-
-        if (profileError) throw profileError;
+      if (error) {
+        throw new Error(error.message || 'Failed to create user');
       }
 
-      // Create user role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: authData.user.id,
-          role,
-          territory: territory || null,
-        });
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-      if (roleError) throw roleError;
-
-      return authData.user;
+      return data.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
