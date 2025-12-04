@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddDealerDialog } from "@/components/dealers/AddDealerDialog";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { EditUserRoleDialog } from "@/components/users/EditUserRoleDialog";
+import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 
 interface Territory {
   id: string;
@@ -191,13 +192,19 @@ const Users = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <EditUserRoleDialog
-                              userId={user.id}
-                              userName={user.full_name}
-                              currentRole={getUserRole(user.id)}
-                              currentTerritory={getUserTerritory(user.id)}
-                              territories={territories}
-                            />
+                            <div className="flex items-center gap-1">
+                              <EditUserRoleDialog
+                                userId={user.id}
+                                userName={user.full_name}
+                                currentRole={getUserRole(user.id)}
+                                currentTerritory={getUserTerritory(user.id)}
+                                territories={territories}
+                              />
+                              <DeleteUserDialog
+                                userId={user.id}
+                                userName={user.full_name}
+                              />
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
