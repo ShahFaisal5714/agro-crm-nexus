@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddDealerDialog } from "@/components/dealers/AddDealerDialog";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { EditUserRoleDialog } from "@/components/users/EditUserRoleDialog";
 
 interface Territory {
   id: string;
@@ -52,6 +53,11 @@ const Users = () => {
   const getUserRole = (userId: string) => {
     const role = userRoles.find((r) => r.user_id === userId);
     return role?.role || 'employee';
+  };
+
+  const getUserTerritory = (userId: string) => {
+    const role = userRoles.find((r) => r.user_id === userId);
+    return role?.territory;
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -170,6 +176,7 @@ const Users = () => {
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -182,6 +189,15 @@ const Users = () => {
                             <Badge variant={getRoleBadgeVariant(getUserRole(user.id))}>
                               {formatRoleName(getUserRole(user.id))}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <EditUserRoleDialog
+                              userId={user.id}
+                              userName={user.full_name}
+                              currentRole={getUserRole(user.id)}
+                              currentTerritory={getUserTerritory(user.id)}
+                              territories={territories}
+                            />
                           </TableCell>
                         </TableRow>
                       ))}
