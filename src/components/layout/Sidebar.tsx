@@ -44,7 +44,7 @@ export const Sidebar = () => {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="Agraicy Logo" className="h-10 w-10 object-contain" />
+          <img src={logo} alt="Agraicy Logo" className="h-14 w-14 object-contain" />
           <div>
             <h2 className="font-bold text-lg">Agraicy</h2>
             <p className="text-xs text-sidebar-foreground/60">Life Sciences</p>
