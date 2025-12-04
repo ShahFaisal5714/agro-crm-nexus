@@ -11,6 +11,11 @@ import { useUsers } from "@/hooks/useUsers";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddDealerDialog } from "@/components/dealers/AddDealerDialog";
+import { EditDealerDialog } from "@/components/dealers/EditDealerDialog";
+import { DeleteDealerDialog } from "@/components/dealers/DeleteDealerDialog";
+import { AddTerritoryDialog } from "@/components/territories/AddTerritoryDialog";
+import { EditTerritoryDialog } from "@/components/territories/EditTerritoryDialog";
+import { DeleteTerritoryDialog } from "@/components/territories/DeleteTerritoryDialog";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { EditUserRoleDialog } from "@/components/users/EditUserRoleDialog";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
@@ -247,6 +252,7 @@ const Users = () => {
                         <TableHead>Phone</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Territory</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -256,7 +262,13 @@ const Users = () => {
                           <TableCell>{dealer.contact_person || "-"}</TableCell>
                           <TableCell>{dealer.phone || "-"}</TableCell>
                           <TableCell>{dealer.email || "-"}</TableCell>
-                          <TableCell>{getTerritoryName(dealer.territory_id)}</TableCell>
+                          <TableCell>{getTerritoryName(dealer.territory_id ?? null)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <EditDealerDialog dealer={dealer} territories={territories} />
+                              <DeleteDealerDialog dealerId={dealer.id} dealerName={dealer.dealer_name} />
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -269,12 +281,15 @@ const Users = () => {
           <TabsContent value="territories" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Territories</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Territories</CardTitle>
+                  <AddTerritoryDialog />
+                </div>
               </CardHeader>
               <CardContent>
                 {territories.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No territories defined yet.
+                    No territories defined yet. Add your first territory to get started.
                   </div>
                 ) : (
                   <Table>
@@ -283,18 +298,30 @@ const Users = () => {
                         <TableHead>Territory Name</TableHead>
                         <TableHead>Code</TableHead>
                         <TableHead>Dealers</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {territories.map((territory) => (
-                        <TableRow key={territory.id}>
-                          <TableCell className="font-medium">{territory.name}</TableCell>
-                          <TableCell className="font-mono text-sm">{territory.code}</TableCell>
-                          <TableCell>
-                            {dealers.filter((d) => d.territory_id === territory.id).length}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {territories.map((territory) => {
+                        const dealerCount = dealers.filter((d) => d.territory_id === territory.id).length;
+                        return (
+                          <TableRow key={territory.id}>
+                            <TableCell className="font-medium">{territory.name}</TableCell>
+                            <TableCell className="font-mono text-sm">{territory.code}</TableCell>
+                            <TableCell>{dealerCount}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <EditTerritoryDialog territory={territory} />
+                                <DeleteTerritoryDialog 
+                                  territoryId={territory.id} 
+                                  territoryName={territory.name}
+                                  dealerCount={dealerCount}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
