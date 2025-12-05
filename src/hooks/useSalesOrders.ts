@@ -123,10 +123,93 @@ export const useSalesOrders = () => {
     },
   });
 
+  const updateOrder = useMutation({
+    mutationFn: async ({
+      id,
+      dealerId,
+      orderDate,
+      status,
+      notes,
+    }: {
+      id: string;
+      dealerId: string;
+      orderDate: string;
+      status: string;
+      notes?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("sales_orders")
+        .update({
+          dealer_id: dealerId,
+          order_date: orderDate,
+          status,
+          notes,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+      toast({
+        title: "Success",
+        description: "Sales order updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteOrder = useMutation({
+    mutationFn: async (id: string) => {
+      // Delete order items first
+      const { error: itemsError } = await supabase
+        .from("sales_order_items")
+        .delete()
+        .eq("sales_order_id", id);
+
+      if (itemsError) throw itemsError;
+
+      // Delete the order
+      const { error } = await supabase
+        .from("sales_orders")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+      toast({
+        title: "Success",
+        description: "Sales order deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     orders,
     isLoading,
     createOrder: createOrder.mutateAsync,
     isCreating: createOrder.isPending,
+    updateOrder: updateOrder.mutateAsync,
+    isUpdating: updateOrder.isPending,
+    deleteOrder: deleteOrder.mutateAsync,
+    isDeleting: deleteOrder.isPending,
   };
 };
