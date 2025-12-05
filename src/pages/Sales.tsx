@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { NewSalesOrderDialog } from "@/components/sales/NewSalesOrderDialog";
+import { EditSalesOrderDialog } from "@/components/sales/EditSalesOrderDialog";
+import { DeleteSalesOrderDialog } from "@/components/sales/DeleteSalesOrderDialog";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -56,6 +58,7 @@ const Sales = () => {
                     <TableHead>Date</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -76,6 +79,12 @@ const Sales = () => {
                         >
                           {order.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <EditSalesOrderDialog order={order} />
+                          <DeleteSalesOrderDialog order={order} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
