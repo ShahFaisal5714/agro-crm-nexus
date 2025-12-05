@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
   ShoppingCart, 
+  FileText,
   Package, 
   Wallet, 
   BarChart3, 
@@ -24,6 +25,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Sales", href: "/sales", icon: ShoppingCart },
+  { title: "Invoices", href: "/invoices", icon: FileText },
   { title: "Purchase", href: "/purchase", icon: Package },
   { title: "Expenses", href: "/expenses", icon: Wallet },
   { title: "Inventory", href: "/inventory", icon: Package },
