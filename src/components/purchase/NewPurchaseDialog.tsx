@@ -41,8 +41,13 @@ export const NewPurchaseDialog = () => {
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
     if (product) {
-      handleItemChange(index, "productId", productId);
-      handleItemChange(index, "unitPrice", product.unit_price);
+      const newItems = [...items];
+      newItems[index] = { 
+        ...newItems[index], 
+        productId: productId, 
+        unitPrice: product.unit_price 
+      };
+      setItems(newItems);
     }
   };
 
