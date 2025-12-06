@@ -7,8 +7,8 @@ import { formatCurrency } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { NewPurchaseDialog } from "@/components/purchase/NewPurchaseDialog";
+import { DeletePurchaseDialog } from "@/components/purchase/DeletePurchaseDialog";
 import { format } from "date-fns";
-
 const Purchase = () => {
   const { purchases, isLoading: purchasesLoading } = usePurchases();
   const { suppliers } = useSuppliers();
@@ -99,6 +99,7 @@ const Purchase = () => {
                     <TableHead>Date</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -112,6 +113,9 @@ const Purchase = () => {
                         <Badge variant={getStatusColor(purchase.status)}>
                           {purchase.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DeletePurchaseDialog purchase={purchase} />
                       </TableCell>
                     </TableRow>
                   ))}
