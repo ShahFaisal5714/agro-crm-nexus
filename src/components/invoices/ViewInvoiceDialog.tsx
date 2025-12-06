@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, Download } from "lucide-react";
+import { Eye, Download, Phone, Mail, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -13,7 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { useInvoices, Invoice, InvoiceItem } from "@/hooks/useInvoices";
+import logo from "@/assets/logo.png";
 
+const COMPANY_CONTACT = {
+  phone: "+923251852232",
+  email: "Contact@Agraicylifesciences.com",
+  address: "Office #2 Abubakar Plaza, KSK Swabi Pakistan",
+};
 interface ViewInvoiceDialogProps {
   invoice: Invoice;
 }
@@ -54,31 +60,44 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
           <title>Invoice ${invoice.invoice_number}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .company-name { font-size: 24px; font-weight: bold; }
-            .invoice-title { font-size: 20px; margin-top: 10px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #2d5a27; }
+            .logo-section { display: flex; align-items: center; gap: 12px; }
+            .logo { height: 60px; width: auto; }
+            .company-name { font-size: 24px; font-weight: bold; color: #2d5a27; }
+            .company-contact { text-align: right; font-size: 12px; color: #666; }
+            .company-contact p { margin: 4px 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+            .invoice-title { font-size: 28px; font-weight: bold; color: #2d5a27; margin: 20px 0; text-align: center; }
             .details { display: flex; justify-content: space-between; margin-bottom: 30px; }
             .details-section { }
             .details-section h3 { font-size: 14px; color: #666; margin-bottom: 5px; }
             .details-section p { margin: 2px 0; font-size: 14px; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-            th { background-color: #f5f5f5; }
+            th { background-color: #2d5a27; color: white; }
             .totals { text-align: right; }
             .totals p { margin: 5px 0; }
-            .total-row { font-size: 18px; font-weight: bold; }
+            .total-row { font-size: 18px; font-weight: bold; color: #2d5a27; }
             .status { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
             .status-paid { background: #d4edda; color: #155724; }
             .status-unpaid { background: #fff3cd; color: #856404; }
             .status-overdue { background: #f8d7da; color: #721c24; }
             .status-cancelled { background: #e9ecef; color: #6c757d; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="company-name">Agraicy Life Sciences</div>
-            <div class="invoice-title">INVOICE</div>
+            <div class="logo-section">
+              <img src="${logo}" alt="Logo" class="logo" />
+              <div class="company-name">Agraicy Life Sciences</div>
+            </div>
+            <div class="company-contact">
+              <p>📞 ${COMPANY_CONTACT.phone}</p>
+              <p>✉️ ${COMPANY_CONTACT.email}</p>
+              <p>📍 ${COMPANY_CONTACT.address}</p>
+            </div>
           </div>
+          <div class="invoice-title">INVOICE</div>
           <div class="details">
             <div class="details-section">
               <h3>Bill To:</h3>
@@ -125,6 +144,10 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             <p class="total-row">Total: PKR ${invoice.total_amount.toLocaleString()}</p>
           </div>
           ${invoice.notes ? `<div style="margin-top: 30px;"><strong>Notes:</strong><p>${invoice.notes}</p></div>` : ""}
+          <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>${COMPANY_CONTACT.phone} | ${COMPANY_CONTACT.email} | ${COMPANY_CONTACT.address}</p>
+          </div>
         </body>
       </html>
     `);
@@ -151,6 +174,29 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
         </DialogHeader>
 
         <div ref={printRef} className="space-y-6">
+          {/* Header with Logo and Contact */}
+          <div className="flex justify-between items-start pb-4 border-b-2 border-primary">
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="Agraicy Life Sciences" className="h-14 w-auto" />
+              <div>
+                <h2 className="text-xl font-bold text-primary">Agraicy Life Sciences</h2>
+              </div>
+            </div>
+            <div className="text-right text-sm text-muted-foreground space-y-1">
+              <p className="flex items-center justify-end gap-2">
+                <Phone className="h-3 w-3" /> {COMPANY_CONTACT.phone}
+              </p>
+              <p className="flex items-center justify-end gap-2">
+                <Mail className="h-3 w-3" /> {COMPANY_CONTACT.email}
+              </p>
+              <p className="flex items-center justify-end gap-2">
+                <MapPin className="h-3 w-3" /> {COMPANY_CONTACT.address}
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-2xl font-bold text-center text-primary">INVOICE</h3>
+
           <div className="flex justify-between">
             <div>
               <h3 className="text-sm text-muted-foreground mb-1">Bill To</h3>
@@ -163,6 +209,10 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
               )}
             </div>
             <div className="text-right">
+              <p className="text-sm">
+                <span className="text-muted-foreground">Invoice #: </span>
+                <span className="font-semibold">{invoice.invoice_number}</span>
+              </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Invoice Date: </span>
                 {format(new Date(invoice.invoice_date), "MMM dd, yyyy")}
