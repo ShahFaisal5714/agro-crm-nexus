@@ -94,9 +94,38 @@ export const usePurchases = () => {
     },
   });
 
+  const deletePurchase = useMutation({
+    mutationFn: async (purchaseId: string) => {
+      // First delete purchase items
+      const { error: itemsError } = await supabase
+        .from("purchase_items")
+        .delete()
+        .eq("purchase_id", purchaseId);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the purchase
+      const { error } = await supabase
+        .from("purchases")
+        .delete()
+        .eq("id", purchaseId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      toast.success("Purchase order deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete purchase order");
+      console.error(error);
+    },
+  });
+
   return {
     purchases: purchases || [],
     isLoading,
     createPurchase: createPurchase.mutateAsync,
+    deletePurchase: deletePurchase.mutateAsync,
   };
 };
