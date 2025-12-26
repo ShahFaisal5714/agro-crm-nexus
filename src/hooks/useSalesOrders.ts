@@ -27,9 +27,41 @@ export interface SalesOrderItem {
   total: number;
 }
 
+export interface SalesOrderItemWithProduct extends SalesOrderItem {
+  products?: {
+    name: string;
+    sku: string;
+  };
+}
+
 export const useSalesOrders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const getOrderWithItems = async (orderId: string) => {
+    const { data: order, error: orderError } = await supabase
+      .from("sales_orders")
+      .select(`
+        *,
+        dealers (dealer_name, address, phone, email, gst_number)
+      `)
+      .eq("id", orderId)
+      .single();
+
+    if (orderError) throw orderError;
+
+    const { data: items, error: itemsError } = await supabase
+      .from("sales_order_items")
+      .select(`
+        *,
+        products (name, sku)
+      `)
+      .eq("sales_order_id", orderId);
+
+    if (itemsError) throw itemsError;
+
+    return { order, items: items as SalesOrderItemWithProduct[] };
+  };
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["sales-orders"],
@@ -205,6 +237,7 @@ export const useSalesOrders = () => {
   return {
     orders,
     isLoading,
+    getOrderWithItems,
     createOrder: createOrder.mutateAsync,
     isCreating: createOrder.isPending,
     updateOrder: updateOrder.mutateAsync,

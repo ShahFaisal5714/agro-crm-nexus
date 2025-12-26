@@ -13,6 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 import { NewSalesOrderDialog } from "@/components/sales/NewSalesOrderDialog";
 import { EditSalesOrderDialog } from "@/components/sales/EditSalesOrderDialog";
 import { DeleteSalesOrderDialog } from "@/components/sales/DeleteSalesOrderDialog";
+import { ViewSalesOrderDialog } from "@/components/sales/ViewSalesOrderDialog";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -82,6 +83,7 @@ const Sales = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
+                          <ViewSalesOrderDialog order={order} />
                           <EditSalesOrderDialog order={order} />
                           <DeleteSalesOrderDialog order={order} />
                         </div>
