@@ -5,16 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Edit, Package, Search } from "lucide-react";
+import { AlertCircle, Edit, Package, Search, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { AddProductDialog } from "@/components/inventory/AddProductDialog";
 import { EditProductDialog } from "@/components/inventory/EditProductDialog";
+import { DeleteProductDialog } from "@/components/inventory/DeleteProductDialog";
 
 const Inventory = () => {
   const { products, isLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
   const filteredProducts = products.filter(
     (product) =>
@@ -125,13 +127,22 @@ const Inventory = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingProduct(product)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingProduct(product)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeletingProduct(product)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -148,6 +159,14 @@ const Inventory = () => {
           product={editingProduct}
           open={!!editingProduct}
           onOpenChange={(open) => !open && setEditingProduct(null)}
+        />
+      )}
+
+      {deletingProduct && (
+        <DeleteProductDialog
+          product={deletingProduct}
+          open={!!deletingProduct}
+          onOpenChange={(open) => !open && setDeletingProduct(null)}
         />
       )}
     </DashboardLayout>
