@@ -11,13 +11,30 @@ export interface Purchase {
   status: string;
   notes?: string;
   created_at: string;
+  created_by: string;
+  suppliers?: {
+    name: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    gst_number?: string;
+  };
 }
 
 export interface PurchaseItem {
+  id?: string;
+  purchase_id?: string;
   product_id: string;
   quantity: number;
   unit_price: number;
   total: number;
+}
+
+export interface PurchaseItemWithProduct extends PurchaseItem {
+  products?: {
+    name: string;
+    sku: string;
+  };
 }
 
 export const usePurchases = () => {
@@ -28,13 +45,41 @@ export const usePurchases = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("purchases")
-        .select("*")
+        .select(`
+          *,
+          suppliers (name, address, phone, email, gst_number)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Purchase[];
     },
   });
+
+  const getPurchaseWithItems = async (purchaseId: string) => {
+    const { data: purchase, error: purchaseError } = await supabase
+      .from("purchases")
+      .select(`
+        *,
+        suppliers (name, address, phone, email, gst_number)
+      `)
+      .eq("id", purchaseId)
+      .single();
+
+    if (purchaseError) throw purchaseError;
+
+    const { data: items, error: itemsError } = await supabase
+      .from("purchase_items")
+      .select(`
+        *,
+        products (name, sku)
+      `)
+      .eq("purchase_id", purchaseId);
+
+    if (itemsError) throw itemsError;
+
+    return { purchase: purchase as Purchase, items: items as PurchaseItemWithProduct[] };
+  };
 
   const createPurchase = useMutation({
     mutationFn: async (purchaseData: {
@@ -94,6 +139,45 @@ export const usePurchases = () => {
     },
   });
 
+  const updatePurchase = useMutation({
+    mutationFn: async ({
+      id,
+      supplier_id,
+      purchase_date,
+      status,
+      notes,
+    }: {
+      id: string;
+      supplier_id: string;
+      purchase_date: string;
+      status: string;
+      notes?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("purchases")
+        .update({
+          supplier_id,
+          purchase_date,
+          status,
+          notes,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      toast.success("Purchase order updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update purchase order");
+      console.error(error);
+    },
+  });
+
   const deletePurchase = useMutation({
     mutationFn: async (purchaseId: string) => {
       // First delete purchase items
@@ -125,7 +209,10 @@ export const usePurchases = () => {
   return {
     purchases: purchases || [],
     isLoading,
+    getPurchaseWithItems,
     createPurchase: createPurchase.mutateAsync,
+    updatePurchase: updatePurchase.mutateAsync,
+    isUpdating: updatePurchase.isPending,
     deletePurchase: deletePurchase.mutateAsync,
   };
 };
