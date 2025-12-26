@@ -5,21 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Package, ShoppingCart, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
-import { useSuppliers } from "@/hooks/useSuppliers";
 import { NewPurchaseDialog } from "@/components/purchase/NewPurchaseDialog";
 import { DeletePurchaseDialog } from "@/components/purchase/DeletePurchaseDialog";
+import { ViewPurchaseDialog } from "@/components/purchase/ViewPurchaseDialog";
+import { EditPurchaseDialog } from "@/components/purchase/EditPurchaseDialog";
 import { format } from "date-fns";
-const Purchase = () => {
+
+const PurchasePage = () => {
   const { purchases, isLoading: purchasesLoading } = usePurchases();
-  const { suppliers } = useSuppliers();
 
   const totalPurchases = purchases.reduce((sum, p) => sum + p.total_amount, 0);
   const pendingPurchases = purchases.filter((p) => p.status === "pending").length;
-
-  const getSupplierName = (supplierId: string) => {
-    const supplier = suppliers.find((s) => s.id === supplierId);
-    return supplier?.name || "Unknown";
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,7 +102,7 @@ const Purchase = () => {
                   {purchases.map((purchase) => (
                     <TableRow key={purchase.id}>
                       <TableCell className="font-mono text-sm">{purchase.purchase_number}</TableCell>
-                      <TableCell>{getSupplierName(purchase.supplier_id)}</TableCell>
+                      <TableCell>{purchase.suppliers?.name || "Unknown"}</TableCell>
                       <TableCell>{format(new Date(purchase.purchase_date), "MMM dd, yyyy")}</TableCell>
                       <TableCell>{formatCurrency(purchase.total_amount)}</TableCell>
                       <TableCell>
@@ -115,7 +111,11 @@ const Purchase = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DeletePurchaseDialog purchase={purchase} />
+                        <div className="flex justify-end gap-1">
+                          <ViewPurchaseDialog purchase={purchase} />
+                          <EditPurchaseDialog purchase={purchase} />
+                          <DeletePurchaseDialog purchase={purchase} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -129,4 +129,4 @@ const Purchase = () => {
   );
 };
 
-export default Purchase;
+export default PurchasePage;
