@@ -11,16 +11,21 @@ import { useExpenses } from "@/hooks/useExpenses";
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
 const Reports = () => {
-  const { orders } = useSalesOrders();
-  const { products } = useProducts();
-  const { dealers } = useDealers();
-  const { expenses } = useExpenses();
+  const { orders, isLoading: ordersLoading } = useSalesOrders();
+  const { products, isLoading: productsLoading } = useProducts();
+  const { dealers, isLoading: dealersLoading } = useDealers();
+  const { expenses, isLoading: expensesLoading } = useExpenses();
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const safeOrders = orders || [];
+  const safeExpenses = expenses || [];
+  const safeDealers = dealers || [];
+  const safeProducts = products || [];
+
+  const totalRevenue = safeOrders.reduce((sum, order) => sum + order.total_amount, 0);
+  const totalExpenses = safeExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const netProfit = totalRevenue - totalExpenses;
 
-  const monthlySales = orders.reduce((acc, order) => {
+  const monthlySales = safeOrders.reduce((acc, order) => {
     const month = new Date(order.order_date).toLocaleString("default", { month: "short" });
     acc[month] = (acc[month] || 0) + order.total_amount;
     return acc;
@@ -32,10 +37,10 @@ const Reports = () => {
   }));
 
   const statusData = [
-    { name: "Pending", value: orders.filter((o) => o.status === "pending").length },
-    { name: "Confirmed", value: orders.filter((o) => o.status === "confirmed").length },
-    { name: "Delivered", value: orders.filter((o) => o.status === "delivered").length },
-    { name: "Cancelled", value: orders.filter((o) => o.status === "cancelled").length },
+    { name: "Pending", value: safeOrders.filter((o) => o.status === "pending").length },
+    { name: "Confirmed", value: safeOrders.filter((o) => o.status === "confirmed").length },
+    { name: "Delivered", value: safeOrders.filter((o) => o.status === "delivered").length },
+    { name: "Cancelled", value: safeOrders.filter((o) => o.status === "cancelled").length },
   ].filter((item) => item.value > 0);
 
   return (
@@ -85,7 +90,7 @@ const Reports = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dealers.length}</div>
+              <div className="text-2xl font-bold">{safeDealers.length}</div>
             </CardContent>
           </Card>
         </div>
@@ -156,16 +161,16 @@ const Reports = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Total Products</p>
-                <p className="text-2xl font-bold">{products.length}</p>
+                <p className="text-2xl font-bold">{safeProducts.length}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Low Stock Items</p>
-                <p className="text-2xl font-bold">{products.filter((p) => p.stock_quantity < 10).length}</p>
+                <p className="text-2xl font-bold">{safeProducts.filter((p) => p.stock_quantity < 10).length}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Stock Value</p>
                 <p className="text-2xl font-bold">
-                  {formatCurrency(products.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
+                  {formatCurrency(safeProducts.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
                 </p>
               </div>
             </div>
