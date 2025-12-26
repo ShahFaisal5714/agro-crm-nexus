@@ -1,6 +1,10 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -15,8 +19,9 @@ import { EditSalesOrderDialog } from "@/components/sales/EditSalesOrderDialog";
 import { DeleteSalesOrderDialog } from "@/components/sales/DeleteSalesOrderDialog";
 import { ViewSalesOrderDialog } from "@/components/sales/ViewSalesOrderDialog";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
+import { useDealers } from "@/hooks/useDealers";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -27,6 +32,31 @@ const statusColors: Record<string, string> = {
 
 const Sales = () => {
   const { orders, isLoading } = useSalesOrders();
+  const { dealers } = useDealers();
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dealerFilter, setDealerFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const filteredOrders = useMemo(() => {
+    return (orders || []).filter(order => {
+      const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           order.dealers?.dealer_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDealer = dealerFilter === "all" || order.dealer_id === dealerFilter;
+      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+      
+      return matchesSearch && matchesDealer && matchesStatus;
+    });
+  }, [orders, searchTerm, dealerFilter, statusFilter]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setDealerFilter("all");
+    setStatusFilter("all");
+  };
+
+  const hasActiveFilters = searchTerm || dealerFilter !== "all" || statusFilter !== "all";
 
   return (
     <DashboardLayout>
@@ -43,14 +73,59 @@ const Sales = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Sales Orders</CardTitle>
+            <div className="flex flex-col gap-4">
+              <CardTitle>Sales Orders</CardTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by order # or dealer..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                <Select value={dealerFilter} onValueChange={setDealerFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Dealer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dealers</SelectItem>
+                    {dealers.map(dealer => (
+                      <SelectItem key={dealer.id} value={dealer.id}>{dealer.dealer_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : orders && orders.length > 0 ? (
+            ) : filteredOrders.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -63,7 +138,7 @@ const Sales = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         {order.order_number}
@@ -94,10 +169,16 @@ const Sales = () => {
               </Table>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                <p>No sales orders yet</p>
-                <p className="text-sm mt-2">
-                  Create your first order to get started
-                </p>
+                {hasActiveFilters ? (
+                  <p>No orders match your filters</p>
+                ) : (
+                  <>
+                    <p>No sales orders yet</p>
+                    <p className="text-sm mt-2">
+                      Create your first order to get started
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </CardContent>

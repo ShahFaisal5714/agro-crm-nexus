@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Edit, Package, Search, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertCircle, Edit, Package, Search, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { AddProductDialog } from "@/components/inventory/AddProductDialog";
@@ -15,14 +16,35 @@ import { DeleteProductDialog } from "@/components/inventory/DeleteProductDialog"
 const Inventory = () => {
   const { products, isLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
+  const [stockFilter, setStockFilter] = useState<string>("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (product.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      let matchesStock = true;
+      if (stockFilter === "in_stock") {
+        matchesStock = product.stock_quantity >= 10;
+      } else if (stockFilter === "low_stock") {
+        matchesStock = product.stock_quantity > 0 && product.stock_quantity < 10;
+      } else if (stockFilter === "out_of_stock") {
+        matchesStock = product.stock_quantity === 0;
+      }
+
+      return matchesSearch && matchesStock;
+    });
+  }, [products, searchTerm, stockFilter]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStockFilter("all");
+  };
+
+  const hasActiveFilters = searchTerm || stockFilter !== "all";
 
   const lowStockProducts = products.filter((p) => p.stock_quantity < 10).length;
 
@@ -75,16 +97,35 @@ const Inventory = () => {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products by name or SKU..."
+                  placeholder="Search products by name, SKU, or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
                 />
               </div>
+
+              <Select value={stockFilter} onValueChange={setStockFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Stock Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Stock</SelectItem>
+                  <SelectItem value="in_stock">In Stock</SelectItem>
+                  <SelectItem value="low_stock">Low Stock</SelectItem>
+                  <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -92,7 +133,7 @@ const Inventory = () => {
               <div className="text-center py-8 text-muted-foreground">Loading products...</div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                {searchTerm ? "No products found matching your search" : "No products yet. Add your first product to get started."}
+                {hasActiveFilters ? "No products match your filters" : "No products yet. Add your first product to get started."}
               </div>
             ) : (
               <Table>

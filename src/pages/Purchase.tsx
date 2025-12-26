@@ -1,10 +1,17 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Package, ShoppingCart, TrendingUp } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Package, ShoppingCart, TrendingUp, Search, X, Calendar as CalendarIcon } from "lucide-react";
+import { formatCurrency, cn } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
+import { useSuppliers } from "@/hooks/useSuppliers";
 import { NewPurchaseDialog } from "@/components/purchase/NewPurchaseDialog";
 import { DeletePurchaseDialog } from "@/components/purchase/DeletePurchaseDialog";
 import { ViewPurchaseDialog } from "@/components/purchase/ViewPurchaseDialog";
@@ -13,6 +20,39 @@ import { format } from "date-fns";
 
 const PurchasePage = () => {
   const { purchases, isLoading: purchasesLoading } = usePurchases();
+  const { suppliers } = useSuppliers();
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  const filteredPurchases = useMemo(() => {
+    return purchases.filter(purchase => {
+      const matchesSearch = purchase.purchase_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           purchase.suppliers?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSupplier = supplierFilter === "all" || purchase.supplier_id === supplierFilter;
+      const matchesStatus = statusFilter === "all" || purchase.status === statusFilter;
+      
+      const purchaseDate = new Date(purchase.purchase_date);
+      const matchesStartDate = !startDate || purchaseDate >= startDate;
+      const matchesEndDate = !endDate || purchaseDate <= endDate;
+      
+      return matchesSearch && matchesSupplier && matchesStatus && matchesStartDate && matchesEndDate;
+    });
+  }, [purchases, searchTerm, supplierFilter, statusFilter, startDate, endDate]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSupplierFilter("all");
+    setStatusFilter("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const hasActiveFilters = searchTerm || supplierFilter !== "all" || statusFilter !== "all" || startDate || endDate;
 
   const totalPurchases = purchases.reduce((sum, p) => sum + p.total_amount, 0);
   const pendingPurchases = purchases.filter((p) => p.status === "pending").length;
@@ -77,14 +117,82 @@ const PurchasePage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Purchase Orders</CardTitle>
+            <div className="flex flex-col gap-4">
+              <CardTitle>Purchase Orders</CardTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by PO # or supplier..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Suppliers</SelectItem>
+                    {suppliers.map(supplier => (
+                      <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "MMM dd") : "Start Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "MMM dd") : "End Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus className="pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {purchasesLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading purchases...</div>
-            ) : purchases.length === 0 ? (
+            ) : filteredPurchases.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No purchase orders yet. Create your first order to get started.
+                {hasActiveFilters ? "No purchases match your filters" : "No purchase orders yet. Create your first order to get started."}
               </div>
             ) : (
               <Table>
@@ -99,7 +207,7 @@ const PurchasePage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {purchases.map((purchase) => (
+                  {filteredPurchases.map((purchase) => (
                     <TableRow key={purchase.id}>
                       <TableCell className="font-mono text-sm">{purchase.purchase_number}</TableCell>
                       <TableCell>{purchase.suppliers?.name || "Unknown"}</TableCell>
