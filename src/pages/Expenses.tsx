@@ -1,20 +1,62 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, Calendar, Edit, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DollarSign, TrendingUp, Calendar as CalendarIcon, Edit, Trash2, FileText, Search, X } from "lucide-react";
+import { formatCurrency, cn } from "@/lib/utils";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { EditExpenseDialog } from "@/components/expenses/EditExpenseDialog";
 import { DeleteExpenseDialog } from "@/components/expenses/DeleteExpenseDialog";
+import { NewInvoiceDialog } from "@/components/invoices/NewInvoiceDialog";
 import { format } from "date-fns";
+
 const Expenses = () => {
   const { expenses, isLoading } = useExpenses();
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  // Get unique categories
+  const categories = useMemo(() => {
+    const cats = [...new Set(expenses.map(e => e.category))];
+    return cats.sort();
+  }, [expenses]);
+
+  // Filter expenses
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter(expense => {
+      const matchesSearch = expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           expense.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || expense.category === categoryFilter;
+      
+      const expenseDate = new Date(expense.expense_date);
+      const matchesStartDate = !startDate || expenseDate >= startDate;
+      const matchesEndDate = !endDate || expenseDate <= endDate;
+      
+      return matchesSearch && matchesCategory && matchesStartDate && matchesEndDate;
+    });
+  }, [expenses, searchTerm, categoryFilter, startDate, endDate]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const hasActiveFilters = searchTerm || categoryFilter !== "all" || startDate || endDate;
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   const thisMonthExpenses = expenses.filter((e) => {
@@ -40,7 +82,10 @@ const Expenses = () => {
               Track and categorize business expenses
             </p>
           </div>
-          <AddExpenseDialog />
+          <div className="flex gap-2">
+            <NewInvoiceDialog />
+            <AddExpenseDialog />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -57,7 +102,7 @@ const Expenses = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">This Month</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(thisMonthExpenses)}</div>
@@ -84,14 +129,70 @@ const Expenses = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Expenses</CardTitle>
+            <div className="flex flex-col gap-4">
+              <CardTitle>Recent Expenses</CardTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search expenses..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "MMM dd") : "Start Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "MMM dd") : "End Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus className="pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading expenses...</div>
-            ) : expenses.length === 0 ? (
+            ) : filteredExpenses.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No expenses yet. Add your first expense to get started.
+                {hasActiveFilters ? "No expenses match your filters" : "No expenses yet. Add your first expense to get started."}
               </div>
             ) : (
               <Table>
@@ -105,7 +206,7 @@ const Expenses = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expenses.map((expense) => (
+                  {filteredExpenses.map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>{format(new Date(expense.expense_date), "MMM dd, yyyy")}</TableCell>
                       <TableCell>
