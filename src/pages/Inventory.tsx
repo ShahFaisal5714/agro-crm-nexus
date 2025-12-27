@@ -9,14 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertCircle, Edit, Package, Search, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
+import { useProductCategories } from "@/hooks/useProductCategories";
 import { AddProductDialog } from "@/components/inventory/AddProductDialog";
 import { EditProductDialog } from "@/components/inventory/EditProductDialog";
 import { DeleteProductDialog } from "@/components/inventory/DeleteProductDialog";
+import { CategoryManagementDialog } from "@/components/inventory/CategoryManagementDialog";
 
 const Inventory = () => {
   const { products, isLoading } = useProducts();
+  const { categories } = useProductCategories();
   const [searchTerm, setSearchTerm] = useState("");
   const [stockFilter, setStockFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
@@ -35,16 +39,22 @@ const Inventory = () => {
         matchesStock = product.stock_quantity === 0;
       }
 
-      return matchesSearch && matchesStock;
+      let matchesCategory = true;
+      if (categoryFilter !== "all") {
+        matchesCategory = product.category_id === categoryFilter;
+      }
+
+      return matchesSearch && matchesStock && matchesCategory;
     });
-  }, [products, searchTerm, stockFilter]);
+  }, [products, searchTerm, stockFilter, categoryFilter]);
 
   const clearFilters = () => {
     setSearchTerm("");
     setStockFilter("all");
+    setCategoryFilter("all");
   };
 
-  const hasActiveFilters = searchTerm || stockFilter !== "all";
+  const hasActiveFilters = searchTerm || stockFilter !== "all" || categoryFilter !== "all";
 
   const lowStockProducts = products.filter((p) => p.stock_quantity < 10).length;
 
@@ -58,7 +68,10 @@ const Inventory = () => {
               Track stock levels and product information
             </p>
           </div>
-          <AddProductDialog />
+          <div className="flex gap-2">
+            <CategoryManagementDialog />
+            <AddProductDialog />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -120,6 +133,18 @@ const Inventory = () => {
                 </SelectContent>
               </Select>
 
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   <X className="h-4 w-4 mr-1" />
@@ -142,6 +167,7 @@ const Inventory = () => {
                     <TableHead>SKU</TableHead>
                     <TableHead>Product Name</TableHead>
                     <TableHead>Unit Price</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Unit</TableHead>
                     <TableHead>Value</TableHead>
@@ -159,6 +185,9 @@ const Inventory = () => {
                         <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{formatCurrency(product.unit_price)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{product.category?.name || "Uncategorized"}</Badge>
+                        </TableCell>
                         <TableCell>{product.stock_quantity}</TableCell>
                         <TableCell>{product.unit}</TableCell>
                         <TableCell>{formatCurrency(product.unit_price * product.stock_quantity)}</TableCell>

@@ -1,181 +1,586 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, Package, DollarSign } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { useSalesOrders } from "@/hooks/useSalesOrders";
+import { useReportData } from "@/hooks/useReportData";
 import { useProducts } from "@/hooks/useProducts";
-import { useDealers } from "@/hooks/useDealers";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useDealers } from "@/hooks/useDealers";
+import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, isWithinInterval } from "date-fns";
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
+const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 const Reports = () => {
-  const { orders, isLoading: ordersLoading } = useSalesOrders();
+  const { data: reportData, isLoading: reportLoading } = useReportData();
   const { products, isLoading: productsLoading } = useProducts();
-  const { dealers, isLoading: dealersLoading } = useDealers();
   const { expenses, isLoading: expensesLoading } = useExpenses();
+  const { dealers, isLoading: dealersLoading } = useDealers();
+  const [timePeriod, setTimePeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
+  const [comparisonPeriods, setComparisonPeriods] = useState<number>(3);
 
-  const safeOrders = orders || [];
+  const isLoading = reportLoading || productsLoading || expensesLoading || dealersLoading;
   const safeExpenses = expenses || [];
-  const safeDealers = dealers || [];
   const safeProducts = products || [];
+  const safeDealers = dealers || [];
 
-  const totalRevenue = safeOrders.reduce((sum, order) => sum + order.total_amount, 0);
-  const totalExpenses = safeExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const netProfit = totalRevenue - totalExpenses;
+  // Calculate P&L
+  const totalRevenue = useMemo(() => 
+    reportData.salesItems.reduce((sum, item) => sum + item.total, 0), 
+    [reportData.salesItems]
+  );
+  const totalExpenses = useMemo(() => 
+    safeExpenses.reduce((sum, e) => sum + e.amount, 0), 
+    [safeExpenses]
+  );
+  const totalCOGS = useMemo(() => 
+    reportData.salesItems.reduce((sum, item) => sum + (item.products.unit_price * item.quantity), 0), 
+    [reportData.salesItems]
+  );
+  const grossProfit = totalRevenue - totalCOGS;
+  const netProfit = grossProfit - totalExpenses;
 
-  const monthlySales = safeOrders.reduce((acc, order) => {
-    const month = new Date(order.order_date).toLocaleString("default", { month: "short" });
-    acc[month] = (acc[month] || 0) + order.total_amount;
-    return acc;
-  }, {} as Record<string, number>);
+  // Stock Report
+  const stockReport = useMemo(() => {
+    return safeProducts.map(p => ({
+      name: p.name,
+      sku: p.sku,
+      stock: p.stock_quantity,
+      value: p.stock_quantity * p.unit_price,
+      category: p.category?.name || "Uncategorized",
+    }));
+  }, [safeProducts]);
 
-  const salesData = Object.entries(monthlySales).map(([month, amount]) => ({
-    month,
-    amount,
-  }));
+  // Product-wise Revenue/Loss
+  const productWiseData = useMemo(() => {
+    const productMap = new Map<string, { name: string; revenue: number; cost: number; quantity: number }>();
+    
+    reportData.salesItems.forEach(item => {
+      const existing = productMap.get(item.product_id) || { 
+        name: item.products.name, 
+        revenue: 0, 
+        cost: 0, 
+        quantity: 0 
+      };
+      existing.revenue += item.total;
+      existing.cost += item.products.unit_price * item.quantity;
+      existing.quantity += item.quantity;
+      productMap.set(item.product_id, existing);
+    });
 
-  const statusData = [
-    { name: "Pending", value: safeOrders.filter((o) => o.status === "pending").length },
-    { name: "Confirmed", value: safeOrders.filter((o) => o.status === "confirmed").length },
-    { name: "Delivered", value: safeOrders.filter((o) => o.status === "delivered").length },
-    { name: "Cancelled", value: safeOrders.filter((o) => o.status === "cancelled").length },
-  ].filter((item) => item.value > 0);
+    return Array.from(productMap.values()).map(p => ({
+      ...p,
+      profit: p.revenue - p.cost,
+    })).sort((a, b) => b.profit - a.profit);
+  }, [reportData.salesItems]);
+
+  // Category-wise Revenue/Loss
+  const categoryWiseData = useMemo(() => {
+    const categoryMap = new Map<string, { name: string; revenue: number; cost: number; quantity: number }>();
+    
+    reportData.salesItems.forEach(item => {
+      const catName = item.products.product_categories?.name || "Uncategorized";
+      const existing = categoryMap.get(catName) || { name: catName, revenue: 0, cost: 0, quantity: 0 };
+      existing.revenue += item.total;
+      existing.cost += item.products.unit_price * item.quantity;
+      existing.quantity += item.quantity;
+      categoryMap.set(catName, existing);
+    });
+
+    return Array.from(categoryMap.values()).map(c => ({
+      ...c,
+      profit: c.revenue - c.cost,
+    })).sort((a, b) => b.revenue - a.revenue);
+  }, [reportData.salesItems]);
+
+  // Territory-wise Sales
+  const territoryWiseData = useMemo(() => {
+    const territoryMap = new Map<string, { name: string; revenue: number; orders: number }>();
+    
+    reportData.salesItems.forEach(item => {
+      const territoryId = item.sales_orders.dealers?.territory_id;
+      const territory = reportData.territories.find(t => t.id === territoryId);
+      const territoryName = territory?.name || "Unknown";
+      
+      const existing = territoryMap.get(territoryName) || { name: territoryName, revenue: 0, orders: 0 };
+      existing.revenue += item.total;
+      existing.orders++;
+      territoryMap.set(territoryName, existing);
+    });
+
+    return Array.from(territoryMap.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [reportData]);
+
+  // Sales Officer-wise Data
+  const salesOfficerData = useMemo(() => {
+    const officerMap = new Map<string, { name: string; revenue: number; orders: Set<string> }>();
+    
+    reportData.salesItems.forEach(item => {
+      const officerId = item.sales_orders.created_by;
+      const officer = reportData.profiles.find(p => p.id === officerId);
+      const officerName = officer?.full_name || "Unknown";
+      
+      const existing = officerMap.get(officerId) || { name: officerName, revenue: 0, orders: new Set<string>() };
+      existing.revenue += item.total;
+      existing.orders.add(item.sales_order_id);
+      officerMap.set(officerId, existing);
+    });
+
+    return Array.from(officerMap.values()).map(o => ({
+      name: o.name,
+      revenue: o.revenue,
+      orders: o.orders.size,
+    })).sort((a, b) => b.revenue - a.revenue);
+  }, [reportData]);
+
+  // Time-based comparison data
+  const timeComparisonData = useMemo(() => {
+    const now = new Date();
+    const periods: { label: string; start: Date; end: Date }[] = [];
+
+    for (let i = 0; i < comparisonPeriods; i++) {
+      let start: Date, end: Date, label: string;
+      
+      if (timePeriod === "monthly") {
+        const date = subMonths(now, i);
+        start = startOfMonth(date);
+        end = endOfMonth(date);
+        label = format(date, "MMM yyyy");
+      } else if (timePeriod === "quarterly") {
+        const date = subQuarters(now, i);
+        start = startOfQuarter(date);
+        end = endOfQuarter(date);
+        label = `Q${Math.ceil((date.getMonth() + 1) / 3)} ${format(date, "yyyy")}`;
+      } else {
+        const date = subYears(now, i);
+        start = startOfYear(date);
+        end = endOfYear(date);
+        label = format(date, "yyyy");
+      }
+      
+      periods.push({ label, start, end });
+    }
+
+    return periods.reverse().map(period => {
+      const periodItems = reportData.salesItems.filter(item => {
+        const orderDate = new Date(item.sales_orders.order_date);
+        return isWithinInterval(orderDate, { start: period.start, end: period.end });
+      });
+
+      const revenue = periodItems.reduce((sum, item) => sum + item.total, 0);
+      const cost = periodItems.reduce((sum, item) => sum + (item.products.unit_price * item.quantity), 0);
+
+      return {
+        period: period.label,
+        revenue,
+        cost,
+        profit: revenue - cost,
+      };
+    });
+  }, [reportData.salesItems, timePeriod, comparisonPeriods]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
-          <p className="text-muted-foreground mt-1">
-            Comprehensive business reports and comparisons
-          </p>
+          <p className="text-muted-foreground mt-1">Comprehensive business reports and analysis</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* P&L Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{formatCurrency(totalRevenue)}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Cost of Goods</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalCOGS)}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Gross Profit</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+              <div className={`text-2xl font-bold ${grossProfit >= 0 ? "text-green-600" : "text-destructive"}`}>
+                {formatCurrency(grossProfit)}
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <TrendingDown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
+              <div className="text-2xl font-bold text-destructive">{formatCurrency(totalExpenses)}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              {netProfit >= 0 ? <TrendingUp className="h-4 w-4 text-green-600" /> : <TrendingDown className="h-4 w-4 text-destructive" />}
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(netProfit)}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Active Dealers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{safeDealers.length}</div>
+              <div className={`text-2xl font-bold ${netProfit >= 0 ? "text-green-600" : "text-destructive"}`}>
+                {formatCurrency(netProfit)}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Sales</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {salesData.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No sales data available
+        <Tabs defaultValue="time" className="space-y-4">
+          <TabsList className="flex-wrap h-auto gap-2">
+            <TabsTrigger value="time">Time Comparison</TabsTrigger>
+            <TabsTrigger value="stock">Stock Report</TabsTrigger>
+            <TabsTrigger value="product">Product Analysis</TabsTrigger>
+            <TabsTrigger value="category">Category Analysis</TabsTrigger>
+            <TabsTrigger value="territory">Territory Sales</TabsTrigger>
+            <TabsTrigger value="officer">Sales Officers</TabsTrigger>
+          </TabsList>
+
+          {/* Time Comparison */}
+          <TabsContent value="time" className="space-y-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Sales Comparison Over Time
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Select value={timePeriod} onValueChange={(v: "monthly" | "quarterly" | "yearly") => setTimePeriod(v)}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={comparisonPeriods.toString()} onValueChange={(v) => setComparisonPeriods(parseInt(v))}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 periods</SelectItem>
+                      <SelectItem value="6">6 periods</SelectItem>
+                      <SelectItem value="12">12 periods</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : (
+              </CardHeader>
+              <CardContent>
+                {timeComparisonData.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">No sales data available</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={timeComparisonData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="period" />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Legend />
+                      <Line type="monotone" dataKey="revenue" name="Revenue" stroke="hsl(var(--primary))" strokeWidth={2} />
+                      <Line type="monotone" dataKey="cost" name="Cost" stroke="hsl(var(--destructive))" strokeWidth={2} />
+                      <Line type="monotone" dataKey="profit" name="Profit" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Stock Report */}
+          <TabsContent value="stock" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Total Products</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{safeProducts.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Low Stock Items (&lt;10)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-destructive">
+                    {safeProducts.filter(p => p.stock_quantity < 10).length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Total Stock Value</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(safeProducts.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock by Category</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={salesData}>
+                  <BarChart data={categoryWiseData.map(c => ({ name: c.name, quantity: c.quantity }))}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                    <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="amount" fill="hsl(var(--primary))" />
+                    <Bar dataKey="quantity" name="Units Sold" fill="hsl(var(--primary))" />
                   </BarChart>
                 </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Status Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {statusData.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No order data available
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+          {/* Product Analysis */}
+          <TabsContent value="product" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Top Performing Products</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={productWiseData.slice(0, 10)} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Bar dataKey="profit" name="Profit" fill="hsl(var(--chart-2))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Inventory Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Products</p>
-                <p className="text-2xl font-bold">{safeProducts.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Low Stock Items</p>
-                <p className="text-2xl font-bold">{safeProducts.filter((p) => p.stock_quantity < 10).length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Stock Value</p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(safeProducts.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
-                </p>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Product Revenue vs Cost</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={productWiseData.slice(0, 10)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 10 }} />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Legend />
+                      <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" />
+                      <Bar dataKey="cost" name="Cost" fill="hsl(var(--destructive))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+
+            {productWiseData.filter(p => p.profit < 0).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-destructive">Loss-Making Products</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {productWiseData.filter(p => p.profit < 0).map((p, i) => (
+                      <div key={i} className="flex justify-between items-center p-2 bg-destructive/10 rounded">
+                        <span>{p.name}</span>
+                        <span className="font-bold text-destructive">{formatCurrency(p.profit)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Category Analysis */}
+          <TabsContent value="category" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Category-wise Revenue Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {categoryWiseData.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">No category data available</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={categoryWiseData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          dataKey="revenue"
+                        >
+                          {categoryWiseData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Category Profit/Loss</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={categoryWiseData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Legend />
+                      <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" />
+                      <Bar dataKey="profit" name="Profit" fill="hsl(var(--chart-2))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Territory Sales */}
+          <TabsContent value="territory" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Territory-wise Sales Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {territoryWiseData.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">No territory data available</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={territoryWiseData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value: number, name: string) => 
+                          name === "revenue" ? formatCurrency(value as number) : value
+                        } />
+                        <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={territoryWiseData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          dataKey="revenue"
+                        >
+                          {territoryWiseData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Sales Officers */}
+          <TabsContent value="officer" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Sales Officer Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {salesOfficerData.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">No sales officer data available</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={salesOfficerData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={120} />
+                        <Tooltip formatter={(value: number, name: string) => 
+                          name === "revenue" ? formatCurrency(value) : value
+                        } />
+                        <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+
+                    <div className="space-y-2">
+                      {salesOfficerData.map((officer, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{officer.name}</p>
+                            <p className="text-sm text-muted-foreground">{officer.orders} orders</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-primary">{formatCurrency(officer.revenue)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Avg: {formatCurrency(officer.revenue / (officer.orders || 1))}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
