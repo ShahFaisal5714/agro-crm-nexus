@@ -3,14 +3,19 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar, Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText } from "lucide-react";
+import { formatCurrency, cn } from "@/lib/utils";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { useReportData } from "@/hooks/useReportData";
 import { useProducts } from "@/hooks/useProducts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useDealers } from "@/hooks/useDealers";
-import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, isWithinInterval } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { DateRange } from "react-day-picker";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -21,24 +26,52 @@ const Reports = () => {
   const { dealers, isLoading: dealersLoading } = useDealers();
   const [timePeriod, setTimePeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
   const [comparisonPeriods, setComparisonPeriods] = useState<number>(3);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
+  const [activeTab, setActiveTab] = useState("time");
 
   const isLoading = reportLoading || productsLoading || expensesLoading || dealersLoading;
   const safeExpenses = expenses || [];
   const safeProducts = products || [];
   const safeDealers = dealers || [];
 
-  // Calculate P&L
+  // Filter data by date range
+  const filteredSalesItems = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return reportData.salesItems;
+    return reportData.salesItems.filter(item => {
+      const orderDate = new Date(item.sales_orders.order_date);
+      return isWithinInterval(orderDate, { 
+        start: startOfDay(dateRange.from!), 
+        end: endOfDay(dateRange.to!) 
+      });
+    });
+  }, [reportData.salesItems, dateRange]);
+
+  const filteredExpenses = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return safeExpenses;
+    return safeExpenses.filter(e => {
+      const expenseDate = new Date(e.expense_date);
+      return isWithinInterval(expenseDate, { 
+        start: startOfDay(dateRange.from!), 
+        end: endOfDay(dateRange.to!) 
+      });
+    });
+  }, [safeExpenses, dateRange]);
+
+  // Calculate P&L based on filtered data
   const totalRevenue = useMemo(() => 
-    reportData.salesItems.reduce((sum, item) => sum + item.total, 0), 
-    [reportData.salesItems]
+    filteredSalesItems.reduce((sum, item) => sum + item.total, 0), 
+    [filteredSalesItems]
   );
   const totalExpenses = useMemo(() => 
-    safeExpenses.reduce((sum, e) => sum + e.amount, 0), 
-    [safeExpenses]
+    filteredExpenses.reduce((sum, e) => sum + e.amount, 0), 
+    [filteredExpenses]
   );
   const totalCOGS = useMemo(() => 
-    reportData.salesItems.reduce((sum, item) => sum + (item.products.unit_price * item.quantity), 0), 
-    [reportData.salesItems]
+    filteredSalesItems.reduce((sum, item) => sum + (item.products.unit_price * item.quantity), 0), 
+    [filteredSalesItems]
   );
   const grossProfit = totalRevenue - totalCOGS;
   const netProfit = grossProfit - totalExpenses;
@@ -58,7 +91,7 @@ const Reports = () => {
   const productWiseData = useMemo(() => {
     const productMap = new Map<string, { name: string; revenue: number; cost: number; quantity: number }>();
     
-    reportData.salesItems.forEach(item => {
+    filteredSalesItems.forEach(item => {
       const existing = productMap.get(item.product_id) || { 
         name: item.products.name, 
         revenue: 0, 
@@ -75,13 +108,13 @@ const Reports = () => {
       ...p,
       profit: p.revenue - p.cost,
     })).sort((a, b) => b.profit - a.profit);
-  }, [reportData.salesItems]);
+  }, [filteredSalesItems]);
 
   // Category-wise Revenue/Loss
   const categoryWiseData = useMemo(() => {
     const categoryMap = new Map<string, { name: string; revenue: number; cost: number; quantity: number }>();
     
-    reportData.salesItems.forEach(item => {
+    filteredSalesItems.forEach(item => {
       const catName = item.products.product_categories?.name || "Uncategorized";
       const existing = categoryMap.get(catName) || { name: catName, revenue: 0, cost: 0, quantity: 0 };
       existing.revenue += item.total;
@@ -94,13 +127,13 @@ const Reports = () => {
       ...c,
       profit: c.revenue - c.cost,
     })).sort((a, b) => b.revenue - a.revenue);
-  }, [reportData.salesItems]);
+  }, [filteredSalesItems]);
 
   // Territory-wise Sales
   const territoryWiseData = useMemo(() => {
     const territoryMap = new Map<string, { name: string; revenue: number; orders: number }>();
     
-    reportData.salesItems.forEach(item => {
+    filteredSalesItems.forEach(item => {
       const territoryId = item.sales_orders.dealers?.territory_id;
       const territory = reportData.territories.find(t => t.id === territoryId);
       const territoryName = territory?.name || "Unknown";
@@ -112,13 +145,13 @@ const Reports = () => {
     });
 
     return Array.from(territoryMap.values()).sort((a, b) => b.revenue - a.revenue);
-  }, [reportData]);
+  }, [filteredSalesItems, reportData.territories]);
 
   // Sales Officer-wise Data
   const salesOfficerData = useMemo(() => {
     const officerMap = new Map<string, { name: string; revenue: number; orders: Set<string> }>();
     
-    reportData.salesItems.forEach(item => {
+    filteredSalesItems.forEach(item => {
       const officerId = item.sales_orders.created_by;
       const officer = reportData.profiles.find(p => p.id === officerId);
       const officerName = officer?.full_name || "Unknown";
@@ -134,7 +167,7 @@ const Reports = () => {
       revenue: o.revenue,
       orders: o.orders.size,
     })).sort((a, b) => b.revenue - a.revenue);
-  }, [reportData]);
+  }, [filteredSalesItems, reportData.profiles]);
 
   // Time-based comparison data
   const timeComparisonData = useMemo(() => {
@@ -182,6 +215,92 @@ const Reports = () => {
     });
   }, [reportData.salesItems, timePeriod, comparisonPeriods]);
 
+  // Export handlers
+  const handleExportCSV = () => {
+    switch (activeTab) {
+      case "time":
+        exportToCSV(timeComparisonData, "time_comparison_report", ["period", "revenue", "cost", "profit"]);
+        break;
+      case "stock":
+        exportToCSV(stockReport, "stock_report", ["name", "sku", "stock", "value", "category"]);
+        break;
+      case "product":
+        exportToCSV(productWiseData, "product_report", ["name", "revenue", "cost", "profit", "quantity"]);
+        break;
+      case "category":
+        exportToCSV(categoryWiseData, "category_report", ["name", "revenue", "cost", "profit", "quantity"]);
+        break;
+      case "territory":
+        exportToCSV(territoryWiseData, "territory_report", ["name", "revenue", "orders"]);
+        break;
+      case "officer":
+        exportToCSV(salesOfficerData, "sales_officer_report", ["name", "revenue", "orders"]);
+        break;
+    }
+  };
+
+  const handleExportPDF = () => {
+    const dateRangeStr = dateRange?.from && dateRange?.to 
+      ? `${format(dateRange.from, "PP")} - ${format(dateRange.to, "PP")}` 
+      : "All Time";
+
+    switch (activeTab) {
+      case "time":
+        exportToPDF("Time Comparison Report", timeComparisonData, [
+          { key: "period", label: "Period" },
+          { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
+          { key: "cost", label: "Cost", format: (v) => formatCurrency(v as number) },
+          { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
+        ], "time_comparison_report");
+        break;
+      case "stock":
+        exportToPDF("Stock Report", stockReport, [
+          { key: "name", label: "Product" },
+          { key: "sku", label: "SKU" },
+          { key: "stock", label: "Quantity" },
+          { key: "value", label: "Value", format: (v) => formatCurrency(v as number) },
+          { key: "category", label: "Category" },
+        ], "stock_report", [
+          { label: "Total Products", value: String(safeProducts.length) },
+          { label: "Low Stock Items", value: String(safeProducts.filter(p => p.stock_quantity < 10).length) },
+          { label: "Total Stock Value", value: formatCurrency(safeProducts.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0)) },
+        ]);
+        break;
+      case "product":
+        exportToPDF("Product Analysis Report", productWiseData, [
+          { key: "name", label: "Product" },
+          { key: "quantity", label: "Qty Sold" },
+          { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
+          { key: "cost", label: "Cost", format: (v) => formatCurrency(v as number) },
+          { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
+        ], "product_report", [{ label: "Date Range", value: dateRangeStr }]);
+        break;
+      case "category":
+        exportToPDF("Category Analysis Report", categoryWiseData, [
+          { key: "name", label: "Category" },
+          { key: "quantity", label: "Qty Sold" },
+          { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
+          { key: "cost", label: "Cost", format: (v) => formatCurrency(v as number) },
+          { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
+        ], "category_report", [{ label: "Date Range", value: dateRangeStr }]);
+        break;
+      case "territory":
+        exportToPDF("Territory Sales Report", territoryWiseData, [
+          { key: "name", label: "Territory" },
+          { key: "orders", label: "Orders" },
+          { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
+        ], "territory_report", [{ label: "Date Range", value: dateRangeStr }]);
+        break;
+      case "officer":
+        exportToPDF("Sales Officer Report", salesOfficerData, [
+          { key: "name", label: "Officer" },
+          { key: "orders", label: "Orders" },
+          { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
+        ], "sales_officer_report", [{ label: "Date Range", value: dateRangeStr }]);
+        break;
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -195,9 +314,49 @@ const Reports = () => {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
-          <p className="text-muted-foreground mt-1">Comprehensive business reports and analysis</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
+            <p className="text-muted-foreground mt-1">Comprehensive business reports and analysis</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Button variant="outline" size="icon" onClick={handleExportCSV} title="Export CSV">
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleExportPDF} title="Export PDF">
+              <FileText className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* P&L Summary */}
@@ -257,7 +416,7 @@ const Reports = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="time" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="flex-wrap h-auto gap-2">
             <TabsTrigger value="time">Time Comparison</TabsTrigger>
             <TabsTrigger value="stock">Stock Report</TabsTrigger>
@@ -272,7 +431,7 @@ const Reports = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                  <CalendarIcon className="h-5 w-5" />
                   Sales Comparison Over Time
                 </CardTitle>
                 <div className="flex gap-2">

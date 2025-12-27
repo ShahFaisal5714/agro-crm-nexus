@@ -4,15 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useProductCategories } from "@/hooks/useProductCategories";
 
 export const AddProductDialog = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [categoryId, setCategoryId] = useState<string>("");
   const queryClient = useQueryClient();
+  const { categories } = useProductCategories();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,6 +30,7 @@ export const AddProductDialog = () => {
       unit_price: parseFloat(formData.get("unit_price") as string),
       stock_quantity: parseInt(formData.get("stock_quantity") as string),
       unit: formData.get("unit") as string,
+      category_id: categoryId || null,
     };
 
     const { error } = await supabase.from("products").insert(productData);
@@ -36,6 +41,7 @@ export const AddProductDialog = () => {
       toast.success("Product added successfully");
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setOpen(false);
+      setCategoryId("");
       (e.target as HTMLFormElement).reset();
     }
 
@@ -67,12 +73,35 @@ export const AddProductDialog = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unit">Unit *</Label>
+              <Input id="unit" name="unit" placeholder="e.g., pcs, kg, box" required />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" rows={3} />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="unit_price">Unit Price *</Label>
               <Input id="unit_price" name="unit_price" type="number" step="0.01" min="0" required />
@@ -80,10 +109,6 @@ export const AddProductDialog = () => {
             <div className="space-y-2">
               <Label htmlFor="stock_quantity">Stock Quantity *</Label>
               <Input id="stock_quantity" name="stock_quantity" type="number" min="0" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unit *</Label>
-              <Input id="unit" name="unit" placeholder="e.g., pcs, kg, box" required />
             </div>
           </div>
 
