@@ -9,6 +9,11 @@ export interface Product {
   unit_price: number;
   stock_quantity: number;
   unit: string;
+  category_id?: string;
+  category?: {
+    id: string;
+    name: string;
+  };
 }
 
 export const useProducts = () => {
@@ -17,7 +22,10 @@ export const useProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select(`
+          *,
+          category:product_categories(id, name)
+        `)
         .order("name");
 
       if (error) throw error;
