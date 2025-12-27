@@ -62,7 +62,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             body { font-family: Arial, sans-serif; padding: 20px; }
             .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #2d5a27; }
             .logo-section { display: flex; align-items: center; gap: 12px; }
-            .logo { height: 60px; width: auto; }
+            .logo { height: 80px; width: auto; }
             .company-name { font-size: 24px; font-weight: bold; color: #2d5a27; }
             .company-contact { text-align: right; font-size: 12px; color: #666; }
             .company-contact p { margin: 4px 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
@@ -177,9 +177,9 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
           {/* Header with Logo and Contact */}
           <div className="flex justify-between items-start pb-4 border-b-2 border-primary">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Agraicy Life Sciences" className="h-14 w-auto" />
+              <img src={logo} alt="Agraicy Life Sciences" className="h-20 w-auto" />
               <div>
-                <h2 className="text-xl font-bold text-primary">Agraicy Life Sciences</h2>
+                <h2 className="text-2xl font-bold text-primary">Agraicy Life Sciences</h2>
               </div>
             </div>
             <div className="text-right text-sm text-muted-foreground space-y-1">
