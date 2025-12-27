@@ -3,55 +3,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { formatCurrency } from "@/lib/utils";
 import { 
-  TrendingUp, 
   ShoppingCart, 
   Package, 
   Wallet,
   Users,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
-
-interface StatCard {
-  title: string;
-  value: string;
-  change: string;
-  icon: React.ComponentType<{ className?: string }>;
-  trend: "up" | "down";
-}
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { SparklineCard } from "@/components/dashboard/SparklineCard";
+import { format } from "date-fns";
 
 const Dashboard = () => {
   const { userRole } = useAuth();
+  const { data: dashboardData, isLoading } = useDashboardData();
 
-  const stats: StatCard[] = [
-    {
-      title: "Total Sales",
-      value: formatCurrency(1245890),
-      change: "+12.5%",
-      icon: ShoppingCart,
-      trend: "up",
-    },
-    {
-      title: "Total Purchase",
-      value: formatCurrency(834560),
-      change: "+8.2%",
-      icon: Package,
-      trend: "up",
-    },
-    {
-      title: "Expenses",
-      value: formatCurrency(245890),
-      change: "-3.1%",
-      icon: Wallet,
-      trend: "down",
-    },
-    {
-      title: "Active Dealers",
-      value: "45",
-      change: "+5",
-      icon: Users,
-      trend: "up",
-    },
-  ];
+  if (isLoading || !dashboardData) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -64,26 +39,45 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className={`text-xs ${stat.trend === "up" ? "text-success" : "text-destructive"} flex items-center gap-1 mt-1`}>
-                    <TrendingUp className="h-3 w-3" />
-                    {stat.change} from last month
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
+          <SparklineCard
+            title="Total Sales"
+            value={dashboardData.totalSales}
+            change={dashboardData.salesChange}
+            icon={ShoppingCart}
+            sparklineData={dashboardData.salesSparkline}
+            dataKey="amount"
+            color="hsl(var(--primary))"
+          />
+          <SparklineCard
+            title="Total Purchase"
+            value={dashboardData.totalPurchases}
+            change={dashboardData.purchasesChange}
+            icon={Package}
+            sparklineData={dashboardData.purchasesSparkline}
+            dataKey="amount"
+            color="hsl(var(--chart-2))"
+          />
+          <SparklineCard
+            title="Expenses"
+            value={dashboardData.totalExpenses}
+            change={dashboardData.expensesChange}
+            icon={Wallet}
+            sparklineData={dashboardData.expensesSparkline}
+            dataKey="amount"
+            trend={dashboardData.expensesChange <= 0 ? "up" : "down"}
+            color="hsl(var(--destructive))"
+          />
+          <SparklineCard
+            title="Active Dealers"
+            value={dashboardData.activeDealers}
+            change={dashboardData.dealersChange > 0 ? (dashboardData.dealersChange / dashboardData.activeDealers) * 100 : 0}
+            changeLabel={`+${dashboardData.dealersChange} this month`}
+            icon={Users}
+            sparklineData={dashboardData.dealersSparkline}
+            dataKey="count"
+            isCurrency={false}
+            color="hsl(var(--chart-4))"
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -94,18 +88,24 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Order #INV-{2000 + i}</p>
-                      <p className="text-sm text-muted-foreground">Dealer Name {i}</p>
+                {dashboardData.recentSalesOrders.length > 0 ? (
+                  dashboardData.recentSalesOrders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{order.order_number}</p>
+                        <p className="text-sm text-muted-foreground">{order.dealer_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(order.total_amount)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(order.order_date), "MMM dd, yyyy")}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(12000 + i * 1000)}</p>
-                      <p className="text-xs text-muted-foreground">Today</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">No recent orders</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -117,18 +117,22 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
-                    <div>
-                      <p className="font-medium">Product {i}</p>
-                      <p className="text-sm text-muted-foreground">SKU: PROD-{1000 + i}</p>
+                {dashboardData.lowStockProducts.length > 0 ? (
+                  dashboardData.lowStockProducts.map((product, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-warning">{product.stock} units</p>
+                        <p className="text-xs text-muted-foreground">In stock</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-warning">{10 - i * 2} units</p>
-                      <p className="text-xs text-muted-foreground">In stock</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">All products are well stocked</p>
+                )}
               </div>
             </CardContent>
           </Card>
