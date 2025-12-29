@@ -7,11 +7,11 @@ import {
   Package, 
   Wallet,
   Users,
-  BarChart3,
   Loader2
 } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { SparklineCard } from "@/components/dashboard/SparklineCard";
+import { SalesPerformanceChart } from "@/components/dashboard/SalesPerformanceChart";
 import { format } from "date-fns";
 
 const Dashboard = () => {
@@ -138,20 +138,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Sales Performance
-            </CardTitle>
-            <CardDescription>Monthly sales comparison</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              <p>Chart component will be displayed here</p>
-            </div>
-          </CardContent>
-        </Card>
+        <SalesPerformanceChart data={dashboardData.monthlyRevenue} />
       </div>
     </DashboardLayout>
   );

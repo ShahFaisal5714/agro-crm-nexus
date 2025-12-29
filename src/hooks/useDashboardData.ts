@@ -7,6 +7,11 @@ interface DailySales {
   amount: number;
 }
 
+interface MonthlyRevenue {
+  month: string;
+  revenue: number;
+}
+
 interface DashboardData {
   totalSales: number;
   salesChange: number;
@@ -22,6 +27,7 @@ interface DashboardData {
   purchasesSparkline: DailySales[];
   expensesSparkline: DailySales[];
   dealersSparkline: Array<{ date: string; count: number }>;
+  monthlyRevenue: MonthlyRevenue[];
 }
 
 export const useDashboardData = () => {
@@ -156,6 +162,23 @@ export const useDashboardData = () => {
         dealersSparkline.push({ date: dateStr, count: cumulativeCount });
       }
 
+      // Generate monthly revenue data (last 12 months)
+      const monthlyRevenue: Array<{ month: string; revenue: number }> = [];
+      for (let i = 11; i >= 0; i--) {
+        const monthStart = startOfMonth(subMonths(now, i));
+        const monthEnd = i === 0 ? now : subDays(startOfMonth(subMonths(now, i - 1)), 1);
+        const monthLabel = format(monthStart, "MMM");
+        
+        const monthRevenue = safeOrders
+          .filter(o => {
+            const d = new Date(o.order_date);
+            return d >= monthStart && d <= monthEnd;
+          })
+          .reduce((sum, o) => sum + o.total_amount, 0);
+        
+        monthlyRevenue.push({ month: monthLabel, revenue: monthRevenue });
+      }
+
       return {
         totalSales: currentMonthSales,
         salesChange: calcChange(currentMonthSales, lastMonthSales),
@@ -177,6 +200,7 @@ export const useDashboardData = () => {
         purchasesSparkline,
         expensesSparkline,
         dealersSparkline,
+        monthlyRevenue,
       };
     },
   });

@@ -1,1 +1,10 @@
 project_id = "dtzdqznjaynnrmnzaxzu"
+
+[functions.create-user]
+verify_jwt = true
+
+[functions.delete-user]
+verify_jwt = true
+
+[functions.check-low-stock]
+verify_jwt = false
