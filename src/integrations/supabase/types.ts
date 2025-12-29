@@ -608,6 +608,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_email: { Args: { email: string }; Returns: boolean }
     }
     Enums: {
       app_role:
