@@ -94,10 +94,34 @@ serve(async (req) => {
       );
     }
 
-    // Validate password length
-    if (password.length < 6) {
+    // Validate password - minimum 8 characters with complexity requirements
+    if (password.length < 8) {
       return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters" }),
+        JSON.stringify({ error: "Password must be at least 8 characters" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Check for uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: "Password must contain at least one uppercase letter" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Check for lowercase letter
+    if (!/[a-z]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: "Password must contain at least one lowercase letter" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Check for number
+    if (!/[0-9]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: "Password must contain at least one number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
