@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { formatCurrency } from "@/lib/utils";
 import { 
@@ -7,16 +9,45 @@ import {
   Package, 
   Wallet,
   Users,
-  Loader2
+  Loader2,
+  Bell
 } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { SparklineCard } from "@/components/dashboard/SparklineCard";
 import { SalesPerformanceChart } from "@/components/dashboard/SalesPerformanceChart";
+import { SalesVsExpensesChart } from "@/components/dashboard/SalesVsExpensesChart";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { userRole } = useAuth();
   const { data: dashboardData, isLoading } = useDashboardData();
+  const [isCheckingStock, setIsCheckingStock] = useState(false);
+
+  const handleCheckLowStock = async () => {
+    setIsCheckingStock(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-low-stock", {
+        body: { triggered_by: "manual" },
+      });
+      
+      if (error) throw error;
+      
+      if (data.emailsSent > 0) {
+        toast.success(`Low stock alert sent to ${data.emailsSent} admin(s)`);
+      } else if (data.lowStockProducts === 0) {
+        toast.info("All products are well stocked");
+      } else {
+        toast.warning("Low stock detected but no admin emails configured");
+      }
+    } catch (error: any) {
+      console.error("Error checking low stock:", error);
+      toast.error("Failed to check low stock");
+    } finally {
+      setIsCheckingStock(false);
+    }
+  };
 
   if (isLoading || !dashboardData) {
     return (
@@ -111,9 +142,24 @@ const Dashboard = () => {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Low Stock Alerts</CardTitle>
-              <CardDescription>Products requiring restock</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>Low Stock Alerts</CardTitle>
+                <CardDescription>Products requiring restock</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleCheckLowStock}
+                disabled={isCheckingStock}
+              >
+                {isCheckingStock ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Bell className="h-4 w-4 mr-2" />
+                )}
+                Notify Admins
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -138,7 +184,10 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <SalesPerformanceChart data={dashboardData.monthlyRevenue} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SalesPerformanceChart data={dashboardData.monthlyRevenue} />
+          <SalesVsExpensesChart data={dashboardData.salesVsExpenses} />
+        </div>
       </div>
     </DashboardLayout>
   );
