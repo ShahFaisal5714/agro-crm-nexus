@@ -64,7 +64,9 @@ const Auth = () => {
       toast.success("Logged in successfully!");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      // Use generic error message to prevent information leakage
+      console.error("Authentication error:", error);
+      toast.error("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }
