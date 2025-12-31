@@ -32,7 +32,11 @@ import { useUsers } from "@/hooks/useUsers";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Must contain at least one number"),
   fullName: z.string().min(1, "Full name is required"),
   phone: z.string().optional(),
   role: z.enum(['admin', 'territory_sales_manager', 'dealer', 'finance', 'employee']),
