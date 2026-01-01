@@ -5,6 +5,7 @@ import { toast } from "sonner";
 export interface Policy {
   id: string;
   policy_number: string;
+  name: string | null;
   dealer_id: string;
   product_id: string;
   quantity: number;
@@ -61,6 +62,7 @@ export const usePolicies = () => {
 
   const createPolicy = useMutation({
     mutationFn: async (policyData: {
+      name?: string;
       dealer_id: string;
       product_id: string;
       quantity: number;
@@ -80,6 +82,7 @@ export const usePolicies = () => {
         .from("policies")
         .insert({
           policy_number: policyNumber,
+          name: policyData.name || null,
           dealer_id: policyData.dealer_id,
           product_id: policyData.product_id,
           quantity: policyData.quantity,
@@ -110,6 +113,7 @@ export const usePolicies = () => {
       ...updateData
     }: {
       id: string;
+      name?: string | null;
       dealer_id?: string;
       product_id?: string;
       quantity?: number;

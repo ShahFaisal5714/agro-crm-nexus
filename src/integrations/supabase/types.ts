@@ -268,6 +268,7 @@ export type Database = {
           dealer_id: string
           expected_delivery_date: string | null
           id: string
+          name: string | null
           notes: string | null
           policy_number: string
           product_id: string
@@ -285,6 +286,7 @@ export type Database = {
           dealer_id: string
           expected_delivery_date?: string | null
           id?: string
+          name?: string | null
           notes?: string | null
           policy_number: string
           product_id: string
@@ -302,6 +304,7 @@ export type Database = {
           dealer_id?: string
           expected_delivery_date?: string | null
           id?: string
+          name?: string | null
           notes?: string | null
           policy_number?: string
           product_id?: string

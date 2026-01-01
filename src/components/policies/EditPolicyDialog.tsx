@@ -37,6 +37,7 @@ const STATUSES = [
 
 export const EditPolicyDialog = ({ policy }: EditPolicyDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState(policy.name || "");
   const [dealerId, setDealerId] = useState(policy.dealer_id);
   const [productId, setProductId] = useState(policy.product_id);
   const [quantity, setQuantity] = useState(policy.quantity.toString());
@@ -58,6 +59,7 @@ export const EditPolicyDialog = ({ policy }: EditPolicyDialogProps) => {
 
     await updatePolicy({
       id: policy.id,
+      name: name || null,
       dealer_id: dealerId,
       product_id: productId,
       quantity: parseInt(quantity),
@@ -82,6 +84,15 @@ export const EditPolicyDialog = ({ policy }: EditPolicyDialogProps) => {
           <DialogTitle>Edit Policy {policy.policy_number}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Policy Name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter policy name (optional)"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>Dealer</Label>
             <Select value={dealerId} onValueChange={setDealerId}>
