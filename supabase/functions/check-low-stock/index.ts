@@ -16,21 +16,60 @@ serve(async (req) => {
   }
 
   try {
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
+    // Verify user authentication from JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const resend = new Resend(resendApiKey);
 
     // Initialize Supabase client with service role for admin access
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify the user's JWT and get their ID
+    const supabaseAnon = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify user has admin role
+    const { data: userRole, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (roleError || !userRole) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden - Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "Service configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
 
     console.log("Checking for low stock products...");
 
@@ -49,7 +88,7 @@ serve(async (req) => {
     if (!lowStockProducts || lowStockProducts.length === 0) {
       console.log("No low stock products found");
       return new Response(
-        JSON.stringify({ message: "No low stock products", count: 0 }),
+        JSON.stringify({ message: "Check completed", alert: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -70,7 +109,7 @@ serve(async (req) => {
     if (!adminRoles || adminRoles.length === 0) {
       console.log("No admin users found to notify");
       return new Response(
-        JSON.stringify({ message: "No admin users to notify", count: lowStockProducts.length }),
+        JSON.stringify({ message: "Check completed", alert: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -90,7 +129,7 @@ serve(async (req) => {
     if (!adminProfiles || adminProfiles.length === 0) {
       console.log("No admin profiles found");
       return new Response(
-        JSON.stringify({ message: "No admin profiles found", count: lowStockProducts.length }),
+        JSON.stringify({ message: "Check completed", alert: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -146,10 +185,8 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        message: "Low stock alert sent", 
-        productsCount: lowStockProducts.length,
-        recipientsCount: adminEmails.length,
-        emailId: emailResult?.id
+        message: "Alert sent successfully", 
+        alert: true
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -157,7 +194,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in check-low-stock function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
