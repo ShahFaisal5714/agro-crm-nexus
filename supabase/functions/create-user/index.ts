@@ -15,6 +15,38 @@ interface CreateUserRequest {
   territory?: string;
 }
 
+// Helper function to log audit events
+async function logAuditEvent(
+  supabaseAdmin: any,
+  userId: string,
+  userEmail: string,
+  action: string,
+  entityType: string,
+  entityId: string | null,
+  details: Record<string, unknown> | null,
+  ipAddress: string | null
+) {
+  try {
+    const { error } = await supabaseAdmin
+      .from("audit_logs")
+      .insert({
+        user_id: userId,
+        user_email: userEmail,
+        action,
+        entity_type: entityType,
+        entity_id: entityId,
+        details,
+        ip_address: ipAddress,
+      });
+    
+    if (error) {
+      console.error("Failed to log audit event:", error);
+    }
+  } catch (err) {
+    console.error("Audit logging error:", err);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -36,6 +68,11 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Get client IP for audit logging
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("x-real-ip") || 
+                     null;
 
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -191,6 +228,23 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Log audit event for user creation
+    await logAuditEvent(
+      supabaseAdmin,
+      callingUser.id,
+      callingUser.email || "unknown",
+      "user_created",
+      "user",
+      authData.user.id,
+      {
+        created_user_email: email,
+        created_user_name: fullName,
+        assigned_role: role,
+        territory: territory || null,
+      },
+      clientIp
+    );
 
     console.log("User created successfully:", authData.user.id);
 

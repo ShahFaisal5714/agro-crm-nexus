@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users as UsersIcon, MapPin, ShieldCheck } from "lucide-react";
+import { Search, Users as UsersIcon, MapPin, ShieldCheck, FileText } from "lucide-react";
 import { useDealers } from "@/hooks/useDealers";
 import { useUsers } from "@/hooks/useUsers";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +19,8 @@ import { DeleteTerritoryDialog } from "@/components/territories/DeleteTerritoryD
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { EditUserRoleDialog } from "@/components/users/EditUserRoleDialog";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
+import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
+import { useAuth } from "@/lib/auth";
 
 interface Territory {
   id: string;
@@ -29,8 +31,10 @@ interface Territory {
 const Users = () => {
   const { dealers, isLoading: dealersLoading } = useDealers();
   const { users, userRoles, isLoading: usersLoading } = useUsers();
+  const { userRole } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [userSearchTerm, setUserSearchTerm] = useState("");
+  const isAdmin = userRole === "admin";
 
   const { data: territories = [] } = useQuery({
     queryKey: ["territories"],
@@ -149,6 +153,7 @@ const Users = () => {
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="dealers">Dealers</TabsTrigger>
             <TabsTrigger value="territories">Territories</TabsTrigger>
+            {isAdmin && <TabsTrigger value="audit">Audit Logs</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
@@ -328,6 +333,12 @@ const Users = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="audit" className="space-y-4">
+              <AuditLogViewer />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
