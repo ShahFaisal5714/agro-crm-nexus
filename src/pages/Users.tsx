@@ -17,8 +17,8 @@ import { AddTerritoryDialog } from "@/components/territories/AddTerritoryDialog"
 import { EditTerritoryDialog } from "@/components/territories/EditTerritoryDialog";
 import { DeleteTerritoryDialog } from "@/components/territories/DeleteTerritoryDialog";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
-import { EditUserRoleDialog } from "@/components/users/EditUserRoleDialog";
-import { ResetPasswordDialog } from "@/components/users/ResetPasswordDialog";
+import { EditUserProfileDialog } from "@/components/users/EditUserProfileDialog";
+import { ChangeEmailDialog } from "@/components/users/ChangeEmailDialog";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { useAuth } from "@/lib/auth";
@@ -204,17 +204,19 @@ const Users = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <EditUserRoleDialog
+                              <EditUserProfileDialog
                                 userId={user.id}
                                 userName={user.full_name}
+                                userEmail={user.email}
+                                userPhone={user.phone || undefined}
                                 currentRole={getUserRole(user.id)}
                                 currentTerritory={getUserTerritory(user.id)}
                                 territories={territories}
                               />
-                              <ResetPasswordDialog
+                              <ChangeEmailDialog
                                 userId={user.id}
                                 userName={user.full_name}
-                                userEmail={user.email}
+                                currentEmail={user.email}
                               />
                               <DeleteUserDialog
                                 userId={user.id}

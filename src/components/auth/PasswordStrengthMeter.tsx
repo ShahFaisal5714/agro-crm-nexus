@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface PasswordStrengthMeterProps {
+export interface PasswordStrengthMeterProps {
   password: string;
+  onStrengthChange?: (strength: number) => void;
 }
 
 interface PasswordRequirement {
@@ -19,7 +20,7 @@ const requirements: PasswordRequirement[] = [
   { label: "One special character", test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
 ];
 
-export const PasswordStrengthMeter = ({ password }: PasswordStrengthMeterProps) => {
+export const PasswordStrengthMeter = ({ password, onStrengthChange }: PasswordStrengthMeterProps) => {
   const results = useMemo(() => {
     return requirements.map((req) => ({
       ...req,
@@ -35,6 +36,10 @@ export const PasswordStrengthMeter = ({ password }: PasswordStrengthMeterProps) 
     if (metCount <= 4) return { level: 3, label: "Good", color: "bg-blue-500" };
     return { level: 4, label: "Strong", color: "bg-green-500" };
   }, [results]);
+
+  useEffect(() => {
+    onStrengthChange?.(strength.level);
+  }, [strength.level, onStrengthChange]);
 
   if (!password) return null;
 
