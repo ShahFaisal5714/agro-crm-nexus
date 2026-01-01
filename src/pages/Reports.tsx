@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText, FileCheck } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { useReportData } from "@/hooks/useReportData";
+import { usePoliciesReport } from "@/hooks/usePoliciesReport";
 import { useProducts } from "@/hooks/useProducts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useDealers } from "@/hooks/useDealers";
@@ -30,6 +31,7 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3
 
 const Reports = () => {
   const { data: reportData, isLoading: reportLoading } = useReportData();
+  const { data: policyReportData, isLoading: policyLoading } = usePoliciesReport();
   const { products, isLoading: productsLoading } = useProducts();
   const { expenses, isLoading: expensesLoading } = useExpenses();
   const { dealers, isLoading: dealersLoading } = useDealers();
@@ -41,10 +43,11 @@ const Reports = () => {
   });
   const [activeTab, setActiveTab] = useState("time");
 
-  const isLoading = reportLoading || productsLoading || expensesLoading || dealersLoading;
+  const isLoading = reportLoading || productsLoading || expensesLoading || dealersLoading || policyLoading;
   const safeExpenses = expenses || [];
   const safeProducts = products || [];
   const safeDealers = dealers || [];
+  const safePolicies = policyReportData.policies || [];
 
   // Filter data by date range
   const filteredSalesItems = useMemo(() => {
@@ -224,6 +227,68 @@ const Reports = () => {
     });
   }, [reportData.salesItems, timePeriod, comparisonPeriods]);
 
+  // Policy Collection Summary
+  const filteredPolicies = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return safePolicies;
+    return safePolicies.filter(p => {
+      const policyDate = new Date(p.created_at);
+      return isWithinInterval(policyDate, { 
+        start: startOfDay(dateRange.from!), 
+        end: endOfDay(dateRange.to!) 
+      });
+    });
+  }, [safePolicies, dateRange]);
+
+  const policyByDealer = useMemo(() => {
+    const dealerMap = new Map<string, { name: string; policies: number; totalAmount: number; collected: number; remaining: number }>();
+    
+    filteredPolicies.forEach(policy => {
+      const dealerName = policy.dealers?.dealer_name || "Unknown";
+      const existing = dealerMap.get(dealerName) || { name: dealerName, policies: 0, totalAmount: 0, collected: 0, remaining: 0 };
+      existing.policies += 1;
+      existing.totalAmount += policy.total_amount;
+      existing.collected += policy.advance_amount;
+      existing.remaining += policy.remaining_amount;
+      dealerMap.set(dealerName, existing);
+    });
+
+    return Array.from(dealerMap.values()).sort((a, b) => b.collected - a.collected);
+  }, [filteredPolicies]);
+
+  const policyByProduct = useMemo(() => {
+    const productMap = new Map<string, { name: string; policies: number; totalAmount: number; collected: number; quantity: number }>();
+    
+    filteredPolicies.forEach(policy => {
+      const productName = policy.products?.name || "Unknown";
+      const existing = productMap.get(productName) || { name: productName, policies: 0, totalAmount: 0, collected: 0, quantity: 0 };
+      existing.policies += 1;
+      existing.totalAmount += policy.total_amount;
+      existing.collected += policy.advance_amount;
+      existing.quantity += policy.quantity;
+      productMap.set(productName, existing);
+    });
+
+    return Array.from(productMap.values()).sort((a, b) => b.collected - a.collected);
+  }, [filteredPolicies]);
+
+  const policyByStatus = useMemo(() => {
+    const statusMap = new Map<string, { status: string; count: number; amount: number }>();
+    
+    filteredPolicies.forEach(policy => {
+      const existing = statusMap.get(policy.status) || { status: policy.status, count: 0, amount: 0 };
+      existing.count += 1;
+      existing.amount += policy.total_amount;
+      statusMap.set(policy.status, existing);
+    });
+
+    return Array.from(statusMap.values());
+  }, [filteredPolicies]);
+
+  const totalPolicyAmount = filteredPolicies.reduce((sum, p) => sum + p.total_amount, 0);
+  const totalCollected = filteredPolicies.reduce((sum, p) => sum + p.advance_amount, 0);
+  const totalRemaining = filteredPolicies.reduce((sum, p) => sum + p.remaining_amount, 0);
+  const collectionRate = totalPolicyAmount > 0 ? (totalCollected / totalPolicyAmount) * 100 : 0;
+
   // Export handlers
   const handleExportCSV = () => {
     switch (activeTab) {
@@ -244,6 +309,9 @@ const Reports = () => {
         break;
       case "officer":
         exportToCSV(salesOfficerData, "sales_officer_report", ["name", "revenue", "orders"]);
+        break;
+      case "policy":
+        exportToCSV(policyByDealer, "policy_collection_report", ["name", "policies", "totalAmount", "collected", "remaining"]);
         break;
     }
   };
@@ -306,6 +374,18 @@ const Reports = () => {
           { key: "orders", label: "Orders" },
           { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
         ], "sales_officer_report", [{ label: "Date Range", value: dateRangeStr }]);
+        break;
+      case "policy":
+        exportToPDF("Policy Collection Report", policyByDealer, [
+          { key: "name", label: "Dealer" },
+          { key: "policies", label: "Policies" },
+          { key: "totalAmount", label: "Total Amount", format: (v) => formatCurrency(v as number) },
+          { key: "collected", label: "Collected", format: (v) => formatCurrency(v as number) },
+          { key: "remaining", label: "Remaining", format: (v) => formatCurrency(v as number) },
+        ], "policy_collection_report", [
+          { label: "Date Range", value: dateRangeStr },
+          { label: "Collection Rate", value: `${collectionRate.toFixed(1)}%` },
+        ]);
         break;
     }
   };
@@ -450,6 +530,7 @@ const Reports = () => {
             <TabsTrigger value="category">Category Analysis</TabsTrigger>
             <TabsTrigger value="territory">Territory Sales</TabsTrigger>
             <TabsTrigger value="officer">Sales Officers</TabsTrigger>
+            <TabsTrigger value="policy">Policy Collection</TabsTrigger>
           </TabsList>
 
           {/* Time Comparison */}
@@ -762,6 +843,143 @@ const Reports = () => {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Policy Collection */}
+          <TabsContent value="policy" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Total Policies</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{filteredPolicies.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Total Amount</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(totalPolicyAmount)}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Collected</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{formatCurrency(totalCollected)}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Outstanding</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalRemaining)}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileCheck className="h-5 w-5" />
+                    Collection by Dealer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {policyByDealer.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">No policy data available</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={policyByDealer.slice(0, 10)}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 10 }} />
+                        <YAxis />
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                        <Legend />
+                        <Bar dataKey="collected" name="Collected" fill="hsl(var(--chart-2))" />
+                        <Bar dataKey="remaining" name="Remaining" fill="hsl(var(--destructive))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Collection by Product</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {policyByProduct.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">No product data available</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={policyByProduct}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          dataKey="collected"
+                        >
+                          {policyByProduct.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Policy Status Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {policyByStatus.map((status, i) => (
+                    <div key={i} className="text-center p-4 bg-muted/50 rounded-lg">
+                      <p className="text-2xl font-bold">{status.count}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{status.status}</p>
+                      <p className="text-xs text-muted-foreground">{formatCurrency(status.amount)}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Dealer-wise Collection Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {policyByDealer.map((dealer, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{dealer.name}</p>
+                        <p className="text-sm text-muted-foreground">{dealer.policies} policies</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">{formatCurrency(dealer.collected)}</p>
+                        <p className="text-sm text-orange-600">
+                          {formatCurrency(dealer.remaining)} pending
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

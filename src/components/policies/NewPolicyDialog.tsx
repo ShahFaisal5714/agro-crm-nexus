@@ -25,6 +25,7 @@ import { formatCurrency } from "@/lib/utils";
 
 export const NewPolicyDialog = () => {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
   const [dealerId, setDealerId] = useState("");
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -51,6 +52,7 @@ export const NewPolicyDialog = () => {
     e.preventDefault();
 
     await createPolicy({
+      name: name || undefined,
       dealer_id: dealerId,
       product_id: productId,
       quantity: parseInt(quantity),
@@ -64,6 +66,7 @@ export const NewPolicyDialog = () => {
   };
 
   const resetForm = () => {
+    setName("");
     setDealerId("");
     setProductId("");
     setQuantity("");
@@ -85,6 +88,15 @@ export const NewPolicyDialog = () => {
           <DialogTitle>Create New Policy</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Policy Name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter policy name (optional)"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>Dealer</Label>
             <Select value={dealerId} onValueChange={setDealerId} required>

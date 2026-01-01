@@ -13,9 +13,11 @@ import {
   Bell
 } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { usePolicies } from "@/hooks/usePolicies";
 import { SparklineCard } from "@/components/dashboard/SparklineCard";
 import { SalesPerformanceChart } from "@/components/dashboard/SalesPerformanceChart";
 import { SalesVsExpensesChart } from "@/components/dashboard/SalesVsExpensesChart";
+import { PendingPoliciesWidget } from "@/components/dashboard/PendingPoliciesWidget";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,6 +25,7 @@ import { toast } from "sonner";
 const Dashboard = () => {
   const { userRole } = useAuth();
   const { data: dashboardData, isLoading } = useDashboardData();
+  const { policies, isLoading: policiesLoading } = usePolicies();
   const [isCheckingStock, setIsCheckingStock] = useState(false);
 
   const handleCheckLowStock = async () => {
@@ -187,6 +190,10 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SalesPerformanceChart data={dashboardData.monthlyRevenue} />
           <SalesVsExpensesChart data={dashboardData.salesVsExpenses} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+          <PendingPoliciesWidget policies={policies} />
         </div>
       </div>
     </DashboardLayout>

@@ -132,6 +132,7 @@ const Policies = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Policy #</TableHead>
+                    <TableHead>Name</TableHead>
                     <TableHead>Dealer</TableHead>
                     <TableHead>Product</TableHead>
                     <TableHead>Qty</TableHead>
@@ -148,6 +149,7 @@ const Policies = () => {
                       <TableCell className="font-medium">
                         {policy.policy_number}
                       </TableCell>
+                      <TableCell>{policy.name || "-"}</TableCell>
                       <TableCell>{policy.dealers?.dealer_name}</TableCell>
                       <TableCell>
                         {policy.products?.name}
