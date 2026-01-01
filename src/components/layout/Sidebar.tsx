@@ -12,6 +12,7 @@ import {
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/lib/auth";
 import logo from "@/assets/logo.png";
 
@@ -37,11 +38,18 @@ const navItems: NavItem[] = [
 
 export const Sidebar = () => {
   const location = useLocation();
-  const { signOut, userRole } = useAuth();
+  const { signOut, userRole, user } = useAuth();
 
   const filteredNavItems = navItems.filter(
     (item) => !item.roles || item.roles.includes(userRole || "")
   );
+
+  const formatRole = (role: string | null) => {
+    if (!role) return "User";
+    return role.split("_").map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(" ");
+  };
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
@@ -55,30 +63,36 @@ export const Sidebar = () => {
         </div>
       </div>
       
-      <nav className="flex-1 p-4 space-y-1">
-        {filteredNavItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.href;
-          
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              <span className="font-medium">{item.title}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <ScrollArea className="flex-1">
+        <nav className="p-4 space-y-1">
+          {filteredNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
+            
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="font-medium">{item.title}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </ScrollArea>
 
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        <div className="px-3">
+          <p className="text-sm font-medium truncate">{user?.email}</p>
+          <p className="text-xs text-sidebar-foreground/60">{formatRole(userRole)}</p>
+        </div>
         <Button
           variant="ghost"
           className="w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground"
