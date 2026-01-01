@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { z } from "zod";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 const passwordSchema = z.string()
   .min(8, 'Password must be at least 8 characters')
@@ -118,6 +119,7 @@ const Auth = () => {
                 onBlur={() => validatePassword(password)}
                 required
               />
+              <PasswordStrengthMeter password={password} />
               {passwordError && (
                 <p className="text-sm text-destructive">{passwordError}</p>
               )}

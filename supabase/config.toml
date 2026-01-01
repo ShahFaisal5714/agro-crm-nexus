@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.check-low-stock]
 verify_jwt = true
+
+[functions.log-audit]
+verify_jwt = true

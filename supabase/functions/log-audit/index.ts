@@ -6,40 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface DeleteUserRequest {
-  userId: string;
-}
-
-// Helper function to log audit events
-async function logAuditEvent(
-  supabaseAdmin: any,
-  userId: string,
-  userEmail: string,
-  action: string,
-  entityType: string,
-  entityId: string | null,
-  details: Record<string, unknown> | null,
-  ipAddress: string | null
-) {
-  try {
-    const { error } = await supabaseAdmin
-      .from("audit_logs")
-      .insert({
-        user_id: userId,
-        user_email: userEmail,
-        action,
-        entity_type: entityType,
-        entity_id: entityId,
-        details,
-        ip_address: ipAddress,
-      });
-    
-    if (error) {
-      console.error("Failed to log audit event:", error);
-    }
-  } catch (err) {
-    console.error("Audit logging error:", err);
-  }
+interface AuditLogRequest {
+  action: string;
+  entityType: string;
+  entityId?: string;
+  details?: Record<string, unknown>;
 }
 
 serve(async (req) => {
@@ -101,64 +72,55 @@ serve(async (req) => {
     if (!isAdmin) {
       console.log("User is not admin:", callingUser.id);
       return new Response(
-        JSON.stringify({ error: "Only admins can delete users" }),
+        JSON.stringify({ error: "Only admins can log audit events" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Parse request body
-    const { userId }: DeleteUserRequest = await req.json();
+    const { action, entityType, entityId, details }: AuditLogRequest = await req.json();
 
     // Validate required fields
-    if (!userId) {
+    if (!action || !entityType) {
       return new Response(
-        JSON.stringify({ error: "Missing required field: userId" }),
+        JSON.stringify({ error: "Missing required fields: action, entityType" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Prevent self-deletion
-    if (userId === callingUser.id) {
+    // Validate action type
+    const validActions = ["user_created", "user_deleted", "role_changed", "data_exported"];
+    if (!validActions.includes(action)) {
       return new Response(
-        JSON.stringify({ error: "You cannot delete your own account" }),
+        JSON.stringify({ error: "Invalid action type" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Deleting user:", userId);
+    console.log("Logging audit event:", action, entityType);
 
-    // Get user info before deletion for audit log
-    const { data: userToDelete } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const deletedUserEmail = userToDelete?.user?.email || "unknown";
-    const deletedUserName = userToDelete?.user?.user_metadata?.full_name || "unknown";
+    // Insert audit log
+    const { error: insertError } = await supabaseAdmin
+      .from("audit_logs")
+      .insert({
+        user_id: callingUser.id,
+        user_email: callingUser.email || "unknown",
+        action,
+        entity_type: entityType,
+        entity_id: entityId || null,
+        details: details || null,
+        ip_address: clientIp,
+      });
 
-    // Delete the user (this will cascade to profiles and user_roles due to foreign key constraints)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-    if (deleteError) {
-      console.error("User deletion error:", deleteError);
+    if (insertError) {
+      console.error("Audit log insert error:", insertError);
       return new Response(
-        JSON.stringify({ error: deleteError.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Failed to log audit event" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Log audit event for user deletion
-    await logAuditEvent(
-      supabaseAdmin,
-      callingUser.id,
-      callingUser.email || "unknown",
-      "user_deleted",
-      "user",
-      userId,
-      {
-        deleted_user_email: deletedUserEmail,
-        deleted_user_name: deletedUserName,
-      },
-      clientIp
-    );
-
-    console.log("User deleted successfully:", userId);
+    console.log("Audit event logged successfully");
 
     return new Response(
       JSON.stringify({ success: true }),
