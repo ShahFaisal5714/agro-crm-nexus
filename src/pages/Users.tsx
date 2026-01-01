@@ -18,6 +18,7 @@ import { EditTerritoryDialog } from "@/components/territories/EditTerritoryDialo
 import { DeleteTerritoryDialog } from "@/components/territories/DeleteTerritoryDialog";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { EditUserRoleDialog } from "@/components/users/EditUserRoleDialog";
+import { ResetPasswordDialog } from "@/components/users/ResetPasswordDialog";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { useAuth } from "@/lib/auth";
@@ -209,6 +210,11 @@ const Users = () => {
                                 currentRole={getUserRole(user.id)}
                                 currentTerritory={getUserTerritory(user.id)}
                                 territories={territories}
+                              />
+                              <ResetPasswordDialog
+                                userId={user.id}
+                                userName={user.full_name}
+                                userEmail={user.email}
                               />
                               <DeleteUserDialog
                                 userId={user.id}

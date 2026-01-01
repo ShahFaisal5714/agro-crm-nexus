@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.log-audit]
 verify_jwt = true
+
+[functions.reset-user-password]
+verify_jwt = true
