@@ -260,6 +260,119 @@ export type Database = {
           },
         ]
       }
+      policies: {
+        Row: {
+          advance_amount: number
+          created_at: string
+          created_by: string
+          dealer_id: string
+          expected_delivery_date: string | null
+          id: string
+          notes: string | null
+          policy_number: string
+          product_id: string
+          quantity: number
+          rate_per_unit: number
+          remaining_amount: number | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          advance_amount?: number
+          created_at?: string
+          created_by: string
+          dealer_id: string
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          policy_number: string
+          product_id: string
+          quantity: number
+          rate_per_unit: number
+          remaining_amount?: number | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          advance_amount?: number
+          created_at?: string
+          created_by?: string
+          dealer_id?: string
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          policy_number?: string
+          product_id?: string
+          quantity?: number
+          rate_per_unit?: number
+          remaining_amount?: number | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policies_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policies_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          policy_id: string
+          reference_number: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          policy_id: string
+          reference_number?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          policy_id?: string
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_payments_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_categories: {
         Row: {
           created_at: string
@@ -635,6 +748,7 @@ export type Database = {
     Functions: {
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
+      generate_policy_number: { Args: never; Returns: string }
       generate_purchase_number: { Args: never; Returns: string }
       get_user_territory: { Args: { _user_id: string }; Returns: string }
       has_role: {
