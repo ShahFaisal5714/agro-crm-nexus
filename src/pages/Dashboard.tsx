@@ -18,6 +18,7 @@ import { SparklineCard } from "@/components/dashboard/SparklineCard";
 import { SalesPerformanceChart } from "@/components/dashboard/SalesPerformanceChart";
 import { SalesVsExpensesChart } from "@/components/dashboard/SalesVsExpensesChart";
 import { PendingPoliciesWidget } from "@/components/dashboard/PendingPoliciesWidget";
+import { SupplierPaymentsDueWidget } from "@/components/dashboard/SupplierPaymentsDueWidget";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -192,8 +193,9 @@ const Dashboard = () => {
           <SalesVsExpensesChart data={dashboardData.salesVsExpenses} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PendingPoliciesWidget policies={policies} />
+          <SupplierPaymentsDueWidget />
         </div>
       </div>
     </DashboardLayout>
