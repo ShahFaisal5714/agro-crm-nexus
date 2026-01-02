@@ -2,6 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export interface PolicyItem {
+  id?: string;
+  product_id: string;
+  quantity: number;
+  rate_per_unit: number;
+  total: number;
+  product?: {
+    name: string;
+    sku: string;
+  };
+}
+
 export interface Policy {
   id: string;
   policy_number: string;
@@ -14,6 +26,8 @@ export interface Policy {
   advance_amount: number;
   remaining_amount: number;
   status: string;
+  start_date: string | null;
+  end_date: string | null;
   expected_delivery_date: string | null;
   notes: string | null;
   created_by: string;
@@ -26,6 +40,7 @@ export interface Policy {
     name: string;
     sku: string;
   };
+  policy_items?: PolicyItem[];
 }
 
 export interface PolicyPayment {
@@ -51,7 +66,8 @@ export const usePolicies = () => {
         .select(`
           *,
           dealers(dealer_name),
-          products(name, sku)
+          products(name, sku),
+          policy_items(*, products:product_id(name, sku))
         `)
         .order("created_at", { ascending: false });
 
@@ -64,9 +80,9 @@ export const usePolicies = () => {
     mutationFn: async (policyData: {
       name?: string;
       dealer_id: string;
-      product_id: string;
-      quantity: number;
-      rate_per_unit: number;
+      items: { product_id: string; quantity: number; rate_per_unit: number }[];
+      start_date?: string;
+      end_date?: string;
       expected_delivery_date?: string;
       notes?: string;
     }) => {
@@ -76,18 +92,27 @@ export const usePolicies = () => {
       // Generate policy number
       const { data: policyNumber } = await supabase.rpc("generate_policy_number");
 
-      const total_amount = policyData.quantity * policyData.rate_per_unit;
+      // Calculate totals from items
+      const total_amount = policyData.items.reduce(
+        (sum, item) => sum + item.quantity * item.rate_per_unit,
+        0
+      );
 
-      const { data, error } = await supabase
+      // Use first item for legacy fields
+      const firstItem = policyData.items[0];
+
+      const { data: policy, error } = await supabase
         .from("policies")
         .insert({
           policy_number: policyNumber,
           name: policyData.name || null,
           dealer_id: policyData.dealer_id,
-          product_id: policyData.product_id,
-          quantity: policyData.quantity,
-          rate_per_unit: policyData.rate_per_unit,
+          product_id: firstItem.product_id,
+          quantity: firstItem.quantity,
+          rate_per_unit: firstItem.rate_per_unit,
           total_amount,
+          start_date: policyData.start_date || null,
+          end_date: policyData.end_date || null,
           expected_delivery_date: policyData.expected_delivery_date || null,
           notes: policyData.notes || null,
           created_by: user.user.id,
@@ -96,7 +121,23 @@ export const usePolicies = () => {
         .single();
 
       if (error) throw error;
-      return data;
+
+      // Insert policy items
+      const policyItems = policyData.items.map((item) => ({
+        policy_id: policy.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        rate_per_unit: item.rate_per_unit,
+        total: item.quantity * item.rate_per_unit,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("policy_items")
+        .insert(policyItems);
+
+      if (itemsError) throw itemsError;
+
+      return policy;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
@@ -110,31 +151,49 @@ export const usePolicies = () => {
   const updatePolicy = useMutation({
     mutationFn: async ({
       id,
+      items,
       ...updateData
     }: {
       id: string;
       name?: string | null;
       dealer_id?: string;
-      product_id?: string;
-      quantity?: number;
-      rate_per_unit?: number;
+      items?: { product_id: string; quantity: number; rate_per_unit: number }[];
+      start_date?: string | null;
+      end_date?: string | null;
       expected_delivery_date?: string | null;
       notes?: string | null;
       status?: string;
     }) => {
-      let finalData = { ...updateData };
-      
-      // Recalculate total if quantity or rate changed
-      if (updateData.quantity !== undefined || updateData.rate_per_unit !== undefined) {
-        const { data: existing } = await supabase
-          .from("policies")
-          .select("quantity, rate_per_unit")
-          .eq("id", id)
-          .single();
-        
-        const qty = updateData.quantity ?? existing?.quantity ?? 0;
-        const rate = updateData.rate_per_unit ?? existing?.rate_per_unit ?? 0;
-        (finalData as any).total_amount = qty * rate;
+      let finalData: Record<string, unknown> = { ...updateData };
+
+      // If items are provided, recalculate totals and update items
+      if (items && items.length > 0) {
+        const total_amount = items.reduce(
+          (sum, item) => sum + item.quantity * item.rate_per_unit,
+          0
+        );
+        const firstItem = items[0];
+        finalData.product_id = firstItem.product_id;
+        finalData.quantity = firstItem.quantity;
+        finalData.rate_per_unit = firstItem.rate_per_unit;
+        finalData.total_amount = total_amount;
+
+        // Delete old items and insert new ones
+        await supabase.from("policy_items").delete().eq("policy_id", id);
+
+        const policyItems = items.map((item) => ({
+          policy_id: id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          rate_per_unit: item.rate_per_unit,
+          total: item.quantity * item.rate_per_unit,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("policy_items")
+          .insert(policyItems);
+
+        if (itemsError) throw itemsError;
       }
 
       const { error } = await supabase

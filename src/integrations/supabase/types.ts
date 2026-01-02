@@ -266,6 +266,7 @@ export type Database = {
           created_at: string
           created_by: string
           dealer_id: string
+          end_date: string | null
           expected_delivery_date: string | null
           id: string
           name: string | null
@@ -275,6 +276,7 @@ export type Database = {
           quantity: number
           rate_per_unit: number
           remaining_amount: number | null
+          start_date: string | null
           status: string
           total_amount: number
           updated_at: string
@@ -284,6 +286,7 @@ export type Database = {
           created_at?: string
           created_by: string
           dealer_id: string
+          end_date?: string | null
           expected_delivery_date?: string | null
           id?: string
           name?: string | null
@@ -293,6 +296,7 @@ export type Database = {
           quantity: number
           rate_per_unit: number
           remaining_amount?: number | null
+          start_date?: string | null
           status?: string
           total_amount: number
           updated_at?: string
@@ -302,6 +306,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           dealer_id?: string
+          end_date?: string | null
           expected_delivery_date?: string | null
           id?: string
           name?: string | null
@@ -311,6 +316,7 @@ export type Database = {
           quantity?: number
           rate_per_unit?: number
           remaining_amount?: number | null
+          start_date?: string | null
           status?: string
           total_amount?: number
           updated_at?: string
@@ -325,6 +331,51 @@ export type Database = {
           },
           {
             foreignKeyName: "policies_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_items: {
+        Row: {
+          created_at: string
+          id: string
+          policy_id: string
+          product_id: string
+          quantity: number
+          rate_per_unit: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          policy_id: string
+          product_id: string
+          quantity: number
+          rate_per_unit: number
+          total: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          policy_id?: string
+          product_id?: string
+          quantity?: number
+          rate_per_unit?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_items_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

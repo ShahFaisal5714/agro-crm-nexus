@@ -134,8 +134,8 @@ const Policies = () => {
                     <TableHead>Policy #</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Dealer</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Qty</TableHead>
+                    <TableHead>Products</TableHead>
+                    <TableHead>Duration</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Advance</TableHead>
                     <TableHead>Remaining</TableHead>
@@ -152,12 +152,31 @@ const Policies = () => {
                       <TableCell>{policy.name || "-"}</TableCell>
                       <TableCell>{policy.dealers?.dealer_name}</TableCell>
                       <TableCell>
-                        {policy.products?.name}
-                        <span className="text-xs text-muted-foreground ml-1">
-                          ({policy.products?.sku})
-                        </span>
+                        {policy.policy_items && policy.policy_items.length > 0 ? (
+                          <div className="text-sm">
+                            {policy.policy_items.length} product{policy.policy_items.length > 1 ? "s" : ""}
+                          </div>
+                        ) : (
+                          <div>
+                            {policy.products?.name}
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({policy.products?.sku})
+                            </span>
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell>{policy.quantity}</TableCell>
+                      <TableCell>
+                        {policy.start_date && policy.end_date ? (
+                          <div className="text-xs">
+                            <div>{format(new Date(policy.start_date), "MMM d")}</div>
+                            <div className="text-muted-foreground">to {format(new Date(policy.end_date), "MMM d, yyyy")}</div>
+                          </div>
+                        ) : policy.start_date ? (
+                          <div className="text-xs">{format(new Date(policy.start_date), "MMM d, yyyy")}</div>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
                       <TableCell>{formatCurrency(policy.total_amount)}</TableCell>
                       <TableCell className="text-green-600">
                         {formatCurrency(policy.advance_amount)}
