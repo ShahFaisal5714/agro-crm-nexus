@@ -49,12 +49,13 @@ export const useDealerCredits = () => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku)
+          products(name, sku),
+          dealers(dealer_name)
         `)
         .order("credit_date", { ascending: false });
 
       if (error) throw error;
-      return data as DealerCredit[];
+      return data as (DealerCredit & { dealers: { dealer_name: string } | null })[];
     },
   });
 
@@ -63,11 +64,14 @@ export const useDealerCredits = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dealer_payments")
-        .select("*")
+        .select(`
+          *,
+          dealers(dealer_name)
+        `)
         .order("payment_date", { ascending: false });
 
       if (error) throw error;
-      return data as DealerPayment[];
+      return data as (DealerPayment & { dealers: { dealer_name: string } | null })[];
     },
   });
 
