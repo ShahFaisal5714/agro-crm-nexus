@@ -5,11 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useProducts } from "@/hooks/useProducts";
+import { useSupplierCredits } from "@/hooks/useSupplierCredits";
+import { toast } from "sonner";
 
 export const NewPurchaseDialog = () => {
   const [open, setOpen] = useState(false);
@@ -19,10 +22,15 @@ export const NewPurchaseDialog = () => {
   const [items, setItems] = useState<Array<{ productId: string; quantity: number; unitPrice: number }>>([
     { productId: "", quantity: 1, unitPrice: 0 },
   ]);
+  
+  // Supplier credit states
+  const [addAsCredit, setAddAsCredit] = useState(false);
+  const [creditDescription, setCreditDescription] = useState("");
 
   const { createPurchase } = usePurchases();
   const { suppliers } = useSuppliers();
   const { products } = useProducts();
+  const { addCredit } = useSupplierCredits();
 
   const handleAddItem = () => {
     setItems([...items, { productId: "", quantity: 1, unitPrice: 0 }]);
@@ -60,22 +68,41 @@ export const NewPurchaseDialog = () => {
       return;
     }
 
-    await createPurchase({
-      supplier_id: supplierId,
-      purchase_date: purchaseDate,
-      notes,
-      items: items.map((item) => ({
-        product_id: item.productId,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        total: item.quantity * item.unitPrice,
-      })),
-    });
+    try {
+      await createPurchase({
+        supplier_id: supplierId,
+        purchase_date: purchaseDate,
+        notes,
+        items: items.map((item) => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total: item.quantity * item.unitPrice,
+        })),
+      });
 
-    setOpen(false);
-    setSupplierId("");
-    setNotes("");
-    setItems([{ productId: "", quantity: 1, unitPrice: 0 }]);
+      // Add as supplier credit if checkbox is checked
+      if (addAsCredit && totalAmount > 0) {
+        const supplier = suppliers.find((s) => s.id === supplierId);
+        await addCredit({
+          supplier_id: supplierId,
+          amount: totalAmount,
+          credit_date: purchaseDate,
+          description: creditDescription || `Purchase order credit for ${supplier?.name || "supplier"}`,
+          notes: `Auto-generated from purchase order on ${purchaseDate}`,
+        });
+        toast.success("Supplier credit added successfully");
+      }
+
+      setOpen(false);
+      setSupplierId("");
+      setNotes("");
+      setItems([{ productId: "", quantity: 1, unitPrice: 0 }]);
+      setAddAsCredit(false);
+      setCreditDescription("");
+    } catch (error) {
+      console.error("Error creating purchase:", error);
+    }
   };
 
   return (
@@ -195,6 +222,35 @@ export const NewPurchaseDialog = () => {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Additional notes..."
             />
+          </div>
+
+          {/* Add as Supplier Credit Section */}
+          <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="addAsCredit" 
+                checked={addAsCredit} 
+                onCheckedChange={(checked) => setAddAsCredit(checked === true)}
+              />
+              <Label htmlFor="addAsCredit" className="text-sm font-medium cursor-pointer">
+                Add this purchase as supplier credit (we owe supplier)
+              </Label>
+            </div>
+            
+            {addAsCredit && (
+              <div className="space-y-2 pl-6">
+                <Label htmlFor="creditDescription" className="text-sm">Credit Description</Label>
+                <Input
+                  id="creditDescription"
+                  value={creditDescription}
+                  onChange={(e) => setCreditDescription(e.target.value)}
+                  placeholder="e.g., Purchase of raw materials on credit"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This will add {formatCurrency(totalAmount)} as credit to the selected supplier's account.
+                </p>
+              </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full">
