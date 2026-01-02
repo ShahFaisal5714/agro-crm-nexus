@@ -16,6 +16,7 @@ import { NewPurchaseDialog } from "@/components/purchase/NewPurchaseDialog";
 import { DeletePurchaseDialog } from "@/components/purchase/DeletePurchaseDialog";
 import { ViewPurchaseDialog } from "@/components/purchase/ViewPurchaseDialog";
 import { EditPurchaseDialog } from "@/components/purchase/EditPurchaseDialog";
+import { SupplierCreditSummaryWidget } from "@/components/purchase/SupplierCreditSummaryWidget";
 import { format } from "date-fns";
 
 const PurchasePage = () => {
@@ -114,6 +115,9 @@ const PurchasePage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Supplier Credit Summary Widget */}
+        <SupplierCreditSummaryWidget />
 
         <Card>
           <CardHeader>
