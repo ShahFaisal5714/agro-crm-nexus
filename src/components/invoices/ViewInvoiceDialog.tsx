@@ -18,7 +18,7 @@ import logo from "@/assets/logo.png";
 const COMPANY_CONTACT = {
   phone: "+923251852232",
   email: "Contact@Agraicylifesciences.com",
-  address: "Office #2 Abubakar Plaza, KSK Swabi Pakistan",
+  address: "Office #2 Abubakar Plaza, KSK Pakistan",
 };
 interface ViewInvoiceDialogProps {
   invoice: Invoice;
