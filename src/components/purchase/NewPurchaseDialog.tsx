@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { usePurchases } from "@/hooks/usePurchases";
@@ -23,14 +22,16 @@ export const NewPurchaseDialog = () => {
     { productId: "", quantity: 1, unitPrice: 0 },
   ]);
   
-  // Supplier credit states
-  const [addAsCredit, setAddAsCredit] = useState(false);
+  // Payment states
+  const [paidAmount, setPaidAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentReference, setPaymentReference] = useState("");
   const [creditDescription, setCreditDescription] = useState("");
 
   const { createPurchase } = usePurchases();
   const { suppliers } = useSuppliers();
   const { products } = useProducts();
-  const { addCredit } = useSupplierCredits();
+  const { addCredit, addPayment } = useSupplierCredits();
 
   const handleAddItem = () => {
     setItems([...items, { productId: "", quantity: 1, unitPrice: 0 }]);
@@ -60,15 +61,24 @@ export const NewPurchaseDialog = () => {
   };
 
   const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const creditAmount = totalAmount - paidAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!supplierId || items.some((item) => !item.productId || item.quantity <= 0)) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (paidAmount > totalAmount) {
+      toast.error("Paid amount cannot exceed total amount");
       return;
     }
 
     try {
+      const supplier = suppliers.find((s) => s.id === supplierId);
+      
       await createPurchase({
         supplier_id: supplierId,
         purchase_date: purchaseDate,
@@ -81,28 +91,47 @@ export const NewPurchaseDialog = () => {
         })),
       });
 
-      // Add as supplier credit if checkbox is checked
-      if (addAsCredit && totalAmount > 0) {
-        const supplier = suppliers.find((s) => s.id === supplierId);
+      // Add credit if there's unpaid amount
+      if (creditAmount > 0) {
         await addCredit({
           supplier_id: supplierId,
-          amount: totalAmount,
+          amount: creditAmount,
           credit_date: purchaseDate,
-          description: creditDescription || `Purchase order credit for ${supplier?.name || "supplier"}`,
-          notes: `Auto-generated from purchase order on ${purchaseDate}`,
+          description: creditDescription || `Purchase credit for ${supplier?.name || "supplier"}`,
+          notes: `Credit from purchase on ${purchaseDate}. Total: ${formatCurrency(totalAmount)}, Paid: ${formatCurrency(paidAmount)}`,
         });
-        toast.success("Supplier credit added successfully");
       }
 
+      // Add payment record if there's paid amount
+      if (paidAmount > 0) {
+        await addPayment({
+          supplier_id: supplierId,
+          amount: paidAmount,
+          payment_date: purchaseDate,
+          payment_method: paymentMethod,
+          reference_number: paymentReference || undefined,
+          notes: `Payment for purchase on ${purchaseDate}. Total: ${formatCurrency(totalAmount)}`,
+        });
+      }
+
+      toast.success("Purchase order created successfully");
       setOpen(false);
-      setSupplierId("");
-      setNotes("");
-      setItems([{ productId: "", quantity: 1, unitPrice: 0 }]);
-      setAddAsCredit(false);
-      setCreditDescription("");
+      resetForm();
     } catch (error) {
       console.error("Error creating purchase:", error);
+      toast.error("Failed to create purchase order");
     }
+  };
+
+  const resetForm = () => {
+    setSupplierId("");
+    setPurchaseDate(new Date().toISOString().split("T")[0]);
+    setNotes("");
+    setItems([{ productId: "", quantity: 1, unitPrice: 0 }]);
+    setPaidAmount(0);
+    setPaymentMethod("cash");
+    setPaymentReference("");
+    setCreditDescription("");
   };
 
   return (
@@ -209,9 +238,88 @@ export const NewPurchaseDialog = () => {
                 </Button>
               </div>
             ))}
-            <div className="text-right text-lg font-bold">
-              Total: {formatCurrency(totalAmount)}
+          </div>
+
+          {/* Payment Section */}
+          <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+            <h3 className="font-semibold text-sm">Payment Details</h3>
+            
+            {/* Amount Summary */}
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-background rounded-lg p-3 border">
+                <div className="text-xs text-muted-foreground mb-1">Total Amount</div>
+                <div className="text-lg font-bold">{formatCurrency(totalAmount)}</div>
+              </div>
+              <div className="bg-background rounded-lg p-3 border">
+                <div className="text-xs text-muted-foreground mb-1">Paid Amount</div>
+                <div className="text-lg font-bold text-green-600">{formatCurrency(paidAmount)}</div>
+              </div>
+              <div className="bg-background rounded-lg p-3 border">
+                <div className="text-xs text-muted-foreground mb-1">Credit Amount</div>
+                <div className={`text-lg font-bold ${creditAmount > 0 ? "text-destructive" : "text-foreground"}`}>
+                  {formatCurrency(creditAmount)}
+                </div>
+              </div>
             </div>
+
+            {/* Payment Inputs */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="paidAmount">Paid Amount</Label>
+                <Input
+                  id="paidAmount"
+                  type="number"
+                  value={paidAmount}
+                  onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
+                  min="0"
+                  max={totalAmount}
+                  step="0.01"
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod">Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="cheque">Cheque</SelectItem>
+                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {paidAmount > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="paymentReference">Payment Reference (Optional)</Label>
+                <Input
+                  id="paymentReference"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="e.g., Transaction ID, Cheque Number"
+                />
+              </div>
+            )}
+
+            {creditAmount > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="creditDescription">Credit Description</Label>
+                <Input
+                  id="creditDescription"
+                  value={creditDescription}
+                  onChange={(e) => setCreditDescription(e.target.value)}
+                  placeholder="e.g., Purchase of materials on credit"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(creditAmount)} will be added as credit owed to the supplier.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -222,35 +330,6 @@ export const NewPurchaseDialog = () => {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Additional notes..."
             />
-          </div>
-
-          {/* Add as Supplier Credit Section */}
-          <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="addAsCredit" 
-                checked={addAsCredit} 
-                onCheckedChange={(checked) => setAddAsCredit(checked === true)}
-              />
-              <Label htmlFor="addAsCredit" className="text-sm font-medium cursor-pointer">
-                Add this purchase as supplier credit (we owe supplier)
-              </Label>
-            </div>
-            
-            {addAsCredit && (
-              <div className="space-y-2 pl-6">
-                <Label htmlFor="creditDescription" className="text-sm">Credit Description</Label>
-                <Input
-                  id="creditDescription"
-                  value={creditDescription}
-                  onChange={(e) => setCreditDescription(e.target.value)}
-                  placeholder="e.g., Purchase of raw materials on credit"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This will add {formatCurrency(totalAmount)} as credit to the selected supplier's account.
-                </p>
-              </div>
-            )}
           </div>
 
           <Button type="submit" className="w-full">
