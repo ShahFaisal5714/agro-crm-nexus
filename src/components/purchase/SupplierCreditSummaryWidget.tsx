@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, TrendingDown, Wallet } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useSupplierCredits } from "@/hooks/useSupplierCredits";
 import { ViewSupplierCreditsDialog } from "@/components/suppliers/ViewSupplierCreditsDialog";
+import { AddSupplierPaymentFromPurchaseDialog } from "@/components/suppliers/AddSupplierPaymentFromPurchaseDialog";
 
 export const SupplierCreditSummaryWidget = () => {
   const { supplierSummaries, totalMarketCredit, isLoading } = useSupplierCredits();
@@ -94,10 +95,17 @@ export const SupplierCreditSummaryWidget = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right py-2">
-                        <ViewSupplierCreditsDialog 
-                          supplierId={summary.supplier_id} 
-                          supplierName={summary.supplier_name} 
-                        />
+                        <div className="flex items-center justify-end gap-1">
+                          <ViewSupplierCreditsDialog 
+                            supplierId={summary.supplier_id} 
+                            supplierName={summary.supplier_name} 
+                          />
+                          <AddSupplierPaymentFromPurchaseDialog
+                            supplierId={summary.supplier_id}
+                            supplierName={summary.supplier_name}
+                            remainingBalance={summary.remaining}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
