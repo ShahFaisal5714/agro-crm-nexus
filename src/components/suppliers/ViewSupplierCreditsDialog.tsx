@@ -19,10 +19,14 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
-import { useSupplierCreditHistory } from "@/hooks/useSupplierCredits";
+import { useSupplierCreditHistory, SupplierCredit, SupplierPayment } from "@/hooks/useSupplierCredits";
 import { format } from "date-fns";
-import { Eye, Loader2, Download, FileSpreadsheet } from "lucide-react";
+import { Eye, Loader2, Download, FileSpreadsheet, Pencil, Trash2 } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
+import { EditSupplierCreditDialog } from "./EditSupplierCreditDialog";
+import { DeleteSupplierCreditDialog } from "./DeleteSupplierCreditDialog";
+import { EditSupplierPaymentDialog } from "./EditSupplierPaymentDialog";
+import { DeleteSupplierPaymentDialog } from "./DeleteSupplierPaymentDialog";
 
 interface ViewSupplierCreditsDialogProps {
   supplierId: string;
@@ -36,6 +40,11 @@ export const ViewSupplierCreditsDialog = ({
   const [open, setOpen] = useState(false);
   const { credits, payments, totalCredit, totalPaid, remaining, isLoading } =
     useSupplierCreditHistory(supplierId);
+
+  const [editingCredit, setEditingCredit] = useState<SupplierCredit | null>(null);
+  const [deletingCreditId, setDeletingCreditId] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
 
   const handleExportDetailedCSV = () => {
     const creditTransactions = credits.map((c) => ({
@@ -198,6 +207,7 @@ export const ViewSupplierCreditsDialog = ({
                         <TableHead>Amount</TableHead>
                         <TableHead>Product</TableHead>
                         <TableHead>Description</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -211,6 +221,24 @@ export const ViewSupplierCreditsDialog = ({
                           </TableCell>
                           <TableCell>{credit.products?.name || "-"}</TableCell>
                           <TableCell>{credit.description || "-"}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditingCredit(credit)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeletingCreditId(credit.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -229,6 +257,7 @@ export const ViewSupplierCreditsDialog = ({
                         <TableHead>Amount</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Reference</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -244,6 +273,24 @@ export const ViewSupplierCreditsDialog = ({
                             <Badge variant="outline">{payment.payment_method}</Badge>
                           </TableCell>
                           <TableCell>{payment.reference_number || "-"}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditingPayment(payment)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeletingPaymentId(payment.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -253,6 +300,27 @@ export const ViewSupplierCreditsDialog = ({
             </Tabs>
           </div>
         )}
+
+        <EditSupplierCreditDialog
+          credit={editingCredit}
+          open={!!editingCredit}
+          onOpenChange={(open) => !open && setEditingCredit(null)}
+        />
+        <DeleteSupplierCreditDialog
+          creditId={deletingCreditId}
+          open={!!deletingCreditId}
+          onOpenChange={(open) => !open && setDeletingCreditId(null)}
+        />
+        <EditSupplierPaymentDialog
+          payment={editingPayment}
+          open={!!editingPayment}
+          onOpenChange={(open) => !open && setEditingPayment(null)}
+        />
+        <DeleteSupplierPaymentDialog
+          paymentId={deletingPaymentId}
+          open={!!deletingPaymentId}
+          onOpenChange={(open) => !open && setDeletingPaymentId(null)}
+        />
       </DialogContent>
     </Dialog>
   );
