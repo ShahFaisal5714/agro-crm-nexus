@@ -7,12 +7,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Eye } from "lucide-react";
+import { Eye, Download, FileSpreadsheet } from "lucide-react";
 import { useDealerCreditHistory } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import {
   Table,
   TableBody,
@@ -33,6 +33,86 @@ interface ViewDealerCreditsDialogProps {
 export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCreditsDialogProps) => {
   const [open, setOpen] = useState(false);
   const { credits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
+
+  const handleExportDetailedCSV = () => {
+    // Combine credits and payments into a single transaction list
+    const transactions = [
+      ...credits.map((c) => ({
+        date: c.credit_date,
+        type: "Credit",
+        amount: c.amount,
+        product: c.products?.name || "-",
+        method: "-",
+        reference: "-",
+        description: c.description || "-",
+        notes: c.notes || "-",
+      })),
+      ...payments.map((p) => ({
+        date: p.payment_date,
+        type: "Payment",
+        amount: p.amount,
+        product: "-",
+        method: p.payment_method,
+        reference: p.reference_number || "-",
+        description: "-",
+        notes: p.notes || "-",
+      })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    exportToCSV(transactions, `${dealerName.replace(/\s+/g, "_")}_credit_history`, [
+      "date",
+      "type",
+      "amount",
+      "product",
+      "method",
+      "reference",
+      "description",
+      "notes",
+    ]);
+  };
+
+  const handleExportDetailedPDF = () => {
+    const transactions = [
+      ...credits.map((c) => ({
+        date: c.credit_date,
+        type: "Credit",
+        amount: c.amount,
+        product: c.products?.name || "-",
+        method: "-",
+        reference: "-",
+        description: c.description || "-",
+      })),
+      ...payments.map((p) => ({
+        date: p.payment_date,
+        type: "Payment",
+        amount: p.amount,
+        product: "-",
+        method: p.payment_method,
+        reference: p.reference_number || "-",
+        description: "-",
+      })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    exportToPDF(
+      `Credit History - ${dealerName}`,
+      transactions,
+      [
+        { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
+        { key: "type", label: "Type" },
+        { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
+        { key: "product", label: "Product" },
+        { key: "method", label: "Method" },
+        { key: "reference", label: "Reference" },
+        { key: "description", label: "Description" },
+      ],
+      `${dealerName.replace(/\s+/g, "_")}_credit_history`,
+      [
+        { label: "Total Credit", value: formatCurrency(totalCredit) },
+        { label: "Total Paid", value: formatCurrency(totalPaid) },
+        { label: "Remaining Balance", value: formatCurrency(remaining) },
+      ]
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -70,9 +150,17 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <AddCreditDialog dealerId={dealerId} dealerName={dealerName} />
             <AddDealerPaymentDialog dealerId={dealerId} dealerName={dealerName} />
+            <Button variant="outline" size="sm" onClick={handleExportDetailedCSV}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportDetailedPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
           </div>
 
           <Separator />

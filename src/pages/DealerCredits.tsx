@@ -46,6 +46,97 @@ const DealerCredits = () => {
     ]);
   };
 
+  const handleExportDetailedCSV = () => {
+    // Export all individual credit and payment transactions
+    const creditTransactions = credits.map((c) => ({
+      dealer_name: c.dealers?.dealer_name || "Unknown",
+      date: c.credit_date,
+      type: "Credit",
+      amount: c.amount,
+      product: c.products?.name || "-",
+      method: "-",
+      reference: "-",
+      description: c.description || "-",
+      notes: c.notes || "-",
+    }));
+
+    const paymentTransactions = payments.map((p) => ({
+      dealer_name: p.dealers?.dealer_name || "Unknown",
+      date: p.payment_date,
+      type: "Payment",
+      amount: p.amount,
+      product: "-",
+      method: p.payment_method,
+      reference: p.reference_number || "-",
+      description: "-",
+      notes: p.notes || "-",
+    }));
+
+    const allTransactions = [...creditTransactions, ...paymentTransactions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    exportToCSV(allTransactions, "dealer_credits_detailed_report", [
+      "dealer_name",
+      "date",
+      "type",
+      "amount",
+      "product",
+      "method",
+      "reference",
+      "description",
+      "notes",
+    ]);
+  };
+
+  const handleExportDetailedPDF = () => {
+    const creditTransactions = credits.map((c) => ({
+      dealer_name: c.dealers?.dealer_name || "Unknown",
+      date: c.credit_date,
+      type: "Credit",
+      amount: c.amount,
+      product: c.products?.name || "-",
+      method: "-",
+      reference: "-",
+    }));
+
+    const paymentTransactions = payments.map((p) => ({
+      dealer_name: p.dealers?.dealer_name || "Unknown",
+      date: p.payment_date,
+      type: "Payment",
+      amount: p.amount,
+      product: "-",
+      method: p.payment_method,
+      reference: p.reference_number || "-",
+    }));
+
+    const allTransactions = [...creditTransactions, ...paymentTransactions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    exportToPDF(
+      "Detailed Dealer Credit & Payment Report",
+      allTransactions,
+      [
+        { key: "dealer_name", label: "Dealer" },
+        { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
+        { key: "type", label: "Type" },
+        { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
+        { key: "product", label: "Product" },
+        { key: "method", label: "Method" },
+        { key: "reference", label: "Reference" },
+      ],
+      "dealer_credits_detailed_report",
+      [
+        { label: "Total Market Credit", value: formatCurrency(totalMarketCredit) },
+        { label: "Total Credit Given", value: formatCurrency(totalCreditGiven) },
+        { label: "Total Collected", value: formatCurrency(totalCollected) },
+        { label: "Dealers with Credit", value: String(dealersWithCredit) },
+        { label: "Total Transactions", value: String(allTransactions.length) },
+      ]
+    );
+  };
+
   const handleExportPDF = () => {
     const data = dealerSummaries.map((s) => ({
       dealer_name: s.dealer_name,
@@ -87,14 +178,22 @@ const DealerCredits = () => {
               Track credit given to dealers and their weekly payments
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleExportCSV}>
               <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export CSV
+              Summary CSV
             </Button>
             <Button variant="outline" onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
-              Export PDF
+              Summary PDF
+            </Button>
+            <Button variant="outline" onClick={handleExportDetailedCSV}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Detailed CSV
+            </Button>
+            <Button variant="outline" onClick={handleExportDetailedPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Detailed PDF
             </Button>
           </div>
         </div>
