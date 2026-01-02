@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Policies from "./pages/Policies";
 import DealerCredits from "./pages/DealerCredits";
 import Dealers from "./pages/Dealers";
+import SupplierCredits from "./pages/SupplierCredits";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/policies" element={<ProtectedRoute><Policies /></ProtectedRoute>} />
             <Route path="/dealer-credits" element={<ProtectedRoute><DealerCredits /></ProtectedRoute>} />
             <Route path="/dealers" element={<ProtectedRoute><Dealers /></ProtectedRoute>} />
+            <Route path="/supplier-credits" element={<ProtectedRoute><SupplierCredits /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

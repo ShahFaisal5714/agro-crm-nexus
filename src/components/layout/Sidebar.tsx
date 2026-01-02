@@ -44,6 +44,7 @@ const navItems: NavItem[] = [
   { title: "Dealer Credits", href: "/dealer-credits", icon: CreditCard },
   { title: "Dealers", href: "/dealers", icon: UserCircle },
   { title: "Purchase", href: "/purchase", icon: Package },
+  { title: "Supplier Credits", href: "/supplier-credits", icon: CreditCard },
   { title: "Expenses", href: "/expenses", icon: Wallet },
   { title: "Inventory", href: "/inventory", icon: Package },
   { title: "Reports", href: "/reports", icon: BarChart3 },
