@@ -17,6 +17,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Policies from "./pages/Policies";
 import DealerCredits from "./pages/DealerCredits";
+import Dealers from "./pages/Dealers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
             <Route path="/policies" element={<ProtectedRoute><Policies /></ProtectedRoute>} />
             <Route path="/dealer-credits" element={<ProtectedRoute><DealerCredits /></ProtectedRoute>} />
+            <Route path="/dealers" element={<ProtectedRoute><Dealers /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

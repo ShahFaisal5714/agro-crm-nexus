@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,17 +13,69 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { useDealerCredits } from "@/hooks/useDealerCredits";
 import { format } from "date-fns";
-import { Loader2, Wallet, TrendingUp, TrendingDown, Users } from "lucide-react";
+import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Download, FileSpreadsheet } from "lucide-react";
 import { ViewDealerCreditsDialog } from "@/components/dealers/ViewDealerCreditsDialog";
 import { AddCreditDialog } from "@/components/dealers/AddCreditDialog";
 import { AddDealerPaymentDialog } from "@/components/dealers/AddDealerPaymentDialog";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 
 const DealerCredits = () => {
-  const { dealerSummaries, totalMarketCredit, isLoading } = useDealerCredits();
+  const { dealerSummaries, totalMarketCredit, isLoading, credits, payments } = useDealerCredits();
 
   const dealersWithCredit = dealerSummaries.filter((s) => s.remaining > 0).length;
   const totalCreditGiven = dealerSummaries.reduce((sum, s) => sum + s.total_credit, 0);
   const totalCollected = dealerSummaries.reduce((sum, s) => sum + s.total_paid, 0);
+
+  const handleExportCSV = () => {
+    const data = dealerSummaries.map((s) => ({
+      dealer_name: s.dealer_name,
+      total_credit: s.total_credit,
+      total_paid: s.total_paid,
+      remaining: s.remaining,
+      last_payment_date: s.last_payment_date || "N/A",
+      status: s.remaining <= 0 ? "Cleared" : "Pending",
+    }));
+
+    exportToCSV(data, "dealer_credits_report", [
+      "dealer_name",
+      "total_credit",
+      "total_paid",
+      "remaining",
+      "last_payment_date",
+      "status",
+    ]);
+  };
+
+  const handleExportPDF = () => {
+    const data = dealerSummaries.map((s) => ({
+      dealer_name: s.dealer_name,
+      total_credit: s.total_credit,
+      total_paid: s.total_paid,
+      remaining: s.remaining,
+      last_payment_date: s.last_payment_date || "N/A",
+      status: s.remaining <= 0 ? "Cleared" : "Pending",
+    }));
+
+    exportToPDF(
+      "Dealer Credit Report",
+      data,
+      [
+        { key: "dealer_name", label: "Dealer" },
+        { key: "total_credit", label: "Total Credit", format: (v) => formatCurrency(Number(v)) },
+        { key: "total_paid", label: "Total Paid", format: (v) => formatCurrency(Number(v)) },
+        { key: "remaining", label: "Remaining", format: (v) => formatCurrency(Number(v)) },
+        { key: "last_payment_date", label: "Last Payment" },
+        { key: "status", label: "Status" },
+      ],
+      "dealer_credits_report",
+      [
+        { label: "Total Market Credit", value: formatCurrency(totalMarketCredit) },
+        { label: "Total Credit Given", value: formatCurrency(totalCreditGiven) },
+        { label: "Total Collected", value: formatCurrency(totalCollected) },
+        { label: "Dealers with Credit", value: String(dealersWithCredit) },
+      ]
+    );
+  };
 
   return (
     <DashboardLayout>
@@ -33,6 +86,16 @@ const DealerCredits = () => {
             <p className="text-muted-foreground mt-1">
               Track credit given to dealers and their weekly payments
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportCSV}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button variant="outline" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
           </div>
         </div>
 
