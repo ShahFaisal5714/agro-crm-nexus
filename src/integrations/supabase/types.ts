@@ -50,6 +50,101 @@ export type Database = {
         }
         Relationships: []
       }
+      dealer_credits: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          credit_date: string
+          dealer_id: string
+          description: string | null
+          id: string
+          notes: string | null
+          product_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          credit_date?: string
+          dealer_id: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          credit_date?: string
+          dealer_id?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dealer_credits_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dealer_credits_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dealer_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          dealer_id: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          reference_number: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          dealer_id: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_number?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          dealer_id?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dealer_payments_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dealers: {
         Row: {
           address: string | null

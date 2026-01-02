@@ -38,6 +38,8 @@ export const ViewPolicyDialog = ({ policy }: ViewPolicyDialogProps) => {
   const [open, setOpen] = useState(false);
   const { data: payments = [] } = usePolicyPayments(policy.id);
 
+  const hasMultipleItems = policy.policy_items && policy.policy_items.length > 0;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -58,23 +60,29 @@ export const ViewPolicyDialog = ({ policy }: ViewPolicyDialogProps) => {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <p className="text-sm text-muted-foreground">Policy Name</p>
+              <p className="font-medium">{policy.name || "-"}</p>
+            </div>
+            <div>
               <p className="text-sm text-muted-foreground">Dealer</p>
               <p className="font-medium">{policy.dealers?.dealer_name}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Product</p>
-              <p className="font-medium">
-                {policy.products?.name} ({policy.products?.sku})
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Quantity</p>
-              <p className="font-medium">{policy.quantity}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Rate per Unit</p>
-              <p className="font-medium">{formatCurrency(policy.rate_per_unit)}</p>
-            </div>
+            {policy.start_date && (
+              <div>
+                <p className="text-sm text-muted-foreground">Start Date</p>
+                <p className="font-medium">
+                  {format(new Date(policy.start_date), "MMM dd, yyyy")}
+                </p>
+              </div>
+            )}
+            {policy.end_date && (
+              <div>
+                <p className="text-sm text-muted-foreground">End Date</p>
+                <p className="font-medium">
+                  {format(new Date(policy.end_date), "MMM dd, yyyy")}
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-muted-foreground">Expected Delivery</p>
               <p className="font-medium">
@@ -89,6 +97,60 @@ export const ViewPolicyDialog = ({ policy }: ViewPolicyDialogProps) => {
                 {format(new Date(policy.created_at), "MMM dd, yyyy")}
               </p>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Policy Items Section */}
+          <div>
+            <h4 className="font-semibold mb-3">Products in Policy</h4>
+            {hasMultipleItems ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {policy.policy_items?.map((item, index) => (
+                    <TableRow key={item.id || index}>
+                      <TableCell>
+                        {item.product?.name || "Unknown Product"}
+                        {item.product?.sku && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({item.product.sku})
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.rate_per_unit)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.total)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between">
+                  <div>
+                    <p className="font-medium">
+                      {policy.products?.name} ({policy.products?.sku})
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {policy.quantity} × {formatCurrency(policy.rate_per_unit)}
+                    </p>
+                  </div>
+                  <p className="font-medium">{formatCurrency(policy.total_amount)}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <Separator />

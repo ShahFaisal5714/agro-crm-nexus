@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
 import { usePolicies } from "@/hooks/usePolicies";
-import { format } from "date-fns";
-import { Loader2, FileCheck, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { format, isWithinInterval, parseISO } from "date-fns";
+import { Loader2, FileCheck, Clock, AlertCircle, CheckCircle, X } from "lucide-react";
 import { NewPolicyDialog } from "@/components/policies/NewPolicyDialog";
 import { ViewPolicyDialog } from "@/components/policies/ViewPolicyDialog";
 import { EditPolicyDialog } from "@/components/policies/EditPolicyDialog";
@@ -30,14 +34,62 @@ const statusColors: Record<string, string> = {
 
 const Policies = () => {
   const { policies, isLoading } = usePolicies();
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
 
-  const pendingCount = policies.filter((p) => p.status === "pending").length;
-  const partialCount = policies.filter((p) => p.status === "partial").length;
-  const paidCount = policies.filter((p) => p.status === "paid").length;
-  const invoicedCount = policies.filter((p) => p.status === "invoiced").length;
+  // Filter policies by date range
+  const filteredPolicies = useMemo(() => {
+    if (!startDateFilter && !endDateFilter) return policies;
 
-  const totalAdvance = policies.reduce((sum, p) => sum + p.advance_amount, 0);
-  const totalRemaining = policies.reduce((sum, p) => sum + p.remaining_amount, 0);
+    return policies.filter((policy) => {
+      const policyStart = policy.start_date ? parseISO(policy.start_date) : null;
+      const policyEnd = policy.end_date ? parseISO(policy.end_date) : null;
+      const filterStart = startDateFilter ? parseISO(startDateFilter) : null;
+      const filterEnd = endDateFilter ? parseISO(endDateFilter) : null;
+
+      // If policy has no dates, include it if no filter is set
+      if (!policyStart && !policyEnd) return true;
+
+      // Check if policy dates overlap with filter range
+      if (filterStart && filterEnd) {
+        if (policyStart && policyEnd) {
+          return policyStart <= filterEnd && policyEnd >= filterStart;
+        }
+        if (policyStart) {
+          return policyStart <= filterEnd && policyStart >= filterStart;
+        }
+        if (policyEnd) {
+          return policyEnd >= filterStart && policyEnd <= filterEnd;
+        }
+      }
+
+      if (filterStart && !filterEnd) {
+        if (policyEnd) return policyEnd >= filterStart;
+        if (policyStart) return policyStart >= filterStart;
+      }
+
+      if (filterEnd && !filterStart) {
+        if (policyStart) return policyStart <= filterEnd;
+        if (policyEnd) return policyEnd <= filterEnd;
+      }
+
+      return true;
+    });
+  }, [policies, startDateFilter, endDateFilter]);
+
+  const clearFilters = () => {
+    setStartDateFilter("");
+    setEndDateFilter("");
+  };
+
+  const pendingCount = filteredPolicies.filter((p) => p.status === "pending").length;
+  const partialCount = filteredPolicies.filter((p) => p.status === "partial").length;
+  const paidCount = filteredPolicies.filter((p) => p.status === "paid").length;
+  const invoicedCount = filteredPolicies.filter((p) => p.status === "invoiced").length;
+
+  const totalAdvance = filteredPolicies.reduce((sum, p) => sum + p.advance_amount, 0);
+  const totalRemaining = filteredPolicies.reduce((sum, p) => sum + p.remaining_amount, 0);
+
 
   return (
     <DashboardLayout>
@@ -118,6 +170,45 @@ const Policies = () => {
           </Card>
         </div>
 
+        {/* Date Range Filter */}
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="start-date" className="text-sm">Start Date</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDateFilter}
+                  onChange={(e) => setStartDateFilter(e.target.value)}
+                  className="w-[160px]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="end-date" className="text-sm">End Date</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDateFilter}
+                  onChange={(e) => setEndDateFilter(e.target.value)}
+                  className="w-[160px]"
+                />
+              </div>
+              {(startDateFilter || endDateFilter) && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+              {(startDateFilter || endDateFilter) && (
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredPolicies.length} of {policies.length} policies
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>All Policies</CardTitle>
@@ -127,7 +218,7 @@ const Policies = () => {
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : policies && policies.length > 0 ? (
+            ) : filteredPolicies && filteredPolicies.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -144,7 +235,7 @@ const Policies = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {policies.map((policy) => (
+                  {filteredPolicies.map((policy) => (
                     <TableRow key={policy.id}>
                       <TableCell className="font-medium">
                         {policy.policy_number}
