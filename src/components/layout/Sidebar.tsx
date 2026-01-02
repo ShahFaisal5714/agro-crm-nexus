@@ -12,7 +12,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  CreditCard
+  CreditCard,
+  UserCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { title: "Invoices", href: "/invoices", icon: FileText },
   { title: "Policies", href: "/policies", icon: FileText },
   { title: "Dealer Credits", href: "/dealer-credits", icon: CreditCard },
+  { title: "Dealers", href: "/dealers", icon: UserCircle },
   { title: "Purchase", href: "/purchase", icon: Package },
   { title: "Expenses", href: "/expenses", icon: Wallet },
   { title: "Inventory", href: "/inventory", icon: Package },

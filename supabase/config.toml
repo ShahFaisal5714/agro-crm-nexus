@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.change-user-email]
 verify_jwt = true
+
+[functions.send-payment-reminders]
+verify_jwt = false
