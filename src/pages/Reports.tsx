@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText, FileCheck } from "lucide-react";
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText, FileCheck, AlertTriangle } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { useReportData } from "@/hooks/useReportData";
@@ -15,6 +15,8 @@ import { usePoliciesReport } from "@/hooks/usePoliciesReport";
 import { useProducts } from "@/hooks/useProducts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useDealers } from "@/hooks/useDealers";
+import { useInvoices } from "@/hooks/useInvoices";
+import { InvoiceAgingReport } from "@/components/reports/InvoiceAgingReport";
 import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, isWithinInterval, startOfDay, endOfDay, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 
@@ -35,6 +37,7 @@ const Reports = () => {
   const { products, isLoading: productsLoading } = useProducts();
   const { expenses, isLoading: expensesLoading } = useExpenses();
   const { dealers, isLoading: dealersLoading } = useDealers();
+  const { invoices, isLoading: invoicesLoading } = useInvoices();
   const [timePeriod, setTimePeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
   const [comparisonPeriods, setComparisonPeriods] = useState<number>(3);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -43,7 +46,7 @@ const Reports = () => {
   });
   const [activeTab, setActiveTab] = useState("time");
 
-  const isLoading = reportLoading || productsLoading || expensesLoading || dealersLoading || policyLoading;
+  const isLoading = reportLoading || productsLoading || expensesLoading || dealersLoading || policyLoading || invoicesLoading;
   const safeExpenses = expenses || [];
   const safeProducts = products || [];
   const safeDealers = dealers || [];
@@ -531,6 +534,10 @@ const Reports = () => {
             <TabsTrigger value="territory">Territory Sales</TabsTrigger>
             <TabsTrigger value="officer">Sales Officers</TabsTrigger>
             <TabsTrigger value="policy">Policy Collection</TabsTrigger>
+            <TabsTrigger value="aging" className="flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Invoice Aging
+            </TabsTrigger>
           </TabsList>
 
           {/* Time Comparison */}
@@ -982,6 +989,11 @@ const Reports = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Invoice Aging Report */}
+          <TabsContent value="aging" className="space-y-4">
+            <InvoiceAgingReport invoices={invoices || []} />
           </TabsContent>
         </Tabs>
       </div>

@@ -98,6 +98,22 @@ export const useInvoicePayments = (invoiceId?: string) => {
 
       if (updateError) throw updateError;
 
+      // Send email notification (fire and forget)
+      try {
+        await supabase.functions.invoke("send-invoice-payment-notification", {
+          body: {
+            invoiceId,
+            paymentAmount: amount,
+            paymentDate,
+            paymentMethod,
+            referenceNumber,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send payment notification email:", emailError);
+        // Don't throw - email failure shouldn't block the payment
+      }
+
       return payment;
     },
     onSuccess: () => {
@@ -111,7 +127,7 @@ export const useInvoicePayments = (invoiceId?: string) => {
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to record payment. Please try again.",
         variant: "destructive",
       });
     },

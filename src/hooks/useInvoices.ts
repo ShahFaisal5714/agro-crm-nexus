@@ -13,6 +13,7 @@ export interface Invoice {
   tax_rate: number;
   tax_amount: number;
   total_amount: number;
+  paid_amount: number;
   status: string;
   notes?: string;
   source?: string;
