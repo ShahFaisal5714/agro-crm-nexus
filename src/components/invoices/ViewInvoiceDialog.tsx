@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, Download, Phone, Mail, MapPin } from "lucide-react";
+import { Eye, Download, Phone, Mail, MapPin, Users, ShoppingCart, Package, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -27,8 +27,33 @@ interface ViewInvoiceDialogProps {
 const statusColors: Record<string, string> = {
   unpaid: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   paid: "bg-green-500/10 text-green-500 border-green-500/20",
+  partial: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   overdue: "bg-red-500/10 text-red-500 border-red-500/20",
   cancelled: "bg-muted text-muted-foreground border-muted",
+};
+
+const sourceColors: Record<string, string> = {
+  manual: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  dealers: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  sales: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  purchases: "bg-green-500/10 text-green-500 border-green-500/20",
+  expenses: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+};
+
+const sourceLabels: Record<string, string> = {
+  manual: "Manual Invoice",
+  dealers: "Dealer Invoice",
+  sales: "Sales Invoice",
+  purchases: "Purchase Invoice",
+  expenses: "Expense Invoice",
+};
+
+const sourceIcons: Record<string, React.ReactNode> = {
+  manual: <Receipt className="h-3 w-3" />,
+  dealers: <Users className="h-3 w-3" />,
+  sales: <ShoppingCart className="h-3 w-3" />,
+  purchases: <Package className="h-3 w-3" />,
+  expenses: <Receipt className="h-3 w-3" />,
 };
 
 export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
@@ -195,7 +220,17 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             </div>
           </div>
 
-          <h3 className="text-2xl font-bold text-center text-primary">INVOICE</h3>
+          {/* Invoice Type Badge */}
+          <div className="flex items-center justify-center gap-2">
+            <h3 className="text-2xl font-bold text-primary">INVOICE</h3>
+            <Badge
+              variant="outline"
+              className={`${sourceColors[invoice.source || "manual"]} flex items-center gap-1`}
+            >
+              {sourceIcons[invoice.source || "manual"]}
+              {sourceLabels[invoice.source || "manual"]}
+            </Badge>
+          </div>
 
           <div className="flex justify-between">
             <div>
