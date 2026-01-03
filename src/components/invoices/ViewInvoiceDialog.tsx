@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, Download, Phone, Mail, MapPin, Users, ShoppingCart, Package, Receipt } from "lucide-react";
+import { Eye, Download, Printer, Phone, Mail, MapPin, Users, ShoppingCart, Package, Receipt, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -11,8 +11,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { useInvoices, Invoice, InvoiceItem } from "@/hooks/useInvoices";
+import { useInvoicePayments, InvoicePayment } from "@/hooks/useInvoicePayments";
+import { AddInvoicePaymentDialog } from "./AddInvoicePaymentDialog";
 import logo from "@/assets/logo.png";
 
 const COMPANY_CONTACT = {
@@ -20,6 +30,7 @@ const COMPANY_CONTACT = {
   email: "Contact@Agraicylifesciences.com",
   address: "Office #2 Abubakar Plaza, KSK Pakistan",
 };
+
 interface ViewInvoiceDialogProps {
   invoice: Invoice;
 }
@@ -42,7 +53,7 @@ const sourceColors: Record<string, string> = {
 
 const sourceLabels: Record<string, string> = {
   manual: "Manual Invoice",
-  dealers: "Dealer Invoice",
+  dealers: "Dealer Credit Invoice",
   sales: "Sales Invoice",
   purchases: "Purchase Invoice",
   expenses: "Expense Invoice",
@@ -62,6 +73,10 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
   const [loading, setLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const { getInvoiceWithItems } = useInvoices();
+  const { payments, deletePayment, isDeleting } = useInvoicePayments(invoice.id);
+
+  const paidAmount = (invoice as { paid_amount?: number }).paid_amount || 0;
+  const remainingAmount = invoice.total_amount - paidAmount;
 
   useEffect(() => {
     if (open) {
@@ -72,19 +87,14 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
     }
   }, [open, invoice.id]);
 
-  const handlePrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
-
-    const printWindow = window.open("", "", "width=800,height=600");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
+  const generatePrintContent = () => {
+    const invoiceSource = invoice.source || "manual";
+    return `
       <html>
         <head>
-          <title>Invoice ${invoice.invoice_number}</title>
+          <title>${sourceLabels[invoiceSource]} - ${invoice.invoice_number}</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
+            body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
             .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #2d5a27; }
             .logo-section { display: flex; align-items: center; gap: 12px; }
             .logo { height: 80px; width: auto; }
@@ -92,6 +102,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             .company-contact { text-align: right; font-size: 12px; color: #666; }
             .company-contact p { margin: 4px 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
             .invoice-title { font-size: 28px; font-weight: bold; color: #2d5a27; margin: 20px 0; text-align: center; }
+            .invoice-type { background: #e8f5e9; color: #2d5a27; padding: 6px 16px; border-radius: 20px; font-size: 14px; display: inline-block; margin: 0 auto 20px; }
             .details { display: flex; justify-content: space-between; margin-bottom: 30px; }
             .details-section { }
             .details-section h3 { font-size: 14px; color: #666; margin-bottom: 5px; }
@@ -105,9 +116,12 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             .status { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
             .status-paid { background: #d4edda; color: #155724; }
             .status-unpaid { background: #fff3cd; color: #856404; }
+            .status-partial { background: #cce5ff; color: #004085; }
             .status-overdue { background: #f8d7da; color: #721c24; }
             .status-cancelled { background: #e9ecef; color: #6c757d; }
             .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666; }
+            .payment-section { margin-top: 30px; }
+            .payment-section h4 { color: #2d5a27; margin-bottom: 10px; }
           </style>
         </head>
         <body>
@@ -122,7 +136,9 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
               <p>📍 ${COMPANY_CONTACT.address}</p>
             </div>
           </div>
-          <div class="invoice-title">INVOICE</div>
+          <div style="text-align: center;">
+            <div class="invoice-title">${sourceLabels[invoiceSource].toUpperCase()}</div>
+          </div>
           <div class="details">
             <div class="details-section">
               <h3>Bill To:</h3>
@@ -149,36 +165,89 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
               </tr>
             </thead>
             <tbody>
-              ${items
-                .map(
-                  (item) => `
+              ${items.map((item) => `
                 <tr>
                   <td>${item.products?.name || item.description || ""}</td>
                   <td>${item.quantity}</td>
                   <td>PKR ${item.unit_price.toLocaleString()}</td>
                   <td>PKR ${item.total.toLocaleString()}</td>
                 </tr>
-              `
-                )
-                .join("")}
+              `).join("")}
             </tbody>
           </table>
           <div class="totals">
             <p>Subtotal: PKR ${invoice.subtotal.toLocaleString()}</p>
             <p>Tax (${invoice.tax_rate}%): PKR ${invoice.tax_amount.toLocaleString()}</p>
             <p class="total-row">Total: PKR ${invoice.total_amount.toLocaleString()}</p>
+            <p style="color: green;">Paid: PKR ${paidAmount.toLocaleString()}</p>
+            <p style="color: ${remainingAmount > 0 ? 'orange' : 'green'}; font-weight: bold;">
+              Remaining: PKR ${remainingAmount.toLocaleString()}
+            </p>
           </div>
-          ${invoice.notes ? `<div style="margin-top: 30px;"><strong>Notes:</strong><p>${invoice.notes}</p></div>` : ""}
+          ${payments && payments.length > 0 ? `
+            <div class="payment-section">
+              <h4>Payment History</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${payments.map(p => `
+                    <tr>
+                      <td>${format(new Date(p.payment_date), "MMM dd, yyyy")}</td>
+                      <td>${p.payment_method}</td>
+                      <td>${p.reference_number || "-"}</td>
+                      <td>PKR ${p.amount.toLocaleString()}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          ` : ""}
           <div class="footer">
             <p>Thank you for your business!</p>
             <p>${COMPANY_CONTACT.phone} | ${COMPANY_CONTACT.email} | ${COMPANY_CONTACT.address}</p>
           </div>
         </body>
       </html>
-    `);
+    `;
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open("", "", "width=800,height=600");
+    if (!printWindow) return;
+    printWindow.document.write(generatePrintContent());
     printWindow.document.close();
     printWindow.print();
   };
+
+  const handleDownload = () => {
+    const printWindow = window.open("", "", "width=800,height=600");
+    if (!printWindow) return;
+    printWindow.document.write(generatePrintContent());
+    printWindow.document.close();
+    // Use print dialog with "Save as PDF" option
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  };
+
+  const handleDeletePayment = async (payment: InvoicePayment) => {
+    if (confirm("Are you sure you want to delete this payment?")) {
+      await deletePayment({
+        paymentId: payment.id,
+        invoiceId: invoice.id,
+        amount: payment.amount,
+      });
+    }
+  };
+
+  const invoiceSource = invoice.source || "manual";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -187,14 +256,28 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
           <Eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle>Invoice {invoice.invoice_number}</DialogTitle>
-            <Button variant="outline" size="sm" onClick={handlePrint}>
-              <Download className="h-4 w-4 mr-2" />
-              Print / PDF
-            </Button>
+            <DialogTitle className="flex items-center gap-2">
+              {sourceLabels[invoiceSource]} - {invoice.invoice_number}
+            </DialogTitle>
+            <div className="flex gap-2">
+              <AddInvoicePaymentDialog
+                invoiceId={invoice.id}
+                invoiceNumber={invoice.invoice_number}
+                totalAmount={invoice.total_amount}
+                paidAmount={paidAmount}
+              />
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -220,15 +303,15 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             </div>
           </div>
 
-          {/* Invoice Type Badge */}
-          <div className="flex items-center justify-center gap-2">
-            <h3 className="text-2xl font-bold text-primary">INVOICE</h3>
+          {/* Invoice Title with Type */}
+          <div className="flex flex-col items-center gap-2">
+            <h3 className="text-2xl font-bold text-primary">{sourceLabels[invoiceSource].toUpperCase()}</h3>
             <Badge
               variant="outline"
-              className={`${sourceColors[invoice.source || "manual"]} flex items-center gap-1`}
+              className={`${sourceColors[invoiceSource]} flex items-center gap-1`}
             >
-              {sourceIcons[invoice.source || "manual"]}
-              {sourceLabels[invoice.source || "manual"]}
+              {sourceIcons[invoiceSource]}
+              {sourceLabels[invoiceSource]}
             </Badge>
           </div>
 
@@ -264,33 +347,35 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
 
           <Separator />
 
+          {/* Items Table */}
           {loading ? (
             <p className="text-center text-muted-foreground py-4">Loading items...</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 text-sm font-medium text-muted-foreground">Item</th>
-                  <th className="text-right py-2 text-sm font-medium text-muted-foreground">Qty</th>
-                  <th className="text-right py-2 text-sm font-medium text-muted-foreground">Unit Price</th>
-                  <th className="text-right py-2 text-sm font-medium text-muted-foreground">Total</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Item</TableHead>
+                  <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Unit Price</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {items.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="py-2">{item.products?.name || item.description}</td>
-                    <td className="py-2 text-right">{item.quantity}</td>
-                    <td className="py-2 text-right">{formatCurrency(item.unit_price)}</td>
-                    <td className="py-2 text-right">{formatCurrency(item.total)}</td>
-                  </tr>
+                  <TableRow key={item.id}>
+                    <TableCell>{item.products?.name || item.description}</TableCell>
+                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.total)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
 
+          {/* Totals */}
           <div className="flex justify-end">
-            <div className="w-64 space-y-2">
+            <div className="w-72 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(invoice.subtotal)}</span>
@@ -304,13 +389,55 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
                 <span>Total</span>
                 <span>{formatCurrency(invoice.total_amount)}</span>
               </div>
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Paid</span>
+                <span>{formatCurrency(paidAmount)}</span>
+              </div>
+              <div className={`flex justify-between font-semibold ${remainingAmount > 0 ? "text-orange-600" : "text-green-600"}`}>
+                <span>Remaining</span>
+                <span>{formatCurrency(remainingAmount)}</span>
+              </div>
             </div>
           </div>
 
-          {invoice.notes && (
-            <div className="pt-4 border-t">
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">Notes</h4>
-              <p className="text-sm">{invoice.notes}</p>
+          {/* Payment History Table */}
+          {payments && payments.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-semibold text-lg">Payment History</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Reference</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell>{format(new Date(payment.payment_date), "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="capitalize">{payment.payment_method.replace("_", " ")}</TableCell>
+                      <TableCell>{payment.reference_number || "-"}</TableCell>
+                      <TableCell className="text-right font-medium text-green-600">
+                        {formatCurrency(payment.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => handleDeletePayment(payment)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>

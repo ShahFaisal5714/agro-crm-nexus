@@ -25,6 +25,7 @@ import { NewInvoiceDialog } from "@/components/invoices/NewInvoiceDialog";
 import { EditInvoiceDialog } from "@/components/invoices/EditInvoiceDialog";
 import { DeleteInvoiceDialog } from "@/components/invoices/DeleteInvoiceDialog";
 import { ViewInvoiceDialog } from "@/components/invoices/ViewInvoiceDialog";
+import { BulkInvoiceDialog } from "@/components/dealers/BulkInvoiceDialog";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO } from "date-fns";
 import { Loader2, X, Filter, ShoppingCart, Users, Package, Receipt } from "lucide-react";
@@ -150,7 +151,10 @@ const Invoices = () => {
               Manage invoices and track payments
             </p>
           </div>
-          <NewInvoiceDialog />
+          <div className="flex gap-2">
+            <BulkInvoiceDialog />
+            <NewInvoiceDialog />
+          </div>
         </div>
 
         {/* Filters */}
