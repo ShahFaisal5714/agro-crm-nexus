@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddCreditDialog } from "./AddCreditDialog";
 import { AddDealerPaymentDialog } from "./AddDealerPaymentDialog";
+import { CreateInvoiceFromCreditsDialog } from "./CreateInvoiceFromCreditsDialog";
 
 interface ViewDealerCreditsDialogProps {
   dealerId: string;
@@ -35,7 +36,6 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const { credits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
 
   const handleExportDetailedCSV = () => {
-    // Combine credits and payments into a single transaction list
     const transactions = [
       ...credits.map((c) => ({
         date: c.credit_date,
@@ -153,6 +153,15 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
           <div className="flex flex-wrap gap-2">
             <AddCreditDialog dealerId={dealerId} dealerName={dealerName} />
             <AddDealerPaymentDialog dealerId={dealerId} dealerName={dealerName} />
+            <CreateInvoiceFromCreditsDialog
+              dealerId={dealerId}
+              dealerName={dealerName}
+              credits={credits}
+              payments={payments}
+              totalCredit={totalCredit}
+              totalPaid={totalPaid}
+              remaining={remaining}
+            />
             <Button variant="outline" size="sm" onClick={handleExportDetailedCSV}>
               <FileSpreadsheet className="h-4 w-4 mr-2" />
               Export CSV

@@ -15,6 +15,7 @@ export interface Invoice {
   total_amount: number;
   status: string;
   notes?: string;
+  source?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -95,6 +96,7 @@ export const useInvoices = () => {
       taxRate,
       notes,
       items,
+      source = "manual",
     }: {
       dealerId: string;
       salesOrderId?: string;
@@ -103,6 +105,7 @@ export const useInvoices = () => {
       taxRate: number;
       notes?: string;
       items: InvoiceItem[];
+      source?: string;
     }) => {
       const { data: invoiceNum, error: invoiceNumError } = await supabase.rpc(
         "generate_invoice_number"
@@ -130,6 +133,7 @@ export const useInvoices = () => {
           total_amount: totalAmount,
           notes,
           created_by: user.id,
+          source,
         })
         .select()
         .single();

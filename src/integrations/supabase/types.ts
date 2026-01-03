@@ -297,6 +297,7 @@ export type Database = {
           invoice_number: string
           notes: string | null
           sales_order_id: string | null
+          source: string | null
           status: string
           subtotal: number
           tax_amount: number
@@ -314,6 +315,7 @@ export type Database = {
           invoice_number: string
           notes?: string | null
           sales_order_id?: string | null
+          source?: string | null
           status?: string
           subtotal?: number
           tax_amount?: number
@@ -331,6 +333,7 @@ export type Database = {
           invoice_number?: string
           notes?: string | null
           sales_order_id?: string | null
+          source?: string | null
           status?: string
           subtotal?: number
           tax_amount?: number
