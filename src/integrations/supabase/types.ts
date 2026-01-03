@@ -286,6 +286,50 @@ export type Database = {
           },
         ]
       }
+      invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          reference_number: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_number?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           created_at: string
@@ -296,6 +340,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           notes: string | null
+          paid_amount: number
           sales_order_id: string | null
           source: string | null
           status: string
@@ -314,6 +359,7 @@ export type Database = {
           invoice_date?: string
           invoice_number: string
           notes?: string | null
+          paid_amount?: number
           sales_order_id?: string | null
           source?: string | null
           status?: string
@@ -332,6 +378,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string
           notes?: string | null
+          paid_amount?: number
           sales_order_id?: string | null
           source?: string | null
           status?: string

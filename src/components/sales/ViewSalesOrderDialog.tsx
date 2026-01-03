@@ -20,7 +20,8 @@ import { Eye, FileText, Loader2 } from "lucide-react";
 import { SalesOrder, useSalesOrders, SalesOrderItemWithProduct } from "@/hooks/useSalesOrders";
 import { useInvoices } from "@/hooks/useInvoices";
 import { formatCurrency } from "@/lib/utils";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
+import { CreateInvoiceFromSalesDialog } from "./CreateInvoiceFromSalesDialog";
 
 interface ViewSalesOrderDialogProps {
   order: SalesOrder;
@@ -37,9 +38,8 @@ export const ViewSalesOrderDialog = ({ order }: ViewSalesOrderDialogProps) => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<SalesOrderItemWithProduct[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
-  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const { getOrderWithItems } = useSalesOrders();
-  const { createInvoice, invoices } = useInvoices();
+  const { invoices } = useInvoices();
 
   // Check if invoice already exists for this order
   const existingInvoice = invoices?.find((inv) => inv.sales_order_id === order.id);
@@ -59,35 +59,6 @@ export const ViewSalesOrderDialog = ({ order }: ViewSalesOrderDialogProps) => {
       console.error("Failed to load order items:", error);
     } finally {
       setIsLoadingItems(false);
-    }
-  };
-
-  const handleCreateInvoice = async () => {
-    setIsCreatingInvoice(true);
-    try {
-      const invoiceItems = items.map((item) => ({
-        product_id: item.product_id,
-        description: item.products?.name || "",
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total: item.total,
-      }));
-
-      await createInvoice({
-        dealerId: order.dealer_id,
-        salesOrderId: order.id,
-        invoiceDate: format(new Date(), "yyyy-MM-dd"),
-        dueDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
-        taxRate: 0,
-        notes: `Invoice created from Sales Order ${order.order_number}`,
-        items: invoiceItems,
-      });
-
-      setOpen(false);
-    } catch (error) {
-      console.error("Failed to create invoice:", error);
-    } finally {
-      setIsCreatingInvoice(false);
     }
   };
 
@@ -192,22 +163,11 @@ export const ViewSalesOrderDialog = ({ order }: ViewSalesOrderDialogProps) => {
                 <span>Invoice {existingInvoice.invoice_number} already created</span>
               </div>
             ) : (
-              <Button
-                onClick={handleCreateInvoice}
-                disabled={isCreatingInvoice || items.length === 0}
-              >
-                {isCreatingInvoice ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Create Invoice
-                  </>
-                )}
-              </Button>
+              <CreateInvoiceFromSalesDialog
+                order={order}
+                items={items}
+                existingInvoice={!!existingInvoice}
+              />
             )}
           </div>
         </div>
