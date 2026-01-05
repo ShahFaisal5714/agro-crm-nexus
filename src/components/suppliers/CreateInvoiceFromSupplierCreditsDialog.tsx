@@ -10,12 +10,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Loader2 } from "lucide-react";
-import { useInvoices } from "@/hooks/useInvoices";
-import { DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
-import { format } from "date-fns";
-import { formatCurrency } from "@/lib/utils";
-import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -24,33 +25,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FileText, Loader2 } from "lucide-react";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useDealers } from "@/hooks/useDealers";
+import { useSupplierCreditHistory, SupplierCredit } from "@/hooks/useSupplierCredits";
+import { format, addDays } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
-interface CreateInvoiceFromCreditsDialogProps {
-  dealerId: string;
-  dealerName: string;
-  credits: DealerCredit[];
-  payments: DealerPayment[];
-  totalCredit: number;
-  totalPaid: number;
-  remaining: number;
+interface CreateInvoiceFromSupplierCreditsDialogProps {
+  supplierId: string;
+  supplierName: string;
 }
 
-export const CreateInvoiceFromCreditsDialog = ({
-  dealerId,
-  dealerName,
-  credits,
-  payments,
-  totalCredit,
-  totalPaid,
-  remaining,
-}: CreateInvoiceFromCreditsDialogProps) => {
+export const CreateInvoiceFromSupplierCreditsDialog = ({
+  supplierId,
+  supplierName,
+}: CreateInvoiceFromSupplierCreditsDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedDealerId, setSelectedDealerId] = useState<string>("");
   const { createInvoice } = useInvoices();
-  
+  const { dealers } = useDealers();
+  const { credits, payments, totalCredit, totalPaid, remaining } = useSupplierCreditHistory(supplierId);
+
   const [formData, setFormData] = useState({
     invoice_date: format(new Date(), "yyyy-MM-dd"),
-    due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+    due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
     tax_rate: 0,
     notes: "",
   });
@@ -58,11 +59,15 @@ export const CreateInvoiceFromCreditsDialog = ({
   const subtotal = totalCredit;
   const taxAmount = (subtotal * formData.tax_rate) / 100;
   const total = subtotal + taxAmount;
-  const invoiceAmount = total - totalPaid;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!selectedDealerId) {
+      toast.error("Please select a dealer");
+      return;
+    }
+
     if (credits.length === 0) {
       toast.error("No credits to invoice");
       return;
@@ -71,35 +76,34 @@ export const CreateInvoiceFromCreditsDialog = ({
     setIsCreating(true);
 
     try {
-      // Create invoice items - use credits with products
+      // Create invoice items from credits that have products
       const invoiceItems = credits
-        .filter(c => c.product_id)
-        .map(c => ({
+        .filter((c) => c.product_id)
+        .map((c) => ({
           product_id: c.product_id!,
           quantity: 1,
           unit_price: c.amount,
           total: c.amount,
+          description: `From supplier ${supplierName}: ${c.description || ""}`,
         }));
 
-      // If no products, we need at least one item
-      if (invoiceItems.length === 0 && credits.length > 0) {
-        toast.error("Credits must have associated products to create an invoice. Please add credits with products.");
+      if (invoiceItems.length === 0) {
+        toast.error("Credits must have associated products to create an invoice");
         setIsCreating(false);
         return;
       }
 
       await createInvoice({
-        dealerId,
+        dealerId: selectedDealerId,
         invoiceDate: formData.invoice_date,
         dueDate: formData.due_date,
         taxRate: formData.tax_rate,
-        notes: formData.notes || undefined,
+        notes: formData.notes || `Invoice from supplier credit: ${supplierName}`,
         items: invoiceItems,
-        source: "dealers",
-        paidAmount: totalPaid, // Store the already paid amount
+        source: "purchases",
       });
 
-      toast.success("Invoice created successfully from dealer credits");
+      toast.success("Invoice created successfully from supplier credits");
       setOpen(false);
     } catch (error) {
       console.error("Error creating invoice:", error);
@@ -119,7 +123,7 @@ export const CreateInvoiceFromCreditsDialog = ({
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Invoice from Credits - {dealerName}</DialogTitle>
+          <DialogTitle>Create Invoice from Supplier Credits - {supplierName}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -134,9 +138,26 @@ export const CreateInvoiceFromCreditsDialog = ({
               <p className="text-xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Invoice Amount</p>
-              <p className="text-xl font-bold text-primary">{formatCurrency(invoiceAmount > 0 ? invoiceAmount : 0)}</p>
+              <p className="text-sm text-muted-foreground">Remaining</p>
+              <p className="text-xl font-bold text-orange-600">{formatCurrency(remaining)}</p>
             </div>
+          </div>
+
+          {/* Dealer Selection */}
+          <div className="space-y-2">
+            <Label>Select Dealer to Bill</Label>
+            <Select value={selectedDealerId} onValueChange={setSelectedDealerId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a dealer" />
+              </SelectTrigger>
+              <SelectContent>
+                {dealers?.map((dealer) => (
+                  <SelectItem key={dealer.id} value={dealer.id}>
+                    {dealer.dealer_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Credit Details */}
@@ -216,7 +237,7 @@ export const CreateInvoiceFromCreditsDialog = ({
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isCreating || credits.length === 0}>
+            <Button type="submit" disabled={isCreating || credits.length === 0 || !selectedDealerId}>
               {isCreating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

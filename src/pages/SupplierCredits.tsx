@@ -21,6 +21,7 @@ import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Download, FileSpreads
 import { ViewSupplierCreditsDialog } from "@/components/suppliers/ViewSupplierCreditsDialog";
 import { AddSupplierCreditDialog } from "@/components/suppliers/AddSupplierCreditDialog";
 import { AddSupplierPaymentDialog } from "@/components/suppliers/AddSupplierPaymentDialog";
+import { CreateInvoiceFromSupplierCreditsDialog } from "@/components/suppliers/CreateInvoiceFromSupplierCreditsDialog";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 
 const SupplierCredits = () => {
@@ -393,6 +394,10 @@ const SupplierCredits = () => {
                             supplierName={summary.supplier_name}
                           />
                           <AddSupplierPaymentDialog
+                            supplierId={summary.supplier_id}
+                            supplierName={summary.supplier_name}
+                          />
+                          <CreateInvoiceFromSupplierCreditsDialog
                             supplierId={summary.supplier_id}
                             supplierName={summary.supplier_name}
                           />
