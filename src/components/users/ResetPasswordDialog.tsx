@@ -77,7 +77,8 @@ export const ResetPasswordDialog = ({
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      toast.error(error.message || "Failed to reset password");
+      console.error("Failed to reset password:", error);
+      toast.error("Failed to reset password. Please try again.");
     } finally {
       setLoading(false);
     }

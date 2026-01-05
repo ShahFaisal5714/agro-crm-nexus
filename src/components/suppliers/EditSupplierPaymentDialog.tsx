@@ -67,7 +67,8 @@ export const EditSupplierPaymentDialog = ({ payment, open, onOpenChange }: EditS
       toast.success("Payment updated successfully");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Failed to update payment:", error);
+      toast.error("Failed to update payment. Please try again.");
     } finally {
       setIsUpdating(false);
     }

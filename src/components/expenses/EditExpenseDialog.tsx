@@ -52,7 +52,8 @@ export const EditExpenseDialog = ({ expense, open, onOpenChange }: EditExpenseDi
       .eq("id", expense.id);
 
     if (error) {
-      toast.error("Failed to update expense: " + error.message);
+      console.error("Failed to update expense:", error);
+      toast.error("Failed to update expense. Please try again.");
     } else {
       toast.success("Expense updated successfully");
       queryClient.invalidateQueries({ queryKey: ["expenses"] });

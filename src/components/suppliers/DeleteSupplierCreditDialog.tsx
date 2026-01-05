@@ -44,7 +44,8 @@ export const DeleteSupplierCreditDialog = ({
       toast.success("Credit deleted successfully");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Failed to delete credit:", error);
+      toast.error("Failed to delete credit. Please try again.");
     } finally {
       setIsDeleting(false);
     }

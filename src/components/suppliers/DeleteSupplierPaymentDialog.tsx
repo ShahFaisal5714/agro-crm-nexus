@@ -44,7 +44,8 @@ export const DeleteSupplierPaymentDialog = ({
       toast.success("Payment deleted successfully");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Failed to delete payment:", error);
+      toast.error("Failed to delete payment. Please try again.");
     } finally {
       setIsDeleting(false);
     }
