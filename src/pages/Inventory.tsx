@@ -166,6 +166,7 @@ const Inventory = () => {
                   <TableRow>
                     <TableHead>SKU</TableHead>
                     <TableHead>Product Name</TableHead>
+                    <TableHead>Pack Size</TableHead>
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Stock</TableHead>
@@ -184,6 +185,13 @@ const Inventory = () => {
                       <TableRow key={product.id}>
                         <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>
+                          {product.pack_size ? (
+                            <Badge variant="secondary">{product.pack_size}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>{formatCurrency(product.unit_price)}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{product.category?.name || "Uncategorized"}</Badge>

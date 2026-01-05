@@ -95,6 +95,7 @@ export const ViewPurchaseDialog = ({ purchase }: ViewPurchaseDialogProps) => {
         taxRate: 0,
         notes: `Invoice created from Purchase Order ${purchase.purchase_number}`,
         items: invoiceItems,
+        source: "purchases",
       });
 
       setOpen(false);

@@ -19,6 +19,7 @@ import { SalesPerformanceChart } from "@/components/dashboard/SalesPerformanceCh
 import { SalesVsExpensesChart } from "@/components/dashboard/SalesVsExpensesChart";
 import { PendingPoliciesWidget } from "@/components/dashboard/PendingPoliciesWidget";
 import { SupplierPaymentsDueWidget } from "@/components/dashboard/SupplierPaymentsDueWidget";
+import { DealerCreditsWidget } from "@/components/dashboard/DealerCreditsWidget";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -196,6 +197,10 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PendingPoliciesWidget policies={policies} />
           <SupplierPaymentsDueWidget />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <DealerCreditsWidget />
         </div>
       </div>
     </DashboardLayout>

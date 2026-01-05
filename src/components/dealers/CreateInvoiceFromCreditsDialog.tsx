@@ -57,7 +57,8 @@ export const CreateInvoiceFromCreditsDialog = ({
 
   const subtotal = totalCredit;
   const taxAmount = (subtotal * formData.tax_rate) / 100;
-  const total = subtotal + taxAmount - totalPaid;
+  const total = subtotal + taxAmount;
+  const invoiceAmount = total - totalPaid;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +96,7 @@ export const CreateInvoiceFromCreditsDialog = ({
         notes: formData.notes || undefined,
         items: invoiceItems,
         source: "dealers",
+        paidAmount: totalPaid, // Store the already paid amount
       });
 
       toast.success("Invoice created successfully from dealer credits");
