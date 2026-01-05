@@ -8,19 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { DollarSign, TrendingUp, Calendar as CalendarIcon, Edit, Trash2, FileText, Search, X } from "lucide-react";
+import { DollarSign, TrendingUp, Calendar as CalendarIcon, Edit, Trash2, Eye, Search, X } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { EditExpenseDialog } from "@/components/expenses/EditExpenseDialog";
 import { DeleteExpenseDialog } from "@/components/expenses/DeleteExpenseDialog";
-import { NewInvoiceDialog } from "@/components/invoices/NewInvoiceDialog";
+import { ViewExpenseDialog } from "@/components/expenses/ViewExpenseDialog";
 import { format } from "date-fns";
 
 const Expenses = () => {
-  const { expenses, isLoading } = useExpenses();
+const { expenses, isLoading } = useExpenses();
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
+  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,10 +83,7 @@ const Expenses = () => {
               Track and categorize business expenses
             </p>
           </div>
-          <div className="flex gap-2">
-            <NewInvoiceDialog />
-            <AddExpenseDialog />
-          </div>
+          <AddExpenseDialog />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -219,6 +217,13 @@ const Expenses = () => {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => setViewingExpense(expense)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setEditingExpense(expense)}
                           >
                             <Edit className="h-4 w-4" />
@@ -253,6 +258,14 @@ const Expenses = () => {
             expense={deletingExpense}
             open={!!deletingExpense}
             onOpenChange={(open) => !open && setDeletingExpense(null)}
+          />
+        )}
+
+        {viewingExpense && (
+          <ViewExpenseDialog
+            expense={viewingExpense}
+            open={!!viewingExpense}
+            onOpenChange={(open) => !open && setViewingExpense(null)}
           />
         )}
       </div>

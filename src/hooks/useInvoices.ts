@@ -98,6 +98,7 @@ export const useInvoices = () => {
       notes,
       items,
       source = "manual",
+      paidAmount = 0,
     }: {
       dealerId: string;
       salesOrderId?: string;
@@ -107,6 +108,7 @@ export const useInvoices = () => {
       notes?: string;
       items: InvoiceItem[];
       source?: string;
+      paidAmount?: number;
     }) => {
       const { data: invoiceNum, error: invoiceNumError } = await supabase.rpc(
         "generate_invoice_number"
@@ -120,6 +122,14 @@ export const useInvoices = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Determine status based on paid amount
+      let status = "unpaid";
+      if (paidAmount >= totalAmount) {
+        status = "paid";
+      } else if (paidAmount > 0) {
+        status = "partial";
+      }
+
       const { data: invoice, error: invoiceError } = await supabase
         .from("invoices")
         .insert({
@@ -132,6 +142,8 @@ export const useInvoices = () => {
           tax_rate: taxRate,
           tax_amount: taxAmount,
           total_amount: totalAmount,
+          paid_amount: paidAmount,
+          status,
           notes,
           created_by: user.id,
           source,

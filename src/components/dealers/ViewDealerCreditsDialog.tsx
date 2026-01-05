@@ -8,8 +8,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Eye, Download, FileSpreadsheet } from "lucide-react";
-import { useDealerCreditHistory } from "@/hooks/useDealerCredits";
+import { Eye, Download, FileSpreadsheet, Edit, Trash2 } from "lucide-react";
+import { useDealerCreditHistory, DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
@@ -25,6 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddCreditDialog } from "./AddCreditDialog";
 import { AddDealerPaymentDialog } from "./AddDealerPaymentDialog";
 import { CreateInvoiceFromCreditsDialog } from "./CreateInvoiceFromCreditsDialog";
+import { EditCreditDialog } from "./EditCreditDialog";
+import { EditPaymentDialog } from "./EditPaymentDialog";
+import { DeleteCreditDialog } from "./DeleteCreditDialog";
+import { DeletePaymentDialog } from "./DeletePaymentDialog";
 
 interface ViewDealerCreditsDialogProps {
   dealerId: string;
@@ -33,6 +37,10 @@ interface ViewDealerCreditsDialogProps {
 
 export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCreditsDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [editingCredit, setEditingCredit] = useState<DealerCredit | null>(null);
+  const [editingPayment, setEditingPayment] = useState<DealerPayment | null>(null);
+  const [deletingCredit, setDeletingCredit] = useState<DealerCredit | null>(null);
+  const [deletingPayment, setDeletingPayment] = useState<DealerPayment | null>(null);
   const { credits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
 
   const handleExportDetailedCSV = () => {
@@ -194,6 +202,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
                       <TableHead>Method</TableHead>
                       <TableHead>Reference</TableHead>
                       <TableHead>Notes</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -209,8 +218,28 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
                           {payment.payment_method.replace("_", " ")}
                         </TableCell>
                         <TableCell>{payment.reference_number || "-"}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">
+                        <TableCell className="max-w-[120px] truncate">
                           {payment.notes || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setEditingPayment(payment)}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setDeletingPayment(payment)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -232,6 +261,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
                       <TableHead>Amount</TableHead>
                       <TableHead>Product</TableHead>
                       <TableHead>Description</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -250,8 +280,28 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
                             "-"
                           )}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
+                        <TableCell className="max-w-[150px] truncate">
                           {credit.description || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setEditingCredit(credit)}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setDeletingCredit(credit)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -262,6 +312,38 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
           </Tabs>
         </div>
       </DialogContent>
+
+      {editingCredit && (
+        <EditCreditDialog
+          credit={editingCredit}
+          open={!!editingCredit}
+          onOpenChange={(open) => !open && setEditingCredit(null)}
+        />
+      )}
+
+      {editingPayment && (
+        <EditPaymentDialog
+          payment={editingPayment}
+          open={!!editingPayment}
+          onOpenChange={(open) => !open && setEditingPayment(null)}
+        />
+      )}
+
+      {deletingCredit && (
+        <DeleteCreditDialog
+          credit={deletingCredit}
+          open={!!deletingCredit}
+          onOpenChange={(open) => !open && setDeletingCredit(null)}
+        />
+      )}
+
+      {deletingPayment && (
+        <DeletePaymentDialog
+          payment={deletingPayment}
+          open={!!deletingPayment}
+          onOpenChange={(open) => !open && setDeletingPayment(null)}
+        />
+      )}
     </Dialog>
   );
 };

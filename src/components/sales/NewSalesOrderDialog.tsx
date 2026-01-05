@@ -226,7 +226,7 @@ export const NewSalesOrderDialog = () => {
                       <SelectContent>
                         {products.map((product) => (
                           <SelectItem key={product.id} value={product.id}>
-                            {product.name} - {formatCurrency(product.unit_price)}
+                            {product.name} {product.pack_size ? `(${product.pack_size})` : ""} - {formatCurrency(product.unit_price)}
                           </SelectItem>
                         ))}
                       </SelectContent>
