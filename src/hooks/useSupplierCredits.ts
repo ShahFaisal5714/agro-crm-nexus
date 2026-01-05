@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { handleOperationError } from "@/lib/errorHandler";
 
 export interface SupplierCredit {
   id: string;
@@ -136,7 +137,7 @@ export const useSupplierCredits = () => {
       toast.success("Credit added successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      handleOperationError(error, "Failed to add credit. Please try again.");
     },
   });
 
@@ -164,7 +165,7 @@ export const useSupplierCredits = () => {
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      handleOperationError(error, "Failed to record payment. Please try again.");
     },
   });
 

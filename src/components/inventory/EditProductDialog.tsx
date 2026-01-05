@@ -49,7 +49,8 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
       .eq("id", product.id);
 
     if (error) {
-      toast.error("Failed to update product: " + error.message);
+      console.error("Failed to update product:", error);
+      toast.error("Failed to update product. Please try again.");
     } else {
       toast.success("Product updated successfully");
       queryClient.invalidateQueries({ queryKey: ["products"] });

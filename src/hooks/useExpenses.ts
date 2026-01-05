@@ -56,8 +56,8 @@ export const useExpenses = () => {
       toast.success("Expense added successfully");
     },
     onError: (error) => {
-      toast.error("Failed to add expense");
-      console.error(error);
+      console.error("Failed to add expense:", error);
+      toast.error("Failed to add expense. Please try again.");
     },
   });
 

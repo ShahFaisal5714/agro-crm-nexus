@@ -32,8 +32,8 @@ export const DeleteDealerDialog = ({ dealerId, dealerName }: DeleteDealerDialogP
     const { error } = await supabase.from("dealers").delete().eq("id", dealerId);
 
     if (error) {
-      toast.error("Failed to delete dealer");
-      console.error(error);
+      console.error("Failed to delete dealer:", error);
+      toast.error("Failed to delete dealer. Please try again.");
       setIsDeleting(false);
       return;
     }

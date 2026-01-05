@@ -74,7 +74,7 @@ export const CreateInvoiceFromPolicyDialog = ({
       setOpen(false);
     } catch (error: any) {
       console.error("Error creating invoice:", error);
-      toast.error(error.message || "Failed to create invoice");
+      toast.error("Failed to create invoice. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

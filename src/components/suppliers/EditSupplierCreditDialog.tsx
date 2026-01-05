@@ -69,7 +69,8 @@ export const EditSupplierCreditDialog = ({ credit, open, onOpenChange }: EditSup
       toast.success("Credit updated successfully");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Failed to update credit:", error);
+      toast.error("Failed to update credit. Please try again.");
     } finally {
       setIsUpdating(false);
     }

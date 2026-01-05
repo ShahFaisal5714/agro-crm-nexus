@@ -59,7 +59,13 @@ export const ChangeEmailDialog = ({
       setConfirmEmail("");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error("Failed to change email:", error);
+      // Only show specific message for validation errors we control
+      if (error.message === "Emails do not match" || error.message === "Invalid email format") {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to change email. Please try again.");
+      }
     },
   });
 

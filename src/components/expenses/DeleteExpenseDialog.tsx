@@ -29,7 +29,8 @@ export const DeleteExpenseDialog = ({ expense, open, onOpenChange }: DeleteExpen
       .eq("id", expense.id);
 
     if (error) {
-      toast.error("Failed to delete expense: " + error.message);
+      console.error("Failed to delete expense:", error);
+      toast.error("Failed to delete expense. Please try again.");
     } else {
       toast.success("Expense deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["expenses"] });

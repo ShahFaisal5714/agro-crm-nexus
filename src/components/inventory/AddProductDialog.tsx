@@ -37,7 +37,8 @@ export const AddProductDialog = () => {
     const { error } = await supabase.from("products").insert(productData);
 
     if (error) {
-      toast.error("Failed to add product: " + error.message);
+      console.error("Failed to add product:", error);
+      toast.error("Failed to add product. Please try again.");
     } else {
       toast.success("Product added successfully");
       queryClient.invalidateQueries({ queryKey: ["products"] });

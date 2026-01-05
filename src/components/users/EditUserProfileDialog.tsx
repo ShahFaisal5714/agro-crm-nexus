@@ -89,7 +89,8 @@ export const EditUserProfileDialog = ({
       toast.success("Profile updated successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile. Please try again.");
     },
   });
 
@@ -126,7 +127,8 @@ export const EditUserProfileDialog = ({
       toast.success("Role updated successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error("Failed to update role:", error);
+      toast.error("Failed to update role. Please try again.");
     },
   });
 
@@ -151,7 +153,13 @@ export const EditUserProfileDialog = ({
       setConfirmPassword("");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error("Failed to reset password:", error);
+      // Only show specific message for validation errors we control
+      if (error.message === "Passwords do not match" || error.message === "Password is too weak") {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to reset password. Please try again.");
+      }
     },
   });
 

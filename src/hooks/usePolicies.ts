@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { handleOperationError } from "@/lib/errorHandler";
 
 export interface PolicyItem {
   id?: string;
@@ -144,7 +145,7 @@ export const usePolicies = () => {
       toast.success("Policy created successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      handleOperationError(error, "Failed to create policy. Please try again.");
     },
   });
 
@@ -208,7 +209,7 @@ export const usePolicies = () => {
       toast.success("Policy updated successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      handleOperationError(error, "Failed to update policy. Please try again.");
     },
   });
 
@@ -222,7 +223,7 @@ export const usePolicies = () => {
       toast.success("Policy deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      handleOperationError(error, "Failed to delete policy. Please try again.");
     },
   });
 
@@ -251,7 +252,7 @@ export const usePolicies = () => {
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      handleOperationError(error, "Failed to record payment. Please try again.");
     },
   });
 

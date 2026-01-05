@@ -29,7 +29,8 @@ export const DeleteProductDialog = ({ product, open, onOpenChange }: DeleteProdu
       .eq("id", product.id);
 
     if (error) {
-      toast.error("Failed to delete product: " + error.message);
+      console.error("Failed to delete product:", error);
+      toast.error("Failed to delete product. Please try again.");
     } else {
       toast.success("Product deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["products"] });

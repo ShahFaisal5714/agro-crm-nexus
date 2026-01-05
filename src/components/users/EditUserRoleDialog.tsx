@@ -91,7 +91,8 @@ export const EditUserRoleDialog = ({
       setOpen(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error("Failed to update role:", error);
+      toast.error("Failed to update role. Please try again.");
     },
   });
 
