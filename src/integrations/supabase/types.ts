@@ -600,6 +600,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          pack_size: string | null
           sku: string
           stock_quantity: number
           unit: string
@@ -612,6 +613,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          pack_size?: string | null
           sku: string
           stock_quantity?: number
           unit?: string
@@ -624,6 +626,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          pack_size?: string | null
           sku?: string
           stock_quantity?: number
           unit?: string
