@@ -56,7 +56,7 @@ export const useInvoicePayments = (invoiceId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Insert payment
+      // Insert invoice payment
       const { data: payment, error: paymentError } = await supabase
         .from("invoice_payments")
         .insert({
@@ -76,7 +76,7 @@ export const useInvoicePayments = (invoiceId?: string) => {
       // Get current invoice and calculate new paid amount
       const { data: invoice, error: invoiceError } = await supabase
         .from("invoices")
-        .select("total_amount, paid_amount")
+        .select("total_amount, paid_amount, dealer_id, invoice_number")
         .eq("id", invoiceId)
         .single();
 
@@ -97,6 +97,24 @@ export const useInvoicePayments = (invoiceId?: string) => {
         .eq("id", invoiceId);
 
       if (updateError) throw updateError;
+
+      // Also add a dealer payment to sync with dealer credits
+      const { error: dealerPaymentError } = await supabase
+        .from("dealer_payments")
+        .insert({
+          dealer_id: invoice.dealer_id,
+          amount,
+          payment_date: paymentDate,
+          payment_method: paymentMethod,
+          reference_number: referenceNumber,
+          notes: `Invoice ${invoice.invoice_number} payment - ${notes || ''}`.trim(),
+          created_by: user.id,
+        });
+
+      if (dealerPaymentError) {
+        console.error("Failed to sync dealer payment:", dealerPaymentError);
+        // Don't throw - invoice payment was successful
+      }
 
       // Send email notification (fire and forget)
       try {
@@ -119,6 +137,8 @@ export const useInvoicePayments = (invoiceId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoice_payments"] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
       toast({
         title: "Success",
         description: "Payment recorded successfully",
@@ -171,6 +191,8 @@ export const useInvoicePayments = (invoiceId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoice_payments"] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
       toast({
         title: "Success",
         description: "Payment deleted successfully",

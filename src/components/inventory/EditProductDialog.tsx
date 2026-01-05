@@ -39,6 +39,7 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
       unit_price: parseFloat(formData.get("unit_price") as string),
       stock_quantity: parseInt(formData.get("stock_quantity") as string),
       unit: formData.get("unit") as string,
+      pack_size: formData.get("pack_size") as string || null,
       category_id: categoryId || null,
     };
 
@@ -92,8 +93,15 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+            </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="pack_size">Pack Size</Label>
+              <Input id="pack_size" name="pack_size" defaultValue={product.pack_size || ""} placeholder="e.g., 500 ml, 1000 ml" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="unit">Unit *</Label>
               <Input id="unit" name="unit" defaultValue={product.unit} required />

@@ -77,7 +77,11 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
   const { getInvoiceWithItems } = useInvoices();
   const { payments, deletePayment, isDeleting } = useInvoicePayments(invoice.id);
 
-  const paidAmount = invoice.paid_amount || 0;
+  // Calculate paid amount from invoice_payments
+  const invoicePaymentsTotal = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+  
+  // Use the higher of: invoice.paid_amount (which gets synced) OR calculated payments total
+  const paidAmount = Math.max(invoice.paid_amount || 0, invoicePaymentsTotal);
   const remainingAmount = invoice.total_amount - paidAmount;
   const lastPayment = payments && payments.length > 0 ? payments[0] : null;
 

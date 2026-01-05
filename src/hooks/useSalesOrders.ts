@@ -137,10 +137,29 @@ export const useSalesOrders = () => {
 
       if (itemsError) throw itemsError;
 
+      // Auto-add dealer credit for the sales order total
+      const { error: creditError } = await supabase
+        .from("dealer_credits")
+        .insert({
+          dealer_id: dealerId,
+          amount: totalAmount,
+          credit_date: orderDate,
+          description: `Sales Order ${orderNum}`,
+          notes: `Auto-created from sales order ${orderNum}`,
+          created_by: user.id,
+        });
+
+      if (creditError) {
+        console.error("Failed to add dealer credit:", creditError);
+        // Don't throw, just log - the order was created successfully
+      }
+
       return order;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       toast({
         title: "Success",
         description: "Sales order created successfully",
