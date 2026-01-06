@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleOperationError } from "@/lib/errorHandler";
+import { useCashTransactions } from "./useCashTransactions";
 
 export interface SupplierCredit {
   id: string;
@@ -42,6 +43,7 @@ export interface SupplierCreditSummary {
 
 export const useSupplierCredits = () => {
   const queryClient = useQueryClient();
+  const { recordTransaction } = useCashTransactions();
 
   const { data: credits = [], isLoading: creditsLoading } = useQuery({
     queryKey: ["supplier-credits"],
@@ -153,15 +155,30 @@ export const useSupplierCredits = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("supplier_payments").insert({
+      const { data: paymentResult, error } = await supabase.from("supplier_payments").insert({
         ...paymentData,
         created_by: user.user.id,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Record cash transaction (deduct from cash in hand)
+      try {
+        await recordTransaction({
+          transaction_type: "supplier_payment",
+          amount: paymentData.amount,
+          reference_id: paymentResult.id,
+          reference_type: "supplier_payment",
+          description: paymentData.notes || "Supplier payment",
+          transaction_date: paymentData.payment_date,
+        });
+      } catch (cashError) {
+        console.error("Failed to record cash transaction:", cashError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplier-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {

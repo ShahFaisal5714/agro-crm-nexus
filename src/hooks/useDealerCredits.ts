@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleOperationError } from "@/lib/errorHandler";
+import { useCashTransactions } from "./useCashTransactions";
 
 export interface DealerCredit {
   id: string;
@@ -42,6 +43,7 @@ export interface DealerCreditSummary {
 
 export const useDealerCredits = () => {
   const queryClient = useQueryClient();
+  const { recordTransaction } = useCashTransactions();
 
   const { data: credits = [], isLoading: creditsLoading } = useQuery({
     queryKey: ["dealer-credits"],
@@ -125,15 +127,30 @@ export const useDealerCredits = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("dealer_credits").insert({
+      const { data: creditResult, error } = await supabase.from("dealer_credits").insert({
         ...creditData,
         created_by: user.user.id,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Record cash transaction (deduct from cash in hand)
+      try {
+        await recordTransaction({
+          transaction_type: "dealer_credit",
+          amount: creditData.amount,
+          reference_id: creditResult.id,
+          reference_type: "dealer_credit",
+          description: creditData.description || "Dealer credit",
+          transaction_date: creditData.credit_date,
+        });
+      } catch (cashError) {
+        console.error("Failed to record cash transaction:", cashError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast.success("Credit added successfully");
     },
     onError: (error: Error) => {
@@ -153,15 +170,30 @@ export const useDealerCredits = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("dealer_payments").insert({
+      const { data: paymentResult, error } = await supabase.from("dealer_payments").insert({
         ...paymentData,
         created_by: user.user.id,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Record cash transaction (add to cash in hand)
+      try {
+        await recordTransaction({
+          transaction_type: "dealer_payment",
+          amount: paymentData.amount,
+          reference_id: paymentResult.id,
+          reference_type: "dealer_payment",
+          description: paymentData.notes || "Dealer payment received",
+          transaction_date: paymentData.payment_date,
+        });
+      } catch (cashError) {
+        console.error("Failed to record cash transaction:", cashError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {
