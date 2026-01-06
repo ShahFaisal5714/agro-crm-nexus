@@ -33,16 +33,20 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
     const { error } = await supabase.from("dealers").insert({
       dealer_name: dealerName,
       contact_person: contactPerson,
-      email,
-      phone,
-      address,
-      gst_number: gstNumber,
+      email: email || null,
+      phone: phone || null,
+      address: address || null,
+      gst_number: gstNumber || null,
       territory_id: territoryId || null,
     });
 
     if (error) {
-      toast.error("Failed to add dealer");
-      console.error(error);
+      console.error("Error adding dealer:", error);
+      if (error.code === "42501" || error.message?.includes("policy")) {
+        toast.error("You don't have permission to add dealers. Admin or Territory Manager role required.");
+      } else {
+        toast.error(`Failed to add dealer: ${error.message}`);
+      }
       return;
     }
 

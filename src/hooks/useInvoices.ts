@@ -122,9 +122,12 @@ export const useInvoices = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Determine status based on paid amount
-      let status = "unpaid";
-      if (paidAmount >= totalAmount) {
+      // Determine status based on paid amount - explicitly type as valid status
+      const validStatuses = ["unpaid", "paid", "partial", "overdue", "cancelled"] as const;
+      type InvoiceStatus = typeof validStatuses[number];
+      
+      let status: InvoiceStatus = "unpaid";
+      if (paidAmount > 0 && paidAmount >= totalAmount) {
         status = "paid";
       } else if (paidAmount > 0) {
         status = "partial";
