@@ -11,13 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -26,12 +19,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FileText, Loader2 } from "lucide-react";
-import { useInvoices } from "@/hooks/useInvoices";
-import { useDealers } from "@/hooks/useDealers";
-import { useSupplierCreditHistory, SupplierCredit } from "@/hooks/useSupplierCredits";
+import { useSupplierCreditHistory } from "@/hooks/useSupplierCredits";
 import { format, addDays } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateInvoiceFromSupplierCreditsDialogProps {
   supplierId: string;
@@ -44,70 +37,61 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
 }: CreateInvoiceFromSupplierCreditsDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedDealerId, setSelectedDealerId] = useState<string>("");
-  const { createInvoice } = useInvoices();
-  const { dealers } = useDealers();
-  const { credits, payments, totalCredit, totalPaid, remaining } = useSupplierCreditHistory(supplierId);
+  const { credits, totalCredit, totalPaid, remaining } = useSupplierCreditHistory(supplierId);
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    invoice_date: format(new Date(), "yyyy-MM-dd"),
-    due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
-    tax_rate: 0,
+    payment_date: format(new Date(), "yyyy-MM-dd"),
+    payment_method: "bank_transfer",
+    reference_number: "",
     notes: "",
   });
-
-  const subtotal = totalCredit;
-  const taxAmount = (subtotal * formData.tax_rate) / 100;
-  const total = subtotal + taxAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedDealerId) {
-      toast.error("Please select a dealer");
-      return;
-    }
-
-    if (credits.length === 0) {
-      toast.error("No credits to invoice");
+    if (remaining <= 0) {
+      toast.error("No outstanding balance to pay");
       return;
     }
 
     setIsCreating(true);
 
     try {
-      // Create invoice items from credits that have products
-      const invoiceItems = credits
-        .filter((c) => c.product_id)
-        .map((c) => ({
-          product_id: c.product_id!,
-          quantity: 1,
-          unit_price: c.amount,
-          total: c.amount,
-          description: `From supplier ${supplierName}: ${c.description || ""}`,
-        }));
-
-      if (invoiceItems.length === 0) {
-        toast.error("Credits must have associated products to create an invoice");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in");
         setIsCreating(false);
         return;
       }
 
-      await createInvoice({
-        dealerId: selectedDealerId,
-        invoiceDate: formData.invoice_date,
-        dueDate: formData.due_date,
-        taxRate: formData.tax_rate,
-        notes: formData.notes || `Invoice from supplier credit: ${supplierName}`,
-        items: invoiceItems,
-        source: "purchases",
+      // Create a supplier payment for the remaining amount
+      const { error } = await supabase.from("supplier_payments").insert({
+        supplier_id: supplierId,
+        amount: remaining,
+        payment_date: formData.payment_date,
+        payment_method: formData.payment_method,
+        reference_number: formData.reference_number || null,
+        notes: formData.notes || `Payment for supplier credits: ${supplierName}`,
+        created_by: user.id,
       });
 
-      toast.success("Invoice created successfully from supplier credits");
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["supplier-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["supplier-payments"] });
+      
+      toast.success("Supplier payment recorded successfully");
       setOpen(false);
+      setFormData({
+        payment_date: format(new Date(), "yyyy-MM-dd"),
+        payment_method: "bank_transfer",
+        reference_number: "",
+        notes: "",
+      });
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      toast.error("Failed to create invoice");
+      console.error("Error recording payment:", error);
+      toast.error("Failed to record payment");
     } finally {
       setIsCreating(false);
     }
@@ -118,12 +102,12 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <FileText className="h-4 w-4 mr-2" />
-          Create Invoice
+          Record Payment
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Invoice from Supplier Credits - {supplierName}</DialogTitle>
+          <DialogTitle>Record Payment to Supplier - {supplierName}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -138,31 +122,14 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
               <p className="text-xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Remaining</p>
+              <p className="text-sm text-muted-foreground">Remaining to Pay</p>
               <p className="text-xl font-bold text-orange-600">{formatCurrency(remaining)}</p>
             </div>
           </div>
 
-          {/* Dealer Selection */}
-          <div className="space-y-2">
-            <Label>Select Dealer to Bill</Label>
-            <Select value={selectedDealerId} onValueChange={setSelectedDealerId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a dealer" />
-              </SelectTrigger>
-              <SelectContent>
-                {dealers?.map((dealer) => (
-                  <SelectItem key={dealer.id} value={dealer.id}>
-                    {dealer.dealer_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Credit Details */}
           <div className="space-y-2">
-            <Label>Credits to Invoice</Label>
+            <Label>Outstanding Credits</Label>
             <div className="border rounded-lg max-h-48 overflow-y-auto">
               <Table>
                 <TableHeader>
@@ -187,38 +154,40 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
             </div>
           </div>
 
-          {/* Invoice Details */}
+          {/* Payment Details */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="invoice_date">Invoice Date</Label>
+              <Label htmlFor="payment_date">Payment Date</Label>
               <Input
-                id="invoice_date"
+                id="payment_date"
                 type="date"
-                value={formData.invoice_date}
-                onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                value={formData.payment_date}
+                onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due_date">Due Date</Label>
-              <Input
-                id="due_date"
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              />
+              <Label htmlFor="payment_method">Payment Method</Label>
+              <select
+                id="payment_method"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.payment_method}
+                onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+              >
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="cheque">Cheque</option>
+                <option value="online">Online</option>
+              </select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tax_rate">Tax Rate (%)</Label>
+            <Label htmlFor="reference_number">Reference Number (Optional)</Label>
             <Input
-              id="tax_rate"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              value={formData.tax_rate}
-              onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
+              id="reference_number"
+              value={formData.reference_number}
+              onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
+              placeholder="Transaction ID, cheque number, etc."
             />
           </div>
 
@@ -228,7 +197,7 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Any additional notes for this invoice..."
+              placeholder="Any additional notes for this payment..."
               rows={3}
             />
           </div>
@@ -237,14 +206,14 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isCreating || credits.length === 0 || !selectedDealerId}>
+            <Button type="submit" disabled={isCreating || remaining <= 0}>
               {isCreating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  Recording...
                 </>
               ) : (
-                "Create Invoice"
+                `Record Payment of ${formatCurrency(remaining)}`
               )}
             </Button>
           </div>
