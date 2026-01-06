@@ -26,9 +26,11 @@ import { EditInvoiceDialog } from "@/components/invoices/EditInvoiceDialog";
 import { DeleteInvoiceDialog } from "@/components/invoices/DeleteInvoiceDialog";
 import { ViewInvoiceDialog } from "@/components/invoices/ViewInvoiceDialog";
 import { BulkInvoiceDialog } from "@/components/dealers/BulkInvoiceDialog";
+import { InvoicePaymentHistory } from "@/components/invoices/InvoicePaymentHistory";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO } from "date-fns";
-import { Loader2, X, Filter, ShoppingCart, Users, Package, Receipt } from "lucide-react";
+import { Loader2, X, Filter, ShoppingCart, Users, Package, Receipt, CreditCard } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const statusColors: Record<string, string> = {
   unpaid: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -64,6 +66,7 @@ const sourceIcons: Record<string, React.ReactNode> = {
 
 const Invoices = () => {
   const { invoices, isLoading } = useInvoices();
+  const [paymentHistoryInvoice, setPaymentHistoryInvoice] = useState<typeof invoices[0] | null>(null);
   
   // Filter states
   const [sourceFilter, setSourceFilter] = useState<string>("all");
@@ -346,6 +349,19 @@ const Invoices = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setPaymentHistoryInvoice(invoice)}
+                                >
+                                  <CreditCard className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Payment History</TooltipContent>
+                            </Tooltip>
                             <ViewInvoiceDialog invoice={invoice} />
                             <EditInvoiceDialog invoice={invoice} />
                             <DeleteInvoiceDialog invoice={invoice} />
@@ -369,6 +385,18 @@ const Invoices = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Payment History Dialog */}
+        {paymentHistoryInvoice && (
+          <InvoicePaymentHistory
+            invoiceId={paymentHistoryInvoice.id}
+            invoiceNumber={paymentHistoryInvoice.invoice_number}
+            totalAmount={paymentHistoryInvoice.total_amount}
+            paidAmount={paymentHistoryInvoice.paid_amount}
+            open={!!paymentHistoryInvoice}
+            onOpenChange={(open) => !open && setPaymentHistoryInvoice(null)}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

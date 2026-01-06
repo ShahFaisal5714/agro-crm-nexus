@@ -19,12 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FileText, Loader2 } from "lucide-react";
-import { useSupplierCreditHistory } from "@/hooks/useSupplierCredits";
-import { format, addDays } from "date-fns";
+import { useSupplierCreditHistory, useSupplierCredits } from "@/hooks/useSupplierCredits";
+import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateInvoiceFromSupplierCreditsDialogProps {
   supplierId: string;
@@ -36,9 +34,8 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
   supplierName,
 }: CreateInvoiceFromSupplierCreditsDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const { credits, totalCredit, totalPaid, remaining } = useSupplierCreditHistory(supplierId);
-  const queryClient = useQueryClient();
+  const { addPayment, isAddingPayment } = useSupplierCredits();
 
   const [formData, setFormData] = useState({
     payment_date: format(new Date(), "yyyy-MM-dd"),
@@ -55,33 +52,17 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
       return;
     }
 
-    setIsCreating(true);
-
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("You must be logged in");
-        setIsCreating(false);
-        return;
-      }
-
-      // Create a supplier payment for the remaining amount
-      const { error } = await supabase.from("supplier_payments").insert({
+      // Use the hook's addPayment which includes cash transaction recording
+      await addPayment({
         supplier_id: supplierId,
         amount: remaining,
         payment_date: formData.payment_date,
         payment_method: formData.payment_method,
-        reference_number: formData.reference_number || null,
+        reference_number: formData.reference_number || undefined,
         notes: formData.notes || `Payment for supplier credits: ${supplierName}`,
-        created_by: user.id,
       });
 
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["supplier-credits"] });
-      queryClient.invalidateQueries({ queryKey: ["supplier-payments"] });
-      
-      toast.success("Supplier payment recorded successfully");
       setOpen(false);
       setFormData({
         payment_date: format(new Date(), "yyyy-MM-dd"),
@@ -91,9 +72,6 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
       });
     } catch (error) {
       console.error("Error recording payment:", error);
-      toast.error("Failed to record payment");
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -206,8 +184,8 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isCreating || remaining <= 0}>
-              {isCreating ? (
+            <Button type="submit" disabled={isAddingPayment || remaining <= 0}>
+              {isAddingPayment ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Recording...

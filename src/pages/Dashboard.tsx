@@ -20,6 +20,7 @@ import { SalesVsExpensesChart } from "@/components/dashboard/SalesVsExpensesChar
 import { PendingPoliciesWidget } from "@/components/dashboard/PendingPoliciesWidget";
 import { SupplierPaymentsDueWidget } from "@/components/dashboard/SupplierPaymentsDueWidget";
 import { DealerCreditsWidget } from "@/components/dashboard/DealerCreditsWidget";
+import { CashInHandWidget } from "@/components/dashboard/CashInHandWidget";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -194,7 +195,8 @@ const Dashboard = () => {
           <SalesVsExpensesChart data={dashboardData.salesVsExpenses} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <CashInHandWidget />
           <PendingPoliciesWidget policies={policies} />
           <SupplierPaymentsDueWidget />
         </div>

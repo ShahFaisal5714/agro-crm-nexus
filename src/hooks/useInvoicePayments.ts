@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCashTransactions } from "./useCashTransactions";
 
 export interface InvoicePayment {
   id: string;
@@ -17,6 +18,7 @@ export interface InvoicePayment {
 export const useInvoicePayments = (invoiceId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { recordTransaction } = useCashTransactions();
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ["invoice_payments", invoiceId],
@@ -116,6 +118,20 @@ export const useInvoicePayments = (invoiceId?: string) => {
         // Don't throw - invoice payment was successful
       }
 
+      // Record cash transaction (add to cash in hand)
+      try {
+        await recordTransaction({
+          transaction_type: "dealer_payment",
+          amount,
+          reference_id: payment.id,
+          reference_type: "invoice_payment",
+          description: `Invoice ${invoice.invoice_number} payment`,
+          transaction_date: paymentDate,
+        });
+      } catch (cashError) {
+        console.error("Failed to record cash transaction:", cashError);
+      }
+
       // Send email notification (fire and forget)
       try {
         await supabase.functions.invoke("send-invoice-payment-notification", {
@@ -139,6 +155,7 @@ export const useInvoicePayments = (invoiceId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast({
         title: "Success",
         description: "Payment recorded successfully",

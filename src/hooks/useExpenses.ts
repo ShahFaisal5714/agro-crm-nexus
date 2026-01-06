@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCashTransactions } from "./useCashTransactions";
 
 export interface Expense {
   id: string;
@@ -14,6 +15,7 @@ export interface Expense {
 
 export const useExpenses = () => {
   const queryClient = useQueryClient();
+  const { recordTransaction } = useCashTransactions();
 
   const { data: expenses, isLoading } = useQuery({
     queryKey: ["expenses"],
@@ -49,10 +51,26 @@ export const useExpenses = () => {
         .single();
 
       if (error) throw error;
+
+      // Record cash transaction (deduct from cash in hand)
+      try {
+        await recordTransaction({
+          transaction_type: "expense",
+          amount: expenseData.amount,
+          reference_id: data.id,
+          reference_type: "expense",
+          description: `${expenseData.category}: ${expenseData.description || "Expense"}`,
+          transaction_date: expenseData.expense_date,
+        });
+      } catch (cashError) {
+        console.error("Failed to record cash transaction:", cashError);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast.success("Expense added successfully");
     },
     onError: (error) => {
