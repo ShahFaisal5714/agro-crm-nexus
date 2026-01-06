@@ -45,6 +45,7 @@ const navItems: NavItem[] = [
   { title: "Dealers", href: "/dealers", icon: UserCircle },
   { title: "Purchase", href: "/purchase", icon: Package },
   { title: "Supplier Credits", href: "/supplier-credits", icon: CreditCard },
+  { title: "Cash in Hand", href: "/cash-transactions", icon: Wallet },
   { title: "Expenses", href: "/expenses", icon: Wallet },
   { title: "Inventory", href: "/inventory", icon: Package },
   { title: "Reports", href: "/reports", icon: BarChart3 },
@@ -100,9 +101,9 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           "p-4 border-b border-sidebar-border flex items-center",
           collapsed ? "justify-center" : "justify-between"
         )}>
-          {!collapsed && (
+        {!collapsed && (
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Agraicy Logo" className="h-12 w-12 object-contain" />
+              <img src={logo} alt="Agraicy Logo" className="h-14 w-14 object-contain" />
               <div>
                 <h2 className="font-bold text-lg">Agraicy</h2>
                 <p className="text-xs text-sidebar-foreground/60">Life Sciences</p>
@@ -110,7 +111,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
             </div>
           )}
           {collapsed && (
-            <img src={logo} alt="Agraicy Logo" className="h-10 w-10 object-contain" />
+            <img src={logo} alt="Agraicy Logo" className="h-12 w-12 object-contain" />
           )}
           <Button
             variant="ghost"
