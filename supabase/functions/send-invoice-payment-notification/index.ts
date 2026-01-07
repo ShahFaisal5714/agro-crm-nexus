@@ -25,21 +25,86 @@ serve(async (req: Request): Promise<Response> => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Authentication check - verify caller identity
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.error("Missing or invalid authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create client with user's auth token to verify identity
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Verify the JWT and get claims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Authentication failed:", claimsError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log(`Authenticated user: ${userId}`);
+
+    // Create admin client for privileged operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify user has permission (admin, finance, or territory_sales_manager)
+    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    
+    const { data: isFinance } = await supabaseAdmin.rpc("has_role", {
+      _user_id: userId,
+      _role: "finance",
+    });
+    
+    const { data: isTSM } = await supabaseAdmin.rpc("has_role", {
+      _user_id: userId,
+      _role: "territory_sales_manager",
+    });
+
+    if (!isAdmin && !isFinance && !isTSM) {
+      console.error("User lacks required permissions");
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
       return new Response(
-        JSON.stringify({ success: false, error: "RESEND_API_KEY not configured" }),
+        JSON.stringify({ success: false, error: "Email service not configured" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     const { invoiceId, paymentAmount, paymentDate, paymentMethod, referenceNumber }: PaymentNotificationRequest = await req.json();
 
-    // Get invoice with dealer info
-    const { data: invoice, error: invoiceError } = await supabase
+    // Validate required fields
+    if (!invoiceId || typeof paymentAmount !== "number" || !paymentDate || !paymentMethod) {
+      return new Response(
+        JSON.stringify({ error: "Invalid request data" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Get invoice with dealer info using admin client
+    const { data: invoice, error: invoiceError } = await supabaseAdmin
       .from("invoices")
       .select(`
         *,
@@ -55,8 +120,9 @@ serve(async (req: Request): Promise<Response> => {
 
     if (invoiceError || !invoice) {
       console.error("Error fetching invoice:", invoiceError);
+      // Return generic error to prevent information disclosure
       return new Response(
-        JSON.stringify({ success: false, error: "Invoice not found" }),
+        JSON.stringify({ success: false, error: "Failed to process request" }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -172,7 +238,7 @@ serve(async (req: Request): Promise<Response> => {
       const errorText = await response.text();
       console.error("Email error:", errorText);
       return new Response(
-        JSON.stringify({ success: false, error: errorText }),
+        JSON.stringify({ success: false, error: "Failed to send notification" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -188,7 +254,7 @@ serve(async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "An error occurred processing your request",
       }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
