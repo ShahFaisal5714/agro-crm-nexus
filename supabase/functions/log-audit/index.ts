@@ -99,18 +99,16 @@ serve(async (req) => {
 
     console.log("Logging audit event:", action, entityType);
 
-    // Insert audit log
-    const { error: insertError } = await supabaseAdmin
-      .from("audit_logs")
-      .insert({
-        user_id: callingUser.id,
-        user_email: callingUser.email || "unknown",
-        action,
-        entity_type: entityType,
-        entity_id: entityId || null,
-        details: details || null,
-        ip_address: clientIp,
-      });
+    // Insert audit log using the secure insert_audit_log function
+    const { error: insertError } = await supabaseAdmin.rpc("insert_audit_log", {
+      p_user_id: callingUser.id,
+      p_user_email: callingUser.email || "unknown",
+      p_action: action,
+      p_entity_type: entityType,
+      p_entity_id: entityId || null,
+      p_details: details || null,
+      p_ip_address: clientIp,
+    });
 
     if (insertError) {
       console.error("Audit log insert error:", insertError);
