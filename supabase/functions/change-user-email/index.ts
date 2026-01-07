@@ -85,19 +85,28 @@ serve(async (req) => {
       console.error("Profile update error:", profileError);
     }
 
-    // Log audit event
-    await supabaseAdmin.from("audit_logs").insert({
-      user_id: requestingUser.id,
-      user_email: requestingUser.email || "unknown",
-      action: "email_changed",
-      entity_type: "user",
-      entity_id: userId,
-      details: {
+    // Get client IP for audit logging
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || null;
+
+    // Log audit event using secure RPC function
+    const { error: auditError } = await supabaseAdmin.rpc('insert_audit_log', {
+      p_user_id: requestingUser.id,
+      p_user_email: requestingUser.email || "unknown",
+      p_action: "email_changed",
+      p_entity_type: "user",
+      p_entity_id: userId,
+      p_details: {
         old_email: oldEmail,
         new_email: newEmail,
         changed_by: requestingUser.email,
       },
+      p_ip_address: clientIp,
     });
+
+    if (auditError) {
+      console.error("Audit log error:", auditError);
+    }
 
     console.log(`Email changed for user ${userId}: ${oldEmail} -> ${newEmail}`);
 
