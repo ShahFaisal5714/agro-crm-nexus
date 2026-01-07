@@ -56,34 +56,16 @@ export const EditUserRoleDialog = ({
 
   const updateRole = useMutation({
     mutationFn: async () => {
-      // Check if user already has a role
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (existingRole) {
-        // Update existing role
-        const { error } = await supabase
-          .from("user_roles")
-          .update({
-            role: role as any,
-            territory: role === "territory_sales_manager" ? territory : null,
-          })
-          .eq("user_id", userId);
-
-        if (error) throw error;
-      } else {
-        // Insert new role
-        const { error } = await supabase.from("user_roles").insert({
-          user_id: userId,
+      const { data, error } = await supabase.functions.invoke("update-user-role", {
+        body: {
+          userId,
           role: role as any,
           territory: role === "territory_sales_manager" ? territory : null,
-        });
+        },
+      });
 
-        if (error) throw error;
-      }
+      if (error) throw new Error(error.message || "Failed to update role");
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-roles"] });
