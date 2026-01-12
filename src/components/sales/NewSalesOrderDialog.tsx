@@ -40,6 +40,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { useDealers } from "@/hooks/useDealers";
 import { useProducts } from "@/hooks/useProducts";
 import { useSalesOrders, SalesOrderItem } from "@/hooks/useSalesOrders";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   dealerId: z.string().min(1, "Please select a dealer"),
@@ -242,14 +243,24 @@ export const NewSalesOrderDialog = () => {
                         <SelectValue placeholder="Select product" />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} {product.pack_size ? `(${product.pack_size})` : ""} - {formatCurrency(product.unit_price)}
-                            <span className={`ml-2 text-xs ${product.stock_quantity <= 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                              (Stock: {product.stock_quantity})
-                            </span>
-                          </SelectItem>
-                        ))}
+                        {products.map((product) => {
+                          const isLowStock = product.stock_quantity > 0 && product.stock_quantity < 50;
+                          const isOutOfStock = product.stock_quantity <= 0;
+                          return (
+                            <SelectItem key={product.id} value={product.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{product.name} {product.pack_size ? `(${product.pack_size})` : ""} - {formatCurrency(product.unit_price)}</span>
+                                {isOutOfStock ? (
+                                  <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
+                                ) : isLowStock ? (
+                                  <Badge variant="outline" className="text-xs border-orange-500 text-orange-500">Low: {product.stock_quantity}</Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Stock: {product.stock_quantity}</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>

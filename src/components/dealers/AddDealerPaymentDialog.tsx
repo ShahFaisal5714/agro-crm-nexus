@@ -24,6 +24,7 @@ import { format } from "date-fns";
 interface AddDealerPaymentDialogProps {
   dealerId?: string;
   dealerName?: string;
+  remainingCredit?: number;
 }
 
 export const AddDealerPaymentDialog = ({ dealerId, dealerName }: AddDealerPaymentDialogProps) => {
