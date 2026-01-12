@@ -105,6 +105,24 @@ export const NewSalesOrderDialog = () => {
       return;
     }
 
+    // Stock validation - check if any item exceeds available stock
+    const stockErrors: string[] = [];
+    for (const item of items) {
+      const product = products.find((p) => p.id === item.product_id);
+      if (product && item.quantity > product.stock_quantity) {
+        stockErrors.push(
+          `${product.name}: Requested ${item.quantity} but only ${product.stock_quantity} in stock`
+        );
+      }
+    }
+
+    if (stockErrors.length > 0) {
+      form.setError("dealerId", { 
+        message: `Insufficient stock: ${stockErrors.join("; ")}` 
+      });
+      return;
+    }
+
     await createOrder({
       dealerId: values.dealerId,
       orderDate: format(values.orderDate, "yyyy-MM-dd"),
@@ -227,6 +245,9 @@ export const NewSalesOrderDialog = () => {
                         {products.map((product) => (
                           <SelectItem key={product.id} value={product.id}>
                             {product.name} {product.pack_size ? `(${product.pack_size})` : ""} - {formatCurrency(product.unit_price)}
+                            <span className={`ml-2 text-xs ${product.stock_quantity <= 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                              (Stock: {product.stock_quantity})
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
