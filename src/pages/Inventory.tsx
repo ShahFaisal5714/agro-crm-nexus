@@ -14,6 +14,8 @@ import { AddProductDialog } from "@/components/inventory/AddProductDialog";
 import { EditProductDialog } from "@/components/inventory/EditProductDialog";
 import { DeleteProductDialog } from "@/components/inventory/DeleteProductDialog";
 import { CategoryManagementDialog } from "@/components/inventory/CategoryManagementDialog";
+import { BulkCostPriceUpdateDialog } from "@/components/inventory/BulkCostPriceUpdateDialog";
+import { ProfitabilitySummaryCard } from "@/components/inventory/ProfitabilitySummaryCard";
 
 const Inventory = () => {
   const { products, isLoading } = useProducts();
@@ -69,10 +71,13 @@ const Inventory = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <BulkCostPriceUpdateDialog products={products} />
             <CategoryManagementDialog />
             <AddProductDialog />
           </div>
         </div>
+
+        <ProfitabilitySummaryCard products={products} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
