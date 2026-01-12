@@ -85,7 +85,7 @@ const Reports = () => {
     [filteredExpenses]
   );
   const totalCOGS = useMemo(() => 
-    filteredSalesItems.reduce((sum, item) => sum + (item.products.unit_price * item.quantity), 0), 
+    filteredSalesItems.reduce((sum, item) => sum + ((item.products.cost_price || item.products.unit_price * 0.8) * item.quantity), 0), 
     [filteredSalesItems]
   );
   const grossProfit = totalRevenue - totalCOGS;

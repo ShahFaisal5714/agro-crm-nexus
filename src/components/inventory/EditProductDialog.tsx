@@ -37,6 +37,7 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
       name: formData.get("name") as string,
       description: formData.get("description") as string || null,
       unit_price: parseFloat(formData.get("unit_price") as string),
+      cost_price: parseFloat(formData.get("cost_price") as string) || 0,
       stock_quantity: parseInt(formData.get("stock_quantity") as string),
       unit: formData.get("unit") as string,
       pack_size: formData.get("pack_size") as string || null,
@@ -114,9 +115,13 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
             <Textarea id="description" name="description" defaultValue={product.description || ""} rows={3} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="unit_price">Unit Price *</Label>
+              <Label htmlFor="cost_price">Cost Price *</Label>
+              <Input id="cost_price" name="cost_price" type="number" step="0.01" min="0" defaultValue={product.cost_price || 0} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unit_price">Selling Price *</Label>
               <Input id="unit_price" name="unit_price" type="number" step="0.01" min="0" defaultValue={product.unit_price} required />
             </div>
             <div className="space-y-2">

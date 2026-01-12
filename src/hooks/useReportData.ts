@@ -27,6 +27,7 @@ export interface SalesOrderItemWithDetails {
     name: string;
     sku: string;
     unit_price: number;
+    cost_price: number | null;
     category_id: string | null;
     product_categories: {
       id: string;
@@ -66,6 +67,7 @@ export const useReportData = () => {
             name,
             sku,
             unit_price,
+            cost_price,
             category_id,
             product_categories(id, name)
           )

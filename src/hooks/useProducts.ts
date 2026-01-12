@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export interface Product {
   id: string;
@@ -7,6 +8,7 @@ export interface Product {
   name: string;
   description?: string;
   unit_price: number;
+  cost_price: number;
   stock_quantity: number;
   unit: string;
   pack_size?: string;
@@ -18,6 +20,8 @@ export interface Product {
 }
 
 export const useProducts = () => {
+  const queryClient = useQueryClient();
+
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -33,6 +37,29 @@ export const useProducts = () => {
       return data as Product[];
     },
   });
+
+  // Subscribe to realtime updates for products
+  useEffect(() => {
+    const channel = supabase
+      .channel("products-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "products",
+        },
+        () => {
+          // Invalidate the products query to refetch fresh data
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return {
     products: products || [],

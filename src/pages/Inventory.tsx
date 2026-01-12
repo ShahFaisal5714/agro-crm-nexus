@@ -167,7 +167,8 @@ const Inventory = () => {
                     <TableHead>SKU</TableHead>
                     <TableHead>Product Name</TableHead>
                     <TableHead>Pack Size</TableHead>
-                    <TableHead>Unit Price</TableHead>
+                    <TableHead>Cost Price</TableHead>
+                    <TableHead>Selling Price</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Unit</TableHead>
@@ -192,6 +193,7 @@ const Inventory = () => {
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
+                        <TableCell>{formatCurrency(product.cost_price || 0)}</TableCell>
                         <TableCell>{formatCurrency(product.unit_price)}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{product.category?.name || "Uncategorized"}</Badge>
