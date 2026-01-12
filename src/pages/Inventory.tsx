@@ -169,6 +169,7 @@ const Inventory = () => {
                     <TableHead>Pack Size</TableHead>
                     <TableHead>Cost Price</TableHead>
                     <TableHead>Selling Price</TableHead>
+                    <TableHead>Margin %</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Unit</TableHead>
@@ -181,6 +182,10 @@ const Inventory = () => {
                   {filteredProducts.map((product) => {
                     const isLowStock = product.stock_quantity < 10;
                     const isOutOfStock = product.stock_quantity === 0;
+                    const costPrice = product.cost_price || product.unit_price * 0.8;
+                    const profitMargin = product.unit_price > 0 
+                      ? ((product.unit_price - costPrice) / product.unit_price * 100).toFixed(1) 
+                      : "0.0";
                     
                     return (
                       <TableRow key={product.id}>
@@ -193,8 +198,13 @@ const Inventory = () => {
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>{formatCurrency(product.cost_price || 0)}</TableCell>
+                        <TableCell>{formatCurrency(costPrice)}</TableCell>
                         <TableCell>{formatCurrency(product.unit_price)}</TableCell>
+                        <TableCell>
+                          <Badge variant={parseFloat(profitMargin) >= 20 ? "default" : parseFloat(profitMargin) >= 10 ? "secondary" : "destructive"}>
+                            {profitMargin}%
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{product.category?.name || "Uncategorized"}</Badge>
                         </TableCell>
