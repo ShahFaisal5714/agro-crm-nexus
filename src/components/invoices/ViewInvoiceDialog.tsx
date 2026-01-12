@@ -152,7 +152,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
         <body>
           <div class="header">
             <div class="logo-section">
-              <img src="${LOGO_URL}" alt="Logo" class="logo" />
+              <img src="${LOGO_BASE64}" alt="Logo" class="logo" />
               <div class="company-name">Agraicy Life Sciences</div>
             </div>
             <div class="company-contact">
