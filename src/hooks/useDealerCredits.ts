@@ -150,7 +150,10 @@ export const useDealerCredits = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dealers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Credit added successfully");
     },
     onError: (error: Error) => {
@@ -193,7 +196,10 @@ export const useDealerCredits = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
       queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dealers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {
