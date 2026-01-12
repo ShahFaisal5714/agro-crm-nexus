@@ -84,6 +84,7 @@ export const DealerCreditsWidget = () => {
                     <AddDealerPaymentDialog
                       dealerId={dealer.dealer_id}
                       dealerName={dealer.dealer_name}
+                      remainingCredit={dealer.remaining}
                     />
                   </TableCell>
                 </TableRow>

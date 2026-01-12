@@ -397,6 +397,7 @@ const DealerCredits = () => {
                           <AddDealerPaymentDialog
                             dealerId={summary.dealer_id}
                             dealerName={summary.dealer_name}
+                            remainingCredit={summary.remaining}
                           />
                         </div>
                       </TableCell>

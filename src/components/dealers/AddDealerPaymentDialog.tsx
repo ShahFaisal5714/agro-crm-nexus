@@ -20,6 +20,8 @@ import {
 import { Banknote } from "lucide-react";
 import { useDealerCredits } from "@/hooks/useDealerCredits";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 interface AddDealerPaymentDialogProps {
   dealerId?: string;
@@ -27,7 +29,7 @@ interface AddDealerPaymentDialogProps {
   remainingCredit?: number;
 }
 
-export const AddDealerPaymentDialog = ({ dealerId, dealerName }: AddDealerPaymentDialogProps) => {
+export const AddDealerPaymentDialog = ({ dealerId, dealerName, remainingCredit = 0 }: AddDealerPaymentDialogProps) => {
   const [open, setOpen] = useState(false);
   const { addPayment, isAddingPayment } = useDealerCredits();
   
@@ -44,9 +46,22 @@ export const AddDealerPaymentDialog = ({ dealerId, dealerName }: AddDealerPaymen
     
     if (!dealerId) return;
 
+    const paymentAmount = parseFloat(formData.amount);
+
+    // Validate payment doesn't exceed remaining credit
+    if (paymentAmount > remainingCredit) {
+      toast.error(`Payment amount (${formatCurrency(paymentAmount)}) exceeds remaining credit (${formatCurrency(remainingCredit)})`);
+      return;
+    }
+
+    if (paymentAmount <= 0) {
+      toast.error("Payment amount must be greater than zero");
+      return;
+    }
+
     await addPayment({
       dealer_id: dealerId,
-      amount: parseFloat(formData.amount),
+      amount: paymentAmount,
       payment_date: formData.payment_date,
       payment_method: formData.payment_method,
       reference_number: formData.reference_number || undefined,
@@ -76,12 +91,18 @@ export const AddDealerPaymentDialog = ({ dealerId, dealerName }: AddDealerPaymen
           <DialogTitle>Record Payment from {dealerName}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {remainingCredit > 0 && (
+            <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+              Remaining Credit: <span className="font-semibold text-foreground">{formatCurrency(remainingCredit)}</span>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="amount">Amount *</Label>
             <Input
               id="amount"
               type="number"
               step="0.01"
+              max={remainingCredit}
               required
               value={formData.amount}
               onChange={(e) =>
