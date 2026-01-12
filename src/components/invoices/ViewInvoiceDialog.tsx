@@ -88,6 +88,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [logoBase64, setLogoBase64] = useState<string>("");
   const printRef = useRef<HTMLDivElement>(null);
   const { getInvoiceWithItems } = useInvoices();
   const { payments, deletePayment, isDeleting } = useInvoicePayments(invoice.id);
@@ -99,6 +100,11 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
   const paidAmount = Math.max(invoice.paid_amount || 0, invoicePaymentsTotal);
   const remainingAmount = invoice.total_amount - paidAmount;
   const lastPayment = payments && payments.length > 0 ? payments[0] : null;
+
+  // Load logo as base64 on mount
+  useEffect(() => {
+    getLogoAsBase64().then(setLogoBase64);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -167,7 +173,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
         <body>
           <div class="header">
             <div class="logo-section">
-              <img src="${LOGO_BASE64}" alt="Logo" class="logo" />
+              <img src="${logoBase64}" alt="Logo" class="logo" />
               <div class="company-name">Agraicy Life Sciences</div>
             </div>
             <div class="company-contact">
@@ -370,7 +376,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
           {/* Header with Logo and Contact */}
           <div className="flex justify-between items-start pb-4 border-b-2 border-primary">
             <div className="flex items-center gap-3">
-              <img src={LOGO_BASE64} alt="Agraicy Life Sciences" className="h-16 w-auto" />
+              <img src={logoBase64} alt="Agraicy Life Sciences" className="h-16 w-auto" />
               <div>
                 <h2 className="text-xl font-bold text-primary">Agraicy Life Sciences</h2>
               </div>

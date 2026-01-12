@@ -160,7 +160,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
             <AddCreditDialog dealerId={dealerId} dealerName={dealerName} />
-            <AddDealerPaymentDialog dealerId={dealerId} dealerName={dealerName} />
+            <AddDealerPaymentDialog dealerId={dealerId} dealerName={dealerName} remainingCredit={remaining} />
             <CreateInvoiceFromCreditsDialog
               dealerId={dealerId}
               dealerName={dealerName}

@@ -116,6 +116,7 @@ const Dealers = () => {
                             <AddDealerPaymentDialog
                               dealerId={dealer.id}
                               dealerName={dealer.dealer_name}
+                              remainingCredit={getDealerCredit(dealer.id)}
                             />
                             <EditDealerDialog dealer={dealer} territories={territories} />
                             <DeleteDealerDialog
