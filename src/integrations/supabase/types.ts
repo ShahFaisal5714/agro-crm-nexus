@@ -226,13 +226,6 @@ export type Database = {
             referencedRelation: "territories"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "dealers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       expenses: {
@@ -1067,15 +1060,7 @@ export type Database = {
           territory?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
