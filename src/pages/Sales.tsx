@@ -133,6 +133,7 @@ const Sales = () => {
                     <TableHead>Dealer</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
@@ -148,6 +149,14 @@ const Sales = () => {
                         {format(new Date(order.order_date), "MMM dd, yyyy")}
                       </TableCell>
                       <TableCell>{formatCurrency(order.total_amount)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="bg-orange-500/10 text-orange-500 border-orange-500/20"
+                        >
+                          Credit
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"

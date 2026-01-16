@@ -160,6 +160,9 @@ export const useSalesOrders = () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast({
         title: "Success",
         description: "Sales order created successfully",
@@ -205,6 +208,8 @@ export const useSalesOrders = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({
         title: "Success",
         description: "Sales order updated successfully",
@@ -239,6 +244,9 @@ export const useSalesOrders = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({
         title: "Success",
         description: "Sales order deleted successfully",
