@@ -83,11 +83,13 @@ export const useSalesOrders = () => {
     mutationFn: async ({
       dealerId,
       orderDate,
+      paymentType,
       notes,
       items,
     }: {
       dealerId: string;
       orderDate: string;
+      paymentType: "cash" | "credit";
       notes?: string;
       items: SalesOrderItem[];
     }) => {
@@ -114,7 +116,7 @@ export const useSalesOrders = () => {
           dealer_id: dealerId,
           order_date: orderDate,
           total_amount: totalAmount,
-          notes,
+          notes: notes ? `[${paymentType.toUpperCase()}] ${notes}` : `[${paymentType.toUpperCase()}]`,
           created_by: user.id,
         })
         .select()
@@ -137,21 +139,55 @@ export const useSalesOrders = () => {
 
       if (itemsError) throw itemsError;
 
-      // Auto-add dealer credit for the sales order total
-      const { error: creditError } = await supabase
-        .from("dealer_credits")
-        .insert({
-          dealer_id: dealerId,
-          amount: totalAmount,
-          credit_date: orderDate,
-          description: `Sales Order ${orderNum}`,
-          notes: `Auto-created from sales order ${orderNum}`,
-          created_by: user.id,
-        });
+      if (paymentType === "credit") {
+        // Auto-add dealer credit for credit sales
+        const { error: creditError } = await supabase
+          .from("dealer_credits")
+          .insert({
+            dealer_id: dealerId,
+            amount: totalAmount,
+            credit_date: orderDate,
+            description: `Sales Order ${orderNum}`,
+            notes: `Auto-created from sales order ${orderNum}`,
+            created_by: user.id,
+          });
 
-      if (creditError) {
-        console.error("Failed to add dealer credit:", creditError);
-        // Don't throw, just log - the order was created successfully
+        if (creditError) {
+          console.error("Failed to add dealer credit:", creditError);
+        }
+      } else {
+        // Cash payment - add to cash transactions
+        const { error: cashError } = await supabase
+          .from("cash_transactions")
+          .insert({
+            transaction_type: "sales_payment",
+            amount: totalAmount,
+            reference_id: order.id,
+            reference_type: "sales_order",
+            description: `Cash payment for Sales Order ${orderNum}`,
+            transaction_date: orderDate,
+            created_by: user.id,
+          });
+
+        if (cashError) {
+          console.error("Failed to record cash transaction:", cashError);
+        }
+
+        // Also add a dealer payment record for cash sales
+        const { error: paymentError } = await supabase
+          .from("dealer_payments")
+          .insert({
+            dealer_id: dealerId,
+            amount: totalAmount,
+            payment_date: orderDate,
+            payment_method: "cash",
+            notes: `Payment for Sales Order ${orderNum}`,
+            created_by: user.id,
+          });
+
+        if (paymentError) {
+          console.error("Failed to record dealer payment:", paymentError);
+        }
       }
 
       return order;
