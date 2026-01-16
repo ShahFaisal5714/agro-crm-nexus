@@ -18,35 +18,58 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
+    // Verify authorization header exists
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create a client with the user's auth token to verify their identity
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Verify the calling user's identity
+    const { data: { user: callingUser }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !callingUser) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create admin client for privileged operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Verify the requesting user is an admin
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
+    // Check if calling user is admin using the secure has_role RPC
+    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
+      _user_id: callingUser.id,
+      _role: "admin",
+    });
+
+    if (roleError) {
+      console.error("Role check error:", roleError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify permissions" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !requestingUser) {
-      throw new Error("Unauthorized");
-    }
-
-    // Check if requesting user is admin
-    const { data: adminRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", requestingUser.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    if (!adminRole) {
-      throw new Error("Only admins can change user emails");
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Only admins can change user emails" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const { userId, newEmail }: ChangeEmailRequest = await req.json();
@@ -91,15 +114,15 @@ serve(async (req) => {
 
     // Log audit event using secure RPC function
     const { error: auditError } = await supabaseAdmin.rpc('insert_audit_log', {
-      p_user_id: requestingUser.id,
-      p_user_email: requestingUser.email || "unknown",
+      p_user_id: callingUser.id,
+      p_user_email: callingUser.email || "unknown",
       p_action: "email_changed",
       p_entity_type: "user",
       p_entity_id: userId,
       p_details: {
         old_email: oldEmail,
         new_email: newEmail,
-        changed_by: requestingUser.email,
+        changed_by: callingUser.email,
       },
       p_ip_address: clientIp,
     });
