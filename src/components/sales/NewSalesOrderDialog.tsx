@@ -45,6 +45,7 @@ import { Badge } from "@/components/ui/badge";
 const formSchema = z.object({
   dealerId: z.string().min(1, "Please select a dealer"),
   orderDate: z.date(),
+  paymentType: z.enum(["cash", "credit"]),
   notes: z.string().optional(),
 });
 
@@ -59,6 +60,7 @@ export const NewSalesOrderDialog = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       orderDate: new Date(),
+      paymentType: "credit",
       notes: "",
     },
   });
@@ -127,6 +129,7 @@ export const NewSalesOrderDialog = () => {
     await createOrder({
       dealerId: values.dealerId,
       orderDate: format(values.orderDate, "yyyy-MM-dd"),
+      paymentType: values.paymentType,
       notes: values.notes,
       items,
     });
@@ -154,7 +157,7 @@ export const NewSalesOrderDialog = () => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="dealerId"
@@ -215,6 +218,28 @@ export const NewSalesOrderDialog = () => {
                         />
                       </PopoverContent>
                     </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="paymentType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash (Immediate Payment)</SelectItem>
+                        <SelectItem value="credit">Credit</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

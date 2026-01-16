@@ -139,7 +139,9 @@ const Sales = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
+                  {filteredOrders.map((order) => {
+                    const isCashPayment = order.notes?.startsWith("[CASH]");
+                    return (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         {order.order_number}
@@ -152,9 +154,12 @@ const Sales = () => {
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className="bg-orange-500/10 text-orange-500 border-orange-500/20"
+                          className={isCashPayment 
+                            ? "bg-green-500/10 text-green-500 border-green-500/20"
+                            : "bg-orange-500/10 text-orange-500 border-orange-500/20"
+                          }
                         >
-                          Credit
+                          {isCashPayment ? "Cash" : "Credit"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -173,7 +178,7 @@ const Sales = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )})}
                 </TableBody>
               </Table>
             ) : (
