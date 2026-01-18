@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText, FileCheck, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, MapPin, Calendar as CalendarIcon, Loader2, Download, FileText, FileCheck, AlertTriangle, Wallet } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { useReportData } from "@/hooks/useReportData";
@@ -17,6 +17,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useDealers } from "@/hooks/useDealers";
 import { useInvoices } from "@/hooks/useInvoices";
 import { InvoiceAgingReport } from "@/components/reports/InvoiceAgingReport";
+import { CreditRecoveryReport } from "@/components/reports/CreditRecoveryReport";
 import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, isWithinInterval, startOfDay, endOfDay, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 
@@ -538,6 +539,10 @@ const Reports = () => {
               <AlertTriangle className="h-3 w-3" />
               Invoice Aging
             </TabsTrigger>
+            <TabsTrigger value="recovery" className="flex items-center gap-1">
+              <Wallet className="h-3 w-3" />
+              Credit Recovery
+            </TabsTrigger>
           </TabsList>
 
           {/* Time Comparison */}
@@ -994,6 +999,11 @@ const Reports = () => {
           {/* Invoice Aging Report */}
           <TabsContent value="aging" className="space-y-4">
             <InvoiceAgingReport invoices={invoices || []} />
+          </TabsContent>
+
+          {/* Credit Recovery Report */}
+          <TabsContent value="recovery" className="space-y-4">
+            <CreditRecoveryReport dateRange={dateRange} />
           </TabsContent>
         </Tabs>
       </div>
