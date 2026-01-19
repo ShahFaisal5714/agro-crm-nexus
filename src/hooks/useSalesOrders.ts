@@ -139,6 +139,26 @@ export const useSalesOrders = () => {
 
       if (itemsError) throw itemsError;
 
+      // Decrease product stock for each item
+      for (const item of items) {
+        const { data: product } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", item.product_id)
+          .single();
+
+        if (product) {
+          const { error: stockError } = await supabase
+            .from("products")
+            .update({ stock_quantity: Math.max(0, product.stock_quantity - item.quantity) })
+            .eq("id", item.product_id);
+
+          if (stockError) {
+            console.error("Failed to decrease stock:", stockError);
+          }
+        }
+      }
+
       if (paymentType === "credit") {
         // Auto-add dealer credit for credit sales
         const { error: creditError } = await supabase
@@ -156,15 +176,15 @@ export const useSalesOrders = () => {
           console.error("Failed to add dealer credit:", creditError);
         }
       } else {
-        // Cash payment - add to cash transactions
+        // Cash payment - add to cash transactions as inflow (sale_cash)
         const { error: cashError } = await supabase
           .from("cash_transactions")
           .insert({
-            transaction_type: "sales_payment",
+            transaction_type: "sale_cash",
             amount: totalAmount,
             reference_id: order.id,
             reference_type: "sales_order",
-            description: `Cash payment for Sales Order ${orderNum}`,
+            description: `Cash sale - Sales Order ${orderNum}`,
             transaction_date: orderDate,
             created_by: user.id,
           });
@@ -182,6 +202,7 @@ export const useSalesOrders = () => {
             payment_date: orderDate,
             payment_method: "cash",
             notes: `Payment for Sales Order ${orderNum}`,
+            reference_number: orderNum,
             created_by: user.id,
           });
 
@@ -262,13 +283,64 @@ export const useSalesOrders = () => {
 
   const deleteOrder = useMutation({
     mutationFn: async (id: string) => {
-      // Delete order items first
+      // First, get the order details to know what to clean up
+      const { data: order, error: orderFetchError } = await supabase
+        .from("sales_orders")
+        .select("*, sales_order_items(product_id, quantity)")
+        .eq("id", id)
+        .single();
+
+      if (orderFetchError) throw orderFetchError;
+
+      // Extract payment type from notes (format: [CREDIT] or [CASH])
+      const paymentType = order.notes?.includes("[CREDIT]") ? "credit" : "cash";
+
+      // Restore product stock for each item
+      for (const item of order.sales_order_items || []) {
+        const { data: product } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", item.product_id)
+          .single();
+
+        if (product) {
+          await supabase
+            .from("products")
+            .update({ stock_quantity: product.stock_quantity + item.quantity })
+            .eq("id", item.product_id);
+        }
+      }
+
+      // Delete order items
       const { error: itemsError } = await supabase
         .from("sales_order_items")
         .delete()
         .eq("sales_order_id", id);
 
       if (itemsError) throw itemsError;
+
+      // Delete associated dealer credit (for credit sales)
+      if (paymentType === "credit") {
+        await supabase
+          .from("dealer_credits")
+          .delete()
+          .eq("dealer_id", order.dealer_id)
+          .ilike("description", `%${order.order_number}%`);
+      } else {
+        // Delete cash transaction (for cash sales)
+        await supabase
+          .from("cash_transactions")
+          .delete()
+          .eq("reference_id", id)
+          .eq("reference_type", "sales_order");
+
+        // Delete dealer payment (for cash sales)
+        await supabase
+          .from("dealer_payments")
+          .delete()
+          .eq("dealer_id", order.dealer_id)
+          .ilike("notes", `%${order.order_number}%`);
+      }
 
       // Delete the order
       const { error } = await supabase
@@ -281,6 +353,9 @@ export const useSalesOrders = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({

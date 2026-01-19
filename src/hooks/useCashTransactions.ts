@@ -32,9 +32,10 @@ export const useCashTransactions = () => {
 
   // Calculate total cash in hand
   const cashInHand = transactions?.reduce((total, tx) => {
-    // Positive: manual_add, dealer_payment, sales_payment
-    // Negative: dealer_credit, supplier_payment, expense
-    if (tx.transaction_type === "manual_add" || tx.transaction_type === "dealer_payment" || tx.transaction_type === "sales_payment") {
+    // Inflow (adds cash): manual_add, dealer_payment, sale_cash, sales_payment, policy_payment
+    // Outflow (reduces cash): supplier_payment, expense
+    const inflowTypes = ["manual_add", "dealer_payment", "sale_cash", "sales_payment", "policy_payment"];
+    if (inflowTypes.includes(tx.transaction_type)) {
       return total + tx.amount;
     } else {
       return total - tx.amount;
