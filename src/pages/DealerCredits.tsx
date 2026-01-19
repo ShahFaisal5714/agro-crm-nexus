@@ -17,12 +17,13 @@ import {
 import { formatCurrency, cn } from "@/lib/utils";
 import { useDealerCredits } from "@/hooks/useDealerCredits";
 import { format } from "date-fns";
-import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Download, FileSpreadsheet, Calendar as CalendarIcon, X, Search } from "lucide-react";
+import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Download, FileSpreadsheet, Calendar as CalendarIcon, X, Search, ArrowRight } from "lucide-react";
 import { ViewDealerCreditsDialog } from "@/components/dealers/ViewDealerCreditsDialog";
 import { AddCreditDialog } from "@/components/dealers/AddCreditDialog";
 import { AddDealerPaymentDialog } from "@/components/dealers/AddDealerPaymentDialog";
 import { BulkPaymentImportDialog } from "@/components/dealers/BulkPaymentImportDialog";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
+import { Link } from "react-router-dom";
 
 const DealerCredits = () => {
   const { dealerSummaries, totalMarketCredit, isLoading, credits, payments } = useDealerCredits();
@@ -222,6 +223,12 @@ const DealerCredits = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/reports" className="gap-2">
+                <ArrowRight className="h-4 w-4" />
+                Credit Recovery Report
+              </Link>
+            </Button>
             <BulkPaymentImportDialog />
             <Button variant="outline" onClick={handleExportCSV}>
               <FileSpreadsheet className="h-4 w-4 mr-2" />

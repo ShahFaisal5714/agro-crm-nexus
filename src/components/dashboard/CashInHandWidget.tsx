@@ -47,7 +47,8 @@ export const CashInHandWidget = () => {
   const recentTransactions = transactions.slice(0, 5);
 
   const getTransactionIcon = (type: string) => {
-    if (type === "manual_add" || type === "dealer_payment") {
+    const inflowTypes = ["manual_add", "dealer_payment", "sale_cash", "sales_payment", "policy_payment"];
+    if (inflowTypes.includes(type)) {
       return <TrendingUp className="h-3 w-3 text-green-500" />;
     }
     return <TrendingDown className="h-3 w-3 text-destructive" />;
@@ -59,8 +60,12 @@ export const CashInHandWidget = () => {
         return "Manual Add";
       case "dealer_payment":
         return "Dealer Payment";
-      case "dealer_credit":
-        return "Dealer Credit";
+      case "sale_cash":
+        return "Cash Sale";
+      case "sales_payment":
+        return "Sales Payment";
+      case "policy_payment":
+        return "Policy Payment";
       case "supplier_payment":
         return "Supplier Payment";
       case "expense":
@@ -68,6 +73,11 @@ export const CashInHandWidget = () => {
       default:
         return type;
     }
+  };
+
+  const isInflow = (type: string) => {
+    const inflowTypes = ["manual_add", "dealer_payment", "sale_cash", "sales_payment", "policy_payment"];
+    return inflowTypes.includes(type);
   };
 
   if (isLoading) {
@@ -179,12 +189,12 @@ export const CashInHandWidget = () => {
                   </div>
                   <span
                     className={`font-medium ${
-                      tx.transaction_type === "manual_add" || tx.transaction_type === "dealer_payment"
+                      isInflow(tx.transaction_type)
                         ? "text-green-600"
                         : "text-destructive"
                     }`}
                   >
-                    {tx.transaction_type === "manual_add" || tx.transaction_type === "dealer_payment"
+                    {isInflow(tx.transaction_type)
                       ? "+"
                       : "-"}
                     {formatCurrency(tx.amount)}
