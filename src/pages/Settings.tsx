@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Bell, Lock } from "lucide-react";
+import { User, Bell, Lock, Database } from "lucide-react";
+import { DataExportSection } from "@/components/settings/DataExportSection";
 
 const Settings = () => {
   const { data: profile } = useQuery({
@@ -73,6 +74,10 @@ const Settings = () => {
             <TabsTrigger value="notifications">
               <Bell className="h-4 w-4 mr-2" />
               Notifications
+            </TabsTrigger>
+            <TabsTrigger value="data">
+              <Database className="h-4 w-4 mr-2" />
+              Data Export
             </TabsTrigger>
           </TabsList>
 
@@ -160,6 +165,10 @@ const Settings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="data">
+            <DataExportSection />
           </TabsContent>
         </Tabs>
       </div>
