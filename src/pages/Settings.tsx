@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Bell, Lock, Database } from "lucide-react";
+import { User, Bell, Lock, Database, Upload, BookOpen } from "lucide-react";
 import { DataExportSection } from "@/components/settings/DataExportSection";
+import { DataImportSection } from "@/components/settings/DataImportSection";
+import { MigrationGuide } from "@/components/settings/MigrationGuide";
 
 const Settings = () => {
   const { data: profile } = useQuery({
@@ -78,6 +80,14 @@ const Settings = () => {
             <TabsTrigger value="data">
               <Database className="h-4 w-4 mr-2" />
               Data Export
+            </TabsTrigger>
+            <TabsTrigger value="import">
+              <Upload className="h-4 w-4 mr-2" />
+              Data Import
+            </TabsTrigger>
+            <TabsTrigger value="migration">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Migration Guide
             </TabsTrigger>
           </TabsList>
 
@@ -169,6 +179,14 @@ const Settings = () => {
 
           <TabsContent value="data">
             <DataExportSection />
+          </TabsContent>
+
+          <TabsContent value="import">
+            <DataImportSection />
+          </TabsContent>
+
+          <TabsContent value="migration">
+            <MigrationGuide />
           </TabsContent>
         </Tabs>
       </div>
