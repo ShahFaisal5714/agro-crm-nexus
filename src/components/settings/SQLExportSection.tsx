@@ -2,16 +2,21 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Loader2, FileCode, Database } from "lucide-react";
-import { format } from "date-fns";
+import { Download, Loader2, FileCode, Database, Clock } from "lucide-react";
+import { format, subDays } from "date-fns";
 
+// Tables in export order (respects foreign key dependencies)
 const EXPORTABLE_TABLES = [
   "territories",
   "product_categories",
   "suppliers",
   "products",
+  "profiles",
+  "user_roles",
   "dealers",
   "dealer_credits",
   "dealer_payments",
@@ -29,37 +34,69 @@ const EXPORTABLE_TABLES = [
   "supplier_payments",
   "expenses",
   "cash_transactions",
-  "profiles",
-  "user_roles",
 ] as const;
 
 type TableName = typeof EXPORTABLE_TABLES[number];
 
-interface ColumnInfo {
-  column_name: string;
-  data_type: string;
-  is_nullable: string;
-  column_default: string | null;
-}
+// Columns that are auto-generated and should be excluded from exports
+const GENERATED_COLUMNS: Record<string, string[]> = {
+  policies: ["remaining_amount"],
+};
+
+// Tables that have updated_at column for incremental backup
+const TABLES_WITH_UPDATED_AT: TableName[] = [
+  "suppliers",
+  "products",
+  "sales_orders",
+  "invoices",
+  "policies",
+  "purchases",
+  "expenses",
+  "profiles",
+];
 
 export const SQLExportSection = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTable, setCurrentTable] = useState("");
+  const [isIncremental, setIsIncremental] = useState(false);
+  const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
 
-  const escapeSQL = (value: unknown): string => {
-    if (value === null || value === undefined) return "NULL";
-    if (typeof value === "number") return String(value);
-    if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
-    if (typeof value === "object") return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
-    return `'${String(value).replace(/'/g, "''")}'`;
+  // Fetch last backup date from backup_history
+  const fetchLastBackupDate = async () => {
+    const { data } = await supabase
+      .from("backup_history" as "territories")
+      .select("completed_at")
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0) {
+      return (data[0] as { completed_at: string }).completed_at;
+    }
+    return subDays(new Date(), 7).toISOString(); // Default to 7 days ago
   };
 
-  const fetchTableData = async (tableName: string): Promise<Record<string, unknown>[]> => {
-    const { data, error } = await supabase
+  const fetchTableData = async (
+    tableName: string,
+    sinceDate?: string
+  ): Promise<Record<string, unknown>[]> => {
+    let query = supabase
       .from(tableName as "dealers")
       .select("*")
       .order("created_at", { ascending: true });
+
+    // Apply incremental filter if date provided
+    if (sinceDate) {
+      const hasUpdatedAt = TABLES_WITH_UPDATED_AT.includes(tableName as TableName);
+      if (hasUpdatedAt) {
+        query = query.gte("updated_at", sinceDate);
+      } else {
+        query = query.gte("created_at", sinceDate);
+      }
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error(`Error fetching ${tableName}:`, error);
@@ -68,19 +105,17 @@ export const SQLExportSection = () => {
     return (data || []) as Record<string, unknown>[];
   };
 
-  const generateInsertStatements = (tableName: string, data: Record<string, unknown>[]): string => {
-    if (data.length === 0) return "";
-
-    const columns = Object.keys(data[0]);
-    let sql = `-- Data for table: ${tableName}\n`;
-    sql += `-- Total records: ${data.length}\n\n`;
-
-    for (const row of data) {
-      const values = columns.map(col => escapeSQL(row[col]));
-      sql += `INSERT INTO public.${tableName} (${columns.join(", ")}) VALUES (${values.join(", ")}) ON CONFLICT (id) DO UPDATE SET ${columns.filter(c => c !== 'id').map(c => `${c} = EXCLUDED.${c}`).join(", ")};\n`;
+  const cleanRecord = (tableName: string, record: Record<string, unknown>): Record<string, unknown> => {
+    const generatedCols = GENERATED_COLUMNS[tableName] || [];
+    const cleaned: Record<string, unknown> = {};
+    
+    for (const [key, value] of Object.entries(record)) {
+      if (!generatedCols.includes(key)) {
+        cleaned[key] = value;
+      }
     }
-
-    return sql + "\n";
+    
+    return cleaned;
   };
 
   const handleExport = async () => {
@@ -88,18 +123,15 @@ export const SQLExportSection = () => {
     setProgress(0);
 
     try {
-      let sqlContent = "";
+      let sinceDate: string | undefined;
       
-      // Header
-      sqlContent += `-- Database Export\n`;
-      sqlContent += `-- Generated: ${new Date().toISOString()}\n`;
-      sqlContent += `-- Project: CRM Database Backup\n`;
-      sqlContent += `-- =====================================================\n\n`;
+      if (isIncremental) {
+        sinceDate = await fetchLastBackupDate();
+        setLastBackupDate(sinceDate);
+      }
 
-      // Disable triggers temporarily for import
-      sqlContent += `-- Disable triggers for clean import\n`;
-      sqlContent += `SET session_replication_role = replica;\n\n`;
-
+      // Build export data structure
+      const exportData: Record<string, Record<string, unknown>[]> = {};
       const exportSummary: Record<string, number> = {};
 
       for (let i = 0; i < EXPORTABLE_TABLES.length; i++) {
@@ -107,30 +139,68 @@ export const SQLExportSection = () => {
         setCurrentTable(tableName);
         setProgress(Math.round(((i + 0.5) / EXPORTABLE_TABLES.length) * 100));
 
-        const data = await fetchTableData(tableName);
-        exportSummary[tableName] = data.length;
-
-        if (data.length > 0) {
-          sqlContent += generateInsertStatements(tableName, data);
-        } else {
-          sqlContent += `-- Table ${tableName}: No data\n\n`;
-        }
+        const data = await fetchTableData(tableName, sinceDate);
+        const cleanedData = data.map(record => cleanRecord(tableName, record));
+        
+        exportData[tableName] = cleanedData;
+        exportSummary[tableName] = cleanedData.length;
 
         setProgress(Math.round(((i + 1) / EXPORTABLE_TABLES.length) * 100));
       }
 
-      // Re-enable triggers
-      sqlContent += `-- Re-enable triggers\n`;
-      sqlContent += `SET session_replication_role = DEFAULT;\n\n`;
+      // Generate Lovable Backup SQL format
+      const timestamp = new Date().toISOString();
+      const totalRecords = Object.values(exportSummary).reduce((a, b) => a + b, 0);
+
+      let sqlContent = `-- =====================================================\n`;
+      sqlContent += `-- LOVABLE CRM DATABASE BACKUP\n`;
+      sqlContent += `-- Format: Lovable Backup SQL v1.0\n`;
+      sqlContent += `-- Generated: ${timestamp}\n`;
+      sqlContent += `-- Type: ${isIncremental ? "Incremental" : "Full"} Backup\n`;
+      if (isIncremental && sinceDate) {
+        sqlContent += `-- Since: ${sinceDate}\n`;
+      }
+      sqlContent += `-- Total Records: ${totalRecords}\n`;
+      sqlContent += `-- =====================================================\n\n`;
+
+      sqlContent += `-- METADATA\n`;
+      sqlContent += `-- @lovable-backup-version: 1.0\n`;
+      sqlContent += `-- @backup-type: ${isIncremental ? "incremental" : "full"}\n`;
+      sqlContent += `-- @timestamp: ${timestamp}\n`;
+      if (isIncremental && sinceDate) {
+        sqlContent += `-- @since: ${sinceDate}\n`;
+      }
+      sqlContent += `\n`;
+
+      // Export each table as JSON payload in SQL comments
+      for (const tableName of EXPORTABLE_TABLES) {
+        const records = exportData[tableName];
+        
+        sqlContent += `-- =====================================================\n`;
+        sqlContent += `-- TABLE: ${tableName}\n`;
+        sqlContent += `-- RECORDS: ${records.length}\n`;
+        sqlContent += `-- =====================================================\n`;
+        
+        if (records.length > 0) {
+          sqlContent += `-- @table-data-start: ${tableName}\n`;
+          sqlContent += `-- ${JSON.stringify(records)}\n`;
+          sqlContent += `-- @table-data-end: ${tableName}\n`;
+        }
+        
+        sqlContent += `\n`;
+      }
 
       // Summary
       sqlContent += `-- =====================================================\n`;
-      sqlContent += `-- Export Summary\n`;
+      sqlContent += `-- EXPORT SUMMARY\n`;
       sqlContent += `-- =====================================================\n`;
       for (const [table, count] of Object.entries(exportSummary)) {
-        sqlContent += `-- ${table}: ${count} records\n`;
+        if (count > 0) {
+          sqlContent += `-- ${table}: ${count} records\n`;
+        }
       }
-      sqlContent += `-- Total: ${Object.values(exportSummary).reduce((a, b) => a + b, 0)} records\n`;
+      sqlContent += `-- =====================================================\n`;
+      sqlContent += `-- Total: ${totalRecords} records\n`;
       sqlContent += `-- =====================================================\n`;
 
       // Download
@@ -138,13 +208,29 @@ export const SQLExportSection = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `database_backup_${format(new Date(), "yyyy-MM-dd_HHmmss")}.sql`;
+      const prefix = isIncremental ? "incremental_backup" : "full_backup";
+      link.download = `${prefix}_${format(new Date(), "yyyy-MM-dd_HHmmss")}.sql`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      const totalRecords = Object.values(exportSummary).reduce((a, b) => a + b, 0);
+      // Log to backup history
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("backup_history" as "territories").insert({
+          backup_type: isIncremental ? "incremental" : "manual",
+          status: "completed",
+          total_records: totalRecords,
+          table_counts: exportSummary,
+          triggered_by: user.id,
+          completed_at: new Date().toISOString(),
+          is_incremental: isIncremental,
+          incremental_since: sinceDate || null,
+          notes: `${isIncremental ? "Incremental" : "Full"} export: ${totalRecords} records from ${EXPORTABLE_TABLES.length} tables`,
+        } as never);
+      }
+
       toast.success(`Exported ${totalRecords} records from ${EXPORTABLE_TABLES.length} tables`);
     } catch (error) {
       console.error("Export error:", error);
@@ -164,10 +250,28 @@ export const SQLExportSection = () => {
           SQL Database Export
         </CardTitle>
         <CardDescription>
-          Export your entire database as a SQL file with INSERT statements for easy restoration
+          Export your database as a backup file for restoration or migration
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="incremental-mode">Incremental Backup</Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Only export records changed since last backup
+            </p>
+          </div>
+          <Switch
+            id="incremental-mode"
+            checked={isIncremental}
+            onCheckedChange={setIsIncremental}
+            disabled={isExporting}
+          />
+        </div>
+
         {isExporting && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
@@ -188,12 +292,12 @@ export const SQLExportSection = () => {
           {isExporting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Generating SQL...
+              Generating Backup...
             </>
           ) : (
             <>
               <Download className="h-4 w-4 mr-2" />
-              Export Database as SQL
+              {isIncremental ? "Export Incremental Backup" : "Export Full Backup"}
             </>
           )}
         </Button>
@@ -202,12 +306,13 @@ export const SQLExportSection = () => {
           <div className="flex items-start gap-2">
             <Database className="h-4 w-4 mt-0.5 text-muted-foreground" />
             <div>
-              <p className="font-medium">SQL Export Features:</p>
+              <p className="font-medium">Lovable Backup Format Features:</p>
               <ul className="text-muted-foreground mt-1 space-y-1">
-                <li>• Complete database backup with all tables</li>
-                <li>• INSERT statements with UPSERT support</li>
-                <li>• Proper data escaping and NULL handling</li>
-                <li>• Compatible with PostgreSQL/Supabase</li>
+                <li>• Compatible with this app's SQL Import feature</li>
+                <li>• Handles all data types including JSON</li>
+                <li>• Excludes auto-generated columns</li>
+                <li>• Incremental mode for faster backups</li>
+                <li>• Works with personal Supabase projects</li>
               </ul>
             </div>
           </div>

@@ -50,6 +50,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_history: {
+        Row: {
+          backup_type: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          incremental_since: string | null
+          is_incremental: boolean
+          notes: string | null
+          notification_email: string | null
+          started_at: string
+          status: string
+          table_counts: Json
+          total_records: number
+          triggered_by: string | null
+        }
+        Insert: {
+          backup_type: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          incremental_since?: string | null
+          is_incremental?: boolean
+          notes?: string | null
+          notification_email?: string | null
+          started_at?: string
+          status?: string
+          table_counts?: Json
+          total_records?: number
+          triggered_by?: string | null
+        }
+        Update: {
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          incremental_since?: string | null
+          is_incremental?: boolean
+          notes?: string | null
+          notification_email?: string | null
+          started_at?: string
+          status?: string
+          table_counts?: Json
+          total_records?: number
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       cash_transactions: {
         Row: {
           amount: number
