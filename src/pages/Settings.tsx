@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Bell, Lock, Database, Upload, BookOpen, FileCode, Clock } from "lucide-react";
+import { User, Bell, Lock, Database, Upload, BookOpen, FileCode, Clock, History } from "lucide-react";
 import { DataExportSection } from "@/components/settings/DataExportSection";
 import { DataImportSection } from "@/components/settings/DataImportSection";
 import { MigrationGuide } from "@/components/settings/MigrationGuide";
 import { SQLExportSection } from "@/components/settings/SQLExportSection";
 import { SQLImportSection } from "@/components/settings/SQLImportSection";
 import { ScheduledBackupSection } from "@/components/settings/ScheduledBackupSection";
+import { BackupHistorySection } from "@/components/settings/BackupHistorySection";
 
 const Settings = () => {
   const { data: profile } = useQuery({
@@ -99,6 +100,10 @@ const Settings = () => {
             <TabsTrigger value="backup">
               <Clock className="h-4 w-4 mr-2" />
               Backups
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              History
             </TabsTrigger>
             <TabsTrigger value="migration">
               <BookOpen className="h-4 w-4 mr-2" />
@@ -210,6 +215,10 @@ const Settings = () => {
 
           <TabsContent value="backup">
             <ScheduledBackupSection />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <BackupHistorySection />
           </TabsContent>
 
           <TabsContent value="migration">

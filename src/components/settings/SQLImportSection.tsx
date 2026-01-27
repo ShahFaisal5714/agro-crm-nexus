@@ -3,9 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Loader2, FileCode, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { Upload, Loader2, FileCode, AlertTriangle, CheckCircle, XCircle, Eye, Database } from "lucide-react";
+
+interface TablePreview {
+  table: string;
+  count: number;
+  sample: Record<string, unknown>[];
+}
 
 interface ImportResult {
   table: string;
@@ -16,14 +24,80 @@ interface ImportResult {
 
 export const SQLImportSection = () => {
   const [isImporting, setIsImporting] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentOperation, setCurrentOperation] = useState("");
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [previewData, setPreviewData] = useState<TablePreview[]>([]);
+  const [parsedData, setParsedData] = useState<Record<string, Record<string, unknown>[]> | null>(null);
+  const [backupMetadata, setBackupMetadata] = useState<{ date: string; format: string; version: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Parse Lovable Backup SQL format (JSON embedded in comments)
+  const parseLovableBackupSQL = (content: string): Record<string, Record<string, unknown>[]> => {
+    const tableData: Record<string, Record<string, unknown>[]> = {};
+    const lines = content.split("\n");
+
+    for (const line of lines) {
+      // Match: -- DATA:table_name:{"json":"data"}
+      const match = line.match(/^-- DATA:(\w+):(.+)$/);
+      if (match) {
+        const [, tableName, jsonStr] = match;
+        try {
+          const rowData = JSON.parse(jsonStr);
+          if (!tableData[tableName]) {
+            tableData[tableName] = [];
+          }
+          tableData[tableName].push(rowData);
+        } catch (e) {
+          console.warn(`Failed to parse row for ${tableName}:`, e);
+        }
+      }
+
+      // Extract metadata
+      if (line.startsWith("-- Lovable Backup SQL Format")) {
+        const versionMatch = line.match(/v([\d.]+)/);
+        setBackupMetadata(prev => ({ ...prev, version: versionMatch?.[1] || "1.0", date: "", format: "Lovable Backup SQL" }));
+      }
+      if (line.startsWith("-- Generated:")) {
+        const dateStr = line.replace("-- Generated:", "").trim();
+        setBackupMetadata(prev => prev ? { ...prev, date: dateStr } : { date: dateStr, format: "Lovable Backup SQL", version: "1.0" });
+      }
+    }
+
+    return tableData;
+  };
+
+  // Fallback: Parse standard INSERT statements
+  const parseStandardSQL = (content: string): Record<string, Record<string, unknown>[]> => {
+    const tableData: Record<string, Record<string, unknown>[]> = {};
+    const lines = content.split("\n");
+    let currentStatement = "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("--") || trimmed === "" || trimmed.startsWith("SET ")) continue;
+
+      currentStatement += " " + trimmed;
+      if (trimmed.endsWith(";")) {
+        if (currentStatement.includes("INSERT INTO")) {
+          const parsed = parseInsertStatement(currentStatement.trim());
+          if (parsed) {
+            if (!tableData[parsed.table]) {
+              tableData[parsed.table] = [];
+            }
+            tableData[parsed.table].push(parsed.data);
+          }
+        }
+        currentStatement = "";
+      }
+    }
+
+    return tableData;
+  };
+
   const parseInsertStatement = (sql: string): { table: string; data: Record<string, unknown> } | null => {
-    // Match: INSERT INTO public.table_name (col1, col2) VALUES (val1, val2)
     const match = sql.match(/INSERT INTO public\.(\w+)\s*\(([^)]+)\)\s*VALUES\s*\((.+)\)/i);
     if (!match) return null;
 
@@ -31,7 +105,6 @@ export const SQLImportSection = () => {
     const columns = match[2].split(",").map(c => c.trim());
     const valuesStr = match[3];
 
-    // Parse values - handle quoted strings, NULL, numbers, booleans
     const values: unknown[] = [];
     let current = "";
     let inString = false;
@@ -80,43 +153,7 @@ export const SQLImportSection = () => {
     return value;
   };
 
-  const processSQL = async (sqlContent: string) => {
-    const lines = sqlContent.split("\n");
-    const insertStatements: string[] = [];
-
-    // Collect all INSERT statements
-    let currentStatement = "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("--") || trimmed === "") continue;
-      if (trimmed.startsWith("SET ")) continue; // Skip SET commands
-
-      currentStatement += " " + trimmed;
-      if (trimmed.endsWith(";")) {
-        if (currentStatement.includes("INSERT INTO")) {
-          insertStatements.push(currentStatement.trim());
-        }
-        currentStatement = "";
-      }
-    }
-
-    // Group by table
-    const tableData: Record<string, Record<string, unknown>[]> = {};
-    
-    for (const stmt of insertStatements) {
-      const parsed = parseInsertStatement(stmt.replace(/;$/, "").replace(/ ON CONFLICT.*$/, ""));
-      if (parsed) {
-        if (!tableData[parsed.table]) {
-          tableData[parsed.table] = [];
-        }
-        tableData[parsed.table].push(parsed.data);
-      }
-    }
-
-    return tableData;
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -125,113 +162,121 @@ export const SQLImportSection = () => {
       return;
     }
 
-    setIsImporting(true);
-    setProgress(0);
-    setImportResults([]);
+    setIsPreviewing(true);
+    setPreviewData([]);
+    setParsedData(null);
     setShowResults(false);
+    setImportResults([]);
+    setBackupMetadata(null);
 
     try {
-      setCurrentOperation("Reading SQL file...");
       const content = await file.text();
 
-      setCurrentOperation("Parsing SQL statements...");
-      setProgress(10);
-      const tableData = await processSQL(content);
-
-      const tables = Object.keys(tableData);
-      const results: ImportResult[] = [];
-
-      // Import in dependency order
-      const importOrder = [
-        "territories",
-        "product_categories",
-        "suppliers",
-        "products",
-        "profiles",
-        "user_roles",
-        "dealers",
-        "dealer_credits",
-        "dealer_payments",
-        "sales_orders",
-        "sales_order_items",
-        "invoices",
-        "invoice_items",
-        "invoice_payments",
-        "policies",
-        "policy_items",
-        "policy_payments",
-        "purchases",
-        "purchase_items",
-        "supplier_credits",
-        "supplier_payments",
-        "expenses",
-        "cash_transactions",
-      ];
-
-      const orderedTables = importOrder.filter(t => tables.includes(t));
-      const remainingTables = tables.filter(t => !orderedTables.includes(t));
-      const allTables = [...orderedTables, ...remainingTables];
-
-      for (let i = 0; i < allTables.length; i++) {
-        const table = allTables[i];
-        const data = tableData[table];
-        
-        setCurrentOperation(`Importing ${table}...`);
-        setProgress(10 + Math.round((i / allTables.length) * 80));
-
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { error } = await supabase
-            .from(table as any)
-            .upsert(data as any[], { onConflict: "id" });
-
-          if (error) {
-            results.push({
-              table,
-              success: false,
-              recordsImported: 0,
-              error: error.message,
-            });
-          } else {
-            results.push({
-              table,
-              success: true,
-              recordsImported: data.length,
-            });
-          }
-        } catch (err) {
-          results.push({
-            table,
-            success: false,
-            recordsImported: 0,
-            error: err instanceof Error ? err.message : "Unknown error",
-          });
-        }
+      // Try Lovable Backup SQL format first
+      let tableData = parseLovableBackupSQL(content);
+      
+      // Fallback to standard SQL if no data found
+      if (Object.keys(tableData).length === 0) {
+        tableData = parseStandardSQL(content);
+        setBackupMetadata({ date: "", format: "Standard SQL", version: "N/A" });
       }
 
-      setImportResults(results);
-      setShowResults(true);
-      setProgress(100);
-
-      const successCount = results.filter(r => r.success).length;
-      const totalRecords = results.reduce((sum, r) => sum + r.recordsImported, 0);
-
-      if (successCount === results.length) {
-        toast.success(`Successfully imported ${totalRecords} records from ${successCount} tables`);
-      } else {
-        toast.warning(`Imported ${totalRecords} records. ${results.length - successCount} table(s) had errors.`);
+      if (Object.keys(tableData).length === 0) {
+        toast.error("No valid data found in SQL file");
+        setIsPreviewing(false);
+        return;
       }
+
+      setParsedData(tableData);
+
+      // Generate preview
+      const previews: TablePreview[] = Object.entries(tableData).map(([table, rows]) => ({
+        table,
+        count: rows.length,
+        sample: rows.slice(0, 3),
+      }));
+
+      setPreviewData(previews);
+      toast.success(`Found ${Object.keys(tableData).length} tables with data`);
     } catch (error) {
-      console.error("Import error:", error);
-      toast.error("Failed to import SQL file");
+      console.error("Parse error:", error);
+      toast.error("Failed to parse SQL file");
     } finally {
-      setIsImporting(false);
-      setCurrentOperation("");
+      setIsPreviewing(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
+
+  const executeImport = async () => {
+    if (!parsedData) return;
+
+    setIsImporting(true);
+    setProgress(0);
+    setShowResults(false);
+    setImportResults([]);
+
+    try {
+      setCurrentOperation("Connecting to restore service...");
+      setProgress(10);
+
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("You must be logged in to restore data");
+        setIsImporting(false);
+        return;
+      }
+
+      setCurrentOperation("Sending data to restore service...");
+      setProgress(30);
+
+      // Call the data-restore edge function
+      const { data: restoreResult, error: restoreError } = await supabase.functions.invoke("data-restore", {
+        body: { tableData: parsedData },
+      });
+
+      if (restoreError) {
+        throw new Error(restoreError.message || "Failed to restore data");
+      }
+
+      setProgress(90);
+      setCurrentOperation("Processing results...");
+
+      if (restoreResult?.results) {
+        setImportResults(restoreResult.results);
+        setShowResults(true);
+
+        const successCount = restoreResult.results.filter((r: ImportResult) => r.success).length;
+        const totalRecords = restoreResult.results.reduce((sum: number, r: ImportResult) => sum + r.recordsImported, 0);
+
+        if (successCount === restoreResult.results.length) {
+          toast.success(`Successfully imported ${totalRecords} records from ${successCount} tables`);
+        } else {
+          toast.warning(`Imported ${totalRecords} records. ${restoreResult.results.length - successCount} table(s) had errors.`);
+        }
+      }
+
+      setProgress(100);
+    } catch (error) {
+      console.error("Import error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to import data");
+    } finally {
+      setIsImporting(false);
+      setCurrentOperation("");
+    }
+  };
+
+  const clearPreview = () => {
+    setPreviewData([]);
+    setParsedData(null);
+    setShowResults(false);
+    setImportResults([]);
+    setBackupMetadata(null);
+  };
+
+  const totalRecords = previewData.reduce((sum, p) => sum + p.count, 0);
 
   return (
     <Card>
@@ -264,38 +309,112 @@ export const SQLImportSection = () => {
           </div>
         )}
 
-        <div className="flex flex-col gap-4">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".sql"
-            onChange={handleFileUpload}
-            className="hidden"
-            disabled={isImporting}
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting}
-            variant="outline"
-            className="w-full"
-          >
-            {isImporting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Importing...
-              </>
-            ) : (
-              <>
-                <FileCode className="h-4 w-4 mr-2" />
-                Select SQL File to Import
-              </>
-            )}
-          </Button>
-        </div>
+        {!parsedData && (
+          <div className="flex flex-col gap-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".sql"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={isImporting || isPreviewing}
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting || isPreviewing}
+              variant="outline"
+              className="w-full"
+            >
+              {isPreviewing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Parsing file...
+                </>
+              ) : (
+                <>
+                  <FileCode className="h-4 w-4 mr-2" />
+                  Select SQL File to Import
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
+        {/* Preview Section */}
+        {previewData.length > 0 && !showResults && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-muted-foreground" />
+                <h4 className="font-medium">Data Preview</h4>
+              </div>
+              {backupMetadata && (
+                <div className="flex gap-2">
+                  <Badge variant="outline">{backupMetadata.format}</Badge>
+                  {backupMetadata.date && (
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {backupMetadata.date}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Table</TableHead>
+                    <TableHead className="text-right">Records</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previewData.map((preview) => (
+                    <TableRow key={preview.table}>
+                      <TableCell className="font-mono">{preview.table}</TableCell>
+                      <TableCell className="text-right font-mono">{preview.count.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="bg-muted/50">
+                    <TableCell className="font-medium">Total</TableCell>
+                    <TableCell className="text-right font-mono font-medium">{totalRecords.toLocaleString()}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={executeImport}
+                disabled={isImporting}
+                className="flex-1"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Database className="h-4 w-4 mr-2" />
+                    Import {totalRecords.toLocaleString()} Records
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={clearPreview} disabled={isImporting}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Results Section */}
         {showResults && importResults.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Import Results:</h4>
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-primary" />
+              Import Results
+            </h4>
             <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-2">
               {importResults.map((result, idx) => (
                 <div
@@ -320,6 +439,9 @@ export const SQLImportSection = () => {
                 </div>
               ))}
             </div>
+            <Button variant="outline" onClick={clearPreview} className="w-full">
+              Import Another File
+            </Button>
           </div>
         )}
 
@@ -327,10 +449,10 @@ export const SQLImportSection = () => {
           <div className="flex items-start gap-2">
             <FileCode className="h-4 w-4 mt-0.5 text-muted-foreground" />
             <div>
-              <p className="font-medium">Supported Format:</p>
+              <p className="font-medium">Supported Formats:</p>
               <ul className="text-muted-foreground mt-1 space-y-1">
-                <li>• SQL files exported from this application</li>
-                <li>• PostgreSQL INSERT statements with UPSERT</li>
+                <li>• Lovable Backup SQL format (recommended)</li>
+                <li>• Standard PostgreSQL INSERT statements</li>
                 <li>• Maintains referential integrity with ordered import</li>
               </ul>
             </div>
