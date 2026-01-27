@@ -65,6 +65,8 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log(`Starting ${isTest ? "test " : ""}backup process...`);
+    
+    const startedAt = new Date().toISOString();
 
     const tableSummaries: TableSummary[] = [];
     let totalRecords = 0;
@@ -163,6 +165,27 @@ const handler = async (req: Request): Promise<Response> => {
       }
     } else {
       console.log("RESEND_API_KEY not configured, skipping email notification");
+    }
+
+    // Log to backup_history table using service role
+    const tableCounts: Record<string, number> = {};
+    tableSummaries.forEach(t => { tableCounts[t.name] = t.recordCount; });
+    
+    const { error: historyError } = await supabase.from("backup_history").insert({
+      backup_type: "scheduled",
+      status: "completed",
+      total_records: totalRecords,
+      table_counts: tableCounts,
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      notification_email: email,
+      notes: isTest ? "Test backup triggered manually" : "Scheduled backup completed",
+    });
+    
+    if (historyError) {
+      console.error("Failed to log to backup_history:", historyError.message);
+    } else {
+      console.log("Backup logged to history table successfully");
     }
 
     return new Response(

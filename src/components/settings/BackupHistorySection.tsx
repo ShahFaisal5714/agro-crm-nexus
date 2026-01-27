@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,9 +143,8 @@ export const BackupHistorySection = () => {
               </TableHeader>
               <TableBody>
                 {backupHistory.map((entry) => (
-                  <>
+                  <React.Fragment key={entry.id}>
                     <TableRow
-                      key={entry.id}
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => setExpandedRow(expandedRow === entry.id ? null : entry.id)}
                     >
@@ -205,7 +204,7 @@ export const BackupHistorySection = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
