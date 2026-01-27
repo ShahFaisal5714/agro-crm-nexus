@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Bell, Lock, Database, Upload, BookOpen } from "lucide-react";
+import { User, Bell, Lock, Database, Upload, BookOpen, FileCode, Clock } from "lucide-react";
 import { DataExportSection } from "@/components/settings/DataExportSection";
 import { DataImportSection } from "@/components/settings/DataImportSection";
 import { MigrationGuide } from "@/components/settings/MigrationGuide";
+import { SQLExportSection } from "@/components/settings/SQLExportSection";
+import { SQLImportSection } from "@/components/settings/SQLImportSection";
+import { ScheduledBackupSection } from "@/components/settings/ScheduledBackupSection";
 
 const Settings = () => {
   const { data: profile } = useQuery({
@@ -64,7 +67,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               Profile
@@ -84,6 +87,18 @@ const Settings = () => {
             <TabsTrigger value="import">
               <Upload className="h-4 w-4 mr-2" />
               Data Import
+            </TabsTrigger>
+            <TabsTrigger value="sql-export">
+              <FileCode className="h-4 w-4 mr-2" />
+              SQL Export
+            </TabsTrigger>
+            <TabsTrigger value="sql-import">
+              <FileCode className="h-4 w-4 mr-2" />
+              SQL Import
+            </TabsTrigger>
+            <TabsTrigger value="backup">
+              <Clock className="h-4 w-4 mr-2" />
+              Backups
             </TabsTrigger>
             <TabsTrigger value="migration">
               <BookOpen className="h-4 w-4 mr-2" />
@@ -183,6 +198,18 @@ const Settings = () => {
 
           <TabsContent value="import">
             <DataImportSection />
+          </TabsContent>
+
+          <TabsContent value="sql-export">
+            <SQLExportSection />
+          </TabsContent>
+
+          <TabsContent value="sql-import">
+            <SQLImportSection />
+          </TabsContent>
+
+          <TabsContent value="backup">
+            <ScheduledBackupSection />
           </TabsContent>
 
           <TabsContent value="migration">

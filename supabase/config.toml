@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.send-invoice-payment-notification]
 verify_jwt = true
+
+[functions.scheduled-backup]
+verify_jwt = false
