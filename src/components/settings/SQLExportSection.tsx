@@ -118,6 +118,31 @@ export const SQLExportSection = () => {
     return cleaned;
   };
 
+  const escapeValue = (value: unknown): string => {
+    if (value === null || value === undefined) {
+      return "NULL";
+    }
+    if (typeof value === "boolean") {
+      return value ? "TRUE" : "FALSE";
+    }
+    if (typeof value === "number") {
+      return String(value);
+    }
+    if (typeof value === "object") {
+      // Handle JSON/JSONB columns
+      return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
+    }
+    // String value - escape single quotes
+    return `'${String(value).replace(/'/g, "''")}'`;
+  };
+
+  const generateInsertStatement = (tableName: string, record: Record<string, unknown>): string => {
+    const columns = Object.keys(record);
+    const values = Object.values(record).map(escapeValue);
+    
+    return `INSERT INTO public.${tableName} (${columns.join(", ")}) VALUES (${values.join(", ")}) ON CONFLICT (id) DO UPDATE SET ${columns.filter(c => c !== "id").map(c => `${c} = EXCLUDED.${c}`).join(", ")};`;
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     setProgress(0);
@@ -148,13 +173,12 @@ export const SQLExportSection = () => {
         setProgress(Math.round(((i + 1) / EXPORTABLE_TABLES.length) * 100));
       }
 
-      // Generate Lovable Backup SQL format
+      // Generate SQL INSERT statements
       const timestamp = new Date().toISOString();
       const totalRecords = Object.values(exportSummary).reduce((a, b) => a + b, 0);
 
       let sqlContent = `-- =====================================================\n`;
-      sqlContent += `-- LOVABLE CRM DATABASE BACKUP\n`;
-      sqlContent += `-- Format: Lovable Backup SQL v1.0\n`;
+      sqlContent += `-- LOVABLE CRM DATABASE BACKUP (SQL INSERT FORMAT)\n`;
       sqlContent += `-- Generated: ${timestamp}\n`;
       sqlContent += `-- Type: ${isIncremental ? "Incremental" : "Full"} Backup\n`;
       if (isIncremental && sinceDate) {
@@ -163,31 +187,25 @@ export const SQLExportSection = () => {
       sqlContent += `-- Total Records: ${totalRecords}\n`;
       sqlContent += `-- =====================================================\n\n`;
 
-      sqlContent += `-- METADATA\n`;
-      sqlContent += `-- @lovable-backup-version: 1.0\n`;
-      sqlContent += `-- @backup-type: ${isIncremental ? "incremental" : "full"}\n`;
-      sqlContent += `-- @timestamp: ${timestamp}\n`;
-      if (isIncremental && sinceDate) {
-        sqlContent += `-- @since: ${sinceDate}\n`;
-      }
-      sqlContent += `\n`;
+      sqlContent += `-- IMPORTANT: Run these statements in your SQL editor.\n`;
+      sqlContent += `-- Each INSERT uses ON CONFLICT to upsert (update if exists).\n`;
+      sqlContent += `-- Tables are ordered to respect foreign key dependencies.\n\n`;
 
-      // Export each table as JSON payload in SQL comments
+      // Export each table as SQL INSERT statements
       for (const tableName of EXPORTABLE_TABLES) {
         const records = exportData[tableName];
         
-        sqlContent += `-- =====================================================\n`;
-        sqlContent += `-- TABLE: ${tableName}\n`;
-        sqlContent += `-- RECORDS: ${records.length}\n`;
-        sqlContent += `-- =====================================================\n`;
-        
         if (records.length > 0) {
-          sqlContent += `-- @table-data-start: ${tableName}\n`;
-          sqlContent += `-- ${JSON.stringify(records)}\n`;
-          sqlContent += `-- @table-data-end: ${tableName}\n`;
+          sqlContent += `-- =====================================================\n`;
+          sqlContent += `-- TABLE: ${tableName} (${records.length} records)\n`;
+          sqlContent += `-- =====================================================\n\n`;
+          
+          for (const record of records) {
+            sqlContent += generateInsertStatement(tableName, record) + "\n";
+          }
+          
+          sqlContent += `\n`;
         }
-        
-        sqlContent += `\n`;
       }
 
       // Summary
