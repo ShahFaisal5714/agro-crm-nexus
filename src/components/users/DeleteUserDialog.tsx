@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/lib/auth";
 
 interface DeleteUserDialogProps {
   userId: string;
@@ -27,14 +28,18 @@ export const DeleteUserDialog = ({ userId, userName }: DeleteUserDialogProps) =>
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
   const [affectedRecords, setAffectedRecords] = useState<Record<string, number>>({});
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const isSelfDelete = !!user?.id && user.id === userId;
+
   useEffect(() => {
     if (open) {
-      fetchAffectedRecords();
+      // No need to fetch affected records if deleting self is blocked.
+      if (!isSelfDelete) fetchAffectedRecords();
     }
-  }, [open]);
+  }, [open, isSelfDelete]);
 
   const fetchAffectedRecords = async () => {
     setIsLoadingRecords(true);
@@ -114,18 +119,24 @@ export const DeleteUserDialog = ({ userId, userName }: DeleteUserDialogProps) =>
                 Are you sure you want to delete <strong>{userName}</strong>? This action cannot be undone.
               </p>
 
-              {isLoadingRecords ? (
+              {isSelfDelete && (
+                <p className="text-sm text-muted-foreground">
+                  You can’t delete your own account. Please sign in with a different admin user to delete this admin.
+                </p>
+              )}
+
+              {isSelfDelete ? null : isLoadingRecords ? (
                 <div className="flex items-center gap-2 py-4 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Checking affected records...</span>
                 </div>
               ) : hasAffectedRecords ? (
-                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
-                  <p className="mb-2 text-sm font-medium text-amber-800 dark:text-amber-200">
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3">
+                  <p className="mb-2 text-sm font-medium text-destructive">
                     The following {totalRecords} record(s) will have their creator set to "Unknown":
                   </p>
                   <ScrollArea className="max-h-32">
-                    <ul className="space-y-1 text-sm text-amber-700 dark:text-amber-300">
+                    <ul className="space-y-1 text-sm text-foreground/80">
                       {Object.entries(affectedRecords).map(([label, count]) => (
                         <li key={label} className="flex justify-between">
                           <span>{label}</span>
@@ -147,7 +158,7 @@ export const DeleteUserDialog = ({ userId, userName }: DeleteUserDialogProps) =>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            disabled={isDeleting || isLoadingRecords}
+            disabled={isDeleting || isLoadingRecords || isSelfDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? "Deleting..." : "Delete"}
