@@ -24,7 +24,7 @@ export type Database = {
           id: string
           ip_address: string | null
           user_email: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           action: string
@@ -35,7 +35,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           user_email: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           action?: string
@@ -46,7 +46,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           user_email?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -105,7 +105,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           id: string
           reference_id: string | null
@@ -116,7 +116,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           id?: string
           reference_id?: string | null
@@ -127,7 +127,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           reference_id?: string | null
@@ -141,7 +141,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           credit_date: string
           dealer_id: string
           description: string | null
@@ -152,7 +152,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           credit_date?: string
           dealer_id: string
           description?: string | null
@@ -163,7 +163,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           credit_date?: string
           dealer_id?: string
           description?: string | null
@@ -192,7 +192,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           dealer_id: string
           id: string
           notes: string | null
@@ -203,7 +203,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           dealer_id: string
           id?: string
           notes?: string | null
@@ -214,7 +214,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           dealer_id?: string
           id?: string
           notes?: string | null
@@ -284,7 +284,7 @@ export type Database = {
           amount: number
           category: string
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           expense_date: string
           id: string
@@ -296,7 +296,7 @@ export type Database = {
           amount: number
           category: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           expense_date?: string
           id?: string
@@ -308,7 +308,7 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           expense_date?: string
           id?: string
@@ -370,7 +370,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           invoice_id: string
           notes: string | null
@@ -381,7 +381,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           invoice_id: string
           notes?: string | null
@@ -392,7 +392,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           invoice_id?: string
           notes?: string | null
@@ -413,7 +413,7 @@ export type Database = {
       invoices: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           dealer_id: string
           due_date: string
           id: string
@@ -432,7 +432,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           dealer_id: string
           due_date?: string
           id?: string
@@ -451,7 +451,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           dealer_id?: string
           due_date?: string
           id?: string
@@ -489,7 +489,7 @@ export type Database = {
         Row: {
           advance_amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           dealer_id: string
           end_date: string | null
           expected_delivery_date: string | null
@@ -509,7 +509,7 @@ export type Database = {
         Insert: {
           advance_amount?: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           dealer_id: string
           end_date?: string | null
           expected_delivery_date?: string | null
@@ -529,7 +529,7 @@ export type Database = {
         Update: {
           advance_amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           dealer_id?: string
           end_date?: string | null
           expected_delivery_date?: string | null
@@ -612,7 +612,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           notes: string | null
           payment_date: string
@@ -623,7 +623,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           payment_date?: string
@@ -634,7 +634,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           payment_date?: string
@@ -801,7 +801,7 @@ export type Database = {
       purchases: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           notes: string | null
           purchase_date: string
@@ -813,7 +813,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           purchase_date?: string
@@ -825,7 +825,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           purchase_date?: string
@@ -893,7 +893,7 @@ export type Database = {
       sales_orders: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           dealer_id: string
           id: string
           notes: string | null
@@ -905,7 +905,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           dealer_id: string
           id?: string
           notes?: string | null
@@ -917,7 +917,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           dealer_id?: string
           id?: string
           notes?: string | null
@@ -941,7 +941,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           credit_date: string
           description: string | null
           id: string
@@ -952,7 +952,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           credit_date?: string
           description?: string | null
           id?: string
@@ -963,7 +963,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           credit_date?: string
           description?: string | null
           id?: string
@@ -992,7 +992,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           notes: string | null
           payment_date: string
@@ -1003,7 +1003,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           payment_date?: string
@@ -1014,7 +1014,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           payment_date?: string
