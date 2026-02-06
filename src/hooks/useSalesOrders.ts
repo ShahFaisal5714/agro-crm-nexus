@@ -217,7 +217,9 @@ export const useSalesOrders = () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
       queryClient.invalidateQueries({ queryKey: ["report-data"] });
       queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       toast({
@@ -265,7 +267,9 @@ export const useSalesOrders = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
       queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({
         title: "Success",
@@ -357,6 +361,7 @@ export const useSalesOrders = () => {
       queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
       queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({
         title: "Success",

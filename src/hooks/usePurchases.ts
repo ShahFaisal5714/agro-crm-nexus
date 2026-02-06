@@ -131,6 +131,10 @@ export const usePurchases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Purchase order created successfully");
     },
     onError: (error) => {
@@ -170,6 +174,10 @@ export const usePurchases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Purchase order updated successfully");
     },
     onError: (error) => {
@@ -198,6 +206,10 @@ export const usePurchases = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Purchase order deleted successfully");
     },
     onError: (error) => {
