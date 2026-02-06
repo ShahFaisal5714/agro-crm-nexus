@@ -142,6 +142,9 @@ export const usePolicies = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Policy created successfully");
     },
     onError: (error: Error) => {
@@ -206,6 +209,9 @@ export const usePolicies = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Policy updated successfully");
     },
     onError: (error: Error) => {
@@ -220,6 +226,9 @@ export const usePolicies = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Policy deleted successfully");
     },
     onError: (error: Error) => {
@@ -249,6 +258,10 @@ export const usePolicies = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
       queryClient.invalidateQueries({ queryKey: ["policy-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {

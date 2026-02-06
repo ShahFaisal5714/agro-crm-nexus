@@ -156,6 +156,9 @@ export const useInvoicePayments = (invoiceId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
       queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({
         title: "Success",
         description: "Payment recorded successfully",
@@ -210,6 +213,10 @@ export const useInvoicePayments = (invoiceId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast({
         title: "Success",
         description: "Payment deleted successfully",

@@ -136,6 +136,9 @@ export const useSupplierCredits = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplier-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Credit added successfully");
     },
     onError: (error: Error) => {
@@ -178,7 +181,11 @@ export const useSupplierCredits = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplier-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["supplier-credits"] });
       queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["report-data"] });
       toast.success("Payment recorded successfully");
     },
     onError: (error: Error) => {
