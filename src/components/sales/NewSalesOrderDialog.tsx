@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -55,6 +55,7 @@ export const NewSalesOrderDialog = () => {
   const { dealers } = useDealers();
   const { products } = useProducts();
   const { createOrder, isCreating } = useSalesOrders();
+  const lastSubmitRef = useRef<number>(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,6 +99,12 @@ export const NewSalesOrderDialog = () => {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 20000) {
+      return;
+    }
+    lastSubmitRef.current = now;
+
     if (items.length === 0) {
       form.setError("dealerId", { message: "Add at least one product" });
       return;

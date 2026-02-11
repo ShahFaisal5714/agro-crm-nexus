@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +37,7 @@ interface CreditItem {
 
 export const AddCreditDialog = ({ dealerId, dealerName }: AddCreditDialogProps) => {
   const [open, setOpen] = useState(false);
+  const lastSubmitRef = useRef<number>(0);
   const { addCredit, isAddingCredit } = useDealerCredits();
   const { products } = useProducts();
   
@@ -89,6 +90,12 @@ export const AddCreditDialog = ({ dealerId, dealerName }: AddCreditDialogProps) 
     
     if (!dealerId) return;
     if (totalAmount <= 0) return;
+
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 20000) {
+      return;
+    }
+    lastSubmitRef.current = now;
 
     // Create credit entries for each item with products, or one combined entry
     const validItems = items.filter(item => item.product_id && item.quantity > 0);

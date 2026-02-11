@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,13 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRegions } from "@/hooks/useRegions";
 
 interface Territory {
   id: string;
   name: string;
   code: string;
+  region_id?: string | null;
 }
 
 export const AddDealerDialog = ({ territories }: { territories: Territory[] }) => {
@@ -25,9 +27,16 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
   const [address, setAddress] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [territoryId, setTerritoryId] = useState("");
+  const [regionId, setRegionId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSubmitRef = useRef<number>(0);
   const queryClient = useQueryClient();
+  const { regions } = useRegions();
+
+  const filteredTerritories = useMemo(() => {
+    if (!regionId) return territories;
+    return territories.filter((t) => t.region_id === regionId);
+  }, [regionId, territories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +81,7 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
     setAddress("");
     setGstNumber("");
     setTerritoryId("");
+    setRegionId("");
   };
 
   return (
@@ -97,20 +107,38 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="territory">Territory</Label>
-            <Select value={territoryId} onValueChange={setTerritoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select territory" />
-              </SelectTrigger>
-              <SelectContent>
-                {territories.map((territory) => (
-                  <SelectItem key={territory.id} value={territory.id}>
-                    {territory.name} ({territory.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="region">Region</Label>
+              <Select value={regionId} onValueChange={(val) => { setRegionId(val); setTerritoryId(""); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All regions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Regions</SelectItem>
+                  {regions.map((region) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name} ({region.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="territory">Territory</Label>
+              <Select value={territoryId} onValueChange={setTerritoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select territory" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTerritories.map((territory) => (
+                    <SelectItem key={territory.id} value={territory.id}>
+                      {territory.name} ({territory.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
