@@ -39,6 +39,7 @@ const ROLES = [
   { value: "territory_sales_manager", label: "Territory Sales Manager" },
   { value: "dealer", label: "Dealer" },
   { value: "finance", label: "Finance" },
+  { value: "accountant", label: "Accountant" },
   { value: "employee", label: "Employee" },
 ];
 

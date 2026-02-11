@@ -150,12 +150,12 @@ export const EditPolicyDialog = ({ policy }: EditPolicyDialogProps) => {
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Policy {policy.policy_number}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <ScrollArea className="flex-1 pr-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto pr-4">
             <div className="space-y-4 pb-4">
               <div className="space-y-2">
                 <Label>Policy Name</Label>
@@ -324,7 +324,7 @@ export const EditPolicyDialog = ({ policy }: EditPolicyDialogProps) => {
                 />
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

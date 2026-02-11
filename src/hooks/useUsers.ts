@@ -13,7 +13,7 @@ export interface UserProfile {
 export interface UserRole {
   id: string;
   user_id: string;
-  role: 'admin' | 'territory_sales_manager' | 'dealer' | 'finance' | 'employee';
+  role: 'admin' | 'territory_sales_manager' | 'dealer' | 'finance' | 'accountant' | 'employee';
   territory?: string;
 }
 
@@ -59,7 +59,7 @@ export const useUsers = () => {
       password: string;
       fullName: string;
       phone?: string;
-      role: 'admin' | 'territory_sales_manager' | 'dealer' | 'finance' | 'employee';
+      role: 'admin' | 'territory_sales_manager' | 'dealer' | 'finance' | 'accountant' | 'employee';
       territory?: string;
     }) => {
       // Call the secure edge function instead of client-side admin API
