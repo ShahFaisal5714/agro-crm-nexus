@@ -39,7 +39,7 @@ const formSchema = z.object({
     .regex(/[0-9]/, "Must contain at least one number"),
   fullName: z.string().min(1, "Full name is required"),
   phone: z.string().optional(),
-  role: z.enum(['admin', 'territory_sales_manager', 'dealer', 'finance', 'employee']),
+  role: z.enum(['admin', 'territory_sales_manager', 'dealer', 'finance', 'accountant', 'employee']),
   territory: z.string().optional(),
 });
 
@@ -170,6 +170,7 @@ export const AddUserDialog = ({ territories }: AddUserDialogProps) => {
                       <SelectItem value="territory_sales_manager">Territory Sales Manager</SelectItem>
                       <SelectItem value="dealer">Dealer</SelectItem>
                       <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="accountant">Accountant</SelectItem>
                       <SelectItem value="employee">Employee</SelectItem>
                     </SelectContent>
                   </Select>
