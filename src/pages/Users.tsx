@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Search, Users as UsersIcon, MapPin, ShieldCheck, FileText } from "lucide-react";
 import { useDealers } from "@/hooks/useDealers";
+import { useRegions } from "@/hooks/useRegions";
 import { useUsers } from "@/hooks/useUsers";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,10 +29,12 @@ interface Territory {
   id: string;
   name: string;
   code: string;
+  region_id?: string | null;
 }
 
 const Users = () => {
   const { dealers, isLoading: dealersLoading } = useDealers();
+  const { regions } = useRegions();
   const { users, userRoles, isLoading: usersLoading } = useUsers();
   const { userRole } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -309,38 +312,82 @@ const Users = () => {
                     No territories defined yet. Add your first territory to get started.
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Territory Name</TableHead>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Dealers</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {territories.map((territory) => {
-                        const dealerCount = dealers.filter((d) => d.territory_id === territory.id).length;
-                        return (
-                          <TableRow key={territory.id}>
-                            <TableCell className="font-medium">{territory.name}</TableCell>
-                            <TableCell className="font-mono text-sm">{territory.code}</TableCell>
-                            <TableCell>{dealerCount}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <EditTerritoryDialog territory={territory} />
-                                <DeleteTerritoryDialog 
-                                  territoryId={territory.id} 
-                                  territoryName={territory.name}
-                                  dealerCount={dealerCount}
-                                />
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                  <div className="space-y-4">
+                    {/* Group territories by region */}
+                    {(() => {
+                      const grouped = new Map<string | null, typeof territories>();
+                      territories.forEach((t) => {
+                        const key = (t as any).region_id || null;
+                        if (!grouped.has(key)) grouped.set(key, []);
+                        grouped.get(key)!.push(t);
+                      });
+
+                      const regionEntries = Array.from(grouped.entries()).sort((a, b) => {
+                        if (a[0] === null) return 1;
+                        if (b[0] === null) return -1;
+                        const rA = regions.find((r) => r.id === a[0]);
+                        const rB = regions.find((r) => r.id === b[0]);
+                        return (rA?.name || "").localeCompare(rB?.name || "");
+                      });
+
+                      return regionEntries.map(([regionId, regionTerritories]) => {
+                        const region = regionId ? regions.find((r) => r.id === regionId) : null;
+                        const totalDealers = regionTerritories.reduce(
+                          (sum, t) => sum + dealers.filter((d) => d.territory_id === t.id).length, 0
                         );
-                      })}
-                    </TableBody>
-                  </Table>
+                        return (
+                          <div key={regionId || "unassigned"} className="border rounded-lg overflow-hidden">
+                            <div className="bg-muted/50 px-4 py-3 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-semibold text-sm">
+                                  {region ? `${region.name} (${region.code})` : "Unassigned Region"}
+                                </span>
+                                <Badge variant="secondary" className="text-xs">
+                                  {regionTerritories.length} {regionTerritories.length === 1 ? "territory" : "territories"}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {totalDealers} {totalDealers === 1 ? "dealer" : "dealers"}
+                                </Badge>
+                              </div>
+                            </div>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Territory Name</TableHead>
+                                  <TableHead>Code</TableHead>
+                                  <TableHead>Dealers</TableHead>
+                                  <TableHead>Actions</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {regionTerritories.map((territory) => {
+                                  const dealerCount = dealers.filter((d) => d.territory_id === territory.id).length;
+                                  return (
+                                    <TableRow key={territory.id}>
+                                      <TableCell className="font-medium">{territory.name}</TableCell>
+                                      <TableCell className="font-mono text-sm">{territory.code}</TableCell>
+                                      <TableCell>{dealerCount}</TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-1">
+                                          <EditTerritoryDialog territory={territory} />
+                                          <DeleteTerritoryDialog 
+                                            territoryId={territory.id} 
+                                            territoryName={territory.name}
+                                            dealerCount={dealerCount}
+                                          />
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
                 )}
               </CardContent>
             </Card>
