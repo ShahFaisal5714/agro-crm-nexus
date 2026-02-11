@@ -11,7 +11,7 @@ interface CreateUserRequest {
   password: string;
   fullName: string;
   phone?: string;
-  role: "admin" | "territory_sales_manager" | "dealer" | "finance" | "employee";
+  role: "admin" | "territory_sales_manager" | "dealer" | "finance" | "accountant" | "employee";
   territory?: string;
 }
 
@@ -164,7 +164,7 @@ serve(async (req) => {
     }
 
     // Validate role
-    const validRoles = ["admin", "territory_sales_manager", "dealer", "finance", "employee"];
+    const validRoles = ["admin", "territory_sales_manager", "dealer", "finance", "accountant", "employee"];
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ error: "Invalid role" }),

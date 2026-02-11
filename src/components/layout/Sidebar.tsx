@@ -38,11 +38,11 @@ interface SidebarProps {
 
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
-  { title: "Sales", href: "/sales", icon: ShoppingCart, roles: ["admin", "territory_sales_manager", "dealer", "employee"] },
+  { title: "Sales", href: "/sales", icon: ShoppingCart, roles: ["admin", "territory_sales_manager", "dealer", "employee", "accountant"] },
   { title: "Invoices", href: "/invoices", icon: FileText },
   { title: "Policies", href: "/policies", icon: FileText },
-  { title: "Dealer Credits", href: "/dealer-credits", icon: CreditCard },
-  { title: "Dealers", href: "/dealers", icon: UserCircle },
+  { title: "Dealer Credits", href: "/dealer-credits", icon: CreditCard, roles: ["admin", "territory_sales_manager", "dealer", "accountant"] },
+  { title: "Dealers", href: "/dealers", icon: UserCircle, roles: ["admin", "territory_sales_manager", "dealer", "accountant"] },
   { title: "Purchase", href: "/purchase", icon: Package, roles: ["admin", "territory_sales_manager", "employee"] },
   { title: "Supplier Credits", href: "/supplier-credits", icon: CreditCard, roles: ["admin", "territory_sales_manager", "employee"] },
   { title: "Cash in Hand", href: "/cash-transactions", icon: Wallet, roles: ["admin", "territory_sales_manager", "employee"] },
