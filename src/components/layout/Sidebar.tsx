@@ -38,19 +38,19 @@ interface SidebarProps {
 
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
-  { title: "Sales", href: "/sales", icon: ShoppingCart },
+  { title: "Sales", href: "/sales", icon: ShoppingCart, roles: ["admin", "territory_sales_manager", "dealer", "employee"] },
   { title: "Invoices", href: "/invoices", icon: FileText },
   { title: "Policies", href: "/policies", icon: FileText },
   { title: "Dealer Credits", href: "/dealer-credits", icon: CreditCard },
   { title: "Dealers", href: "/dealers", icon: UserCircle },
-  { title: "Purchase", href: "/purchase", icon: Package },
-  { title: "Supplier Credits", href: "/supplier-credits", icon: CreditCard },
-  { title: "Cash in Hand", href: "/cash-transactions", icon: Wallet },
-  { title: "Expenses", href: "/expenses", icon: Wallet },
+  { title: "Purchase", href: "/purchase", icon: Package, roles: ["admin", "territory_sales_manager", "employee"] },
+  { title: "Supplier Credits", href: "/supplier-credits", icon: CreditCard, roles: ["admin", "territory_sales_manager", "employee"] },
+  { title: "Cash in Hand", href: "/cash-transactions", icon: Wallet, roles: ["admin", "territory_sales_manager", "employee"] },
+  { title: "Expenses", href: "/expenses", icon: Wallet, roles: ["admin", "territory_sales_manager", "employee"] },
   { title: "Inventory", href: "/inventory", icon: Package },
   { title: "Reports", href: "/reports", icon: BarChart3 },
   { title: "Users", href: "/users", icon: Users, roles: ["admin"] },
-  { title: "Settings", href: "/settings", icon: Settings },
+  { title: "Settings", href: "/settings", icon: Settings, roles: ["admin", "territory_sales_manager", "employee"] },
 ];
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {

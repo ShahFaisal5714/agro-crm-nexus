@@ -17,6 +17,7 @@ import { DeletePurchaseDialog } from "@/components/purchase/DeletePurchaseDialog
 import { ViewPurchaseDialog } from "@/components/purchase/ViewPurchaseDialog";
 import { EditPurchaseDialog } from "@/components/purchase/EditPurchaseDialog";
 import { SupplierCreditSummaryWidget } from "@/components/purchase/SupplierCreditSummaryWidget";
+import { AddSupplierDialog } from "@/components/suppliers/AddSupplierDialog";
 import { format } from "date-fns";
 
 const PurchasePage = () => {
@@ -81,7 +82,10 @@ const PurchasePage = () => {
               Track purchases and supplier management
             </p>
           </div>
-          <NewPurchaseDialog />
+          <div className="flex gap-2">
+            <AddSupplierDialog />
+            <NewPurchaseDialog />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

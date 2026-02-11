@@ -845,6 +845,30 @@ export type Database = {
           },
         ]
       }
+      regions: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       sales_order_items: {
         Row: {
           created_at: string
@@ -1074,20 +1098,31 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          region_id: string | null
         }
         Insert: {
           code: string
           created_at?: string
           id?: string
           name: string
+          region_id?: string | null
         }
         Update: {
           code?: string
           created_at?: string
           id?: string
           name?: string
+          region_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "territories_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

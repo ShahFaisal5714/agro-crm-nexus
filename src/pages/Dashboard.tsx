@@ -23,6 +23,7 @@ import { DealerCreditsWidget } from "@/components/dashboard/DealerCreditsWidget"
 import { CashInHandWidget } from "@/components/dashboard/CashInHandWidget";
 import { CashFlowChart } from "@/components/dashboard/CashFlowChart";
 import { CreditRecoverySummaryWidget } from "@/components/dashboard/CreditRecoverySummaryWidget";
+import { ProfitLossWidget } from "@/components/dashboard/ProfitLossWidget";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -176,7 +177,7 @@ const Dashboard = () => {
                     <div key={i} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
                       <div>
                         <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+                        <p className="text-sm text-muted-foreground">Batch: {product.sku}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-warning">{product.stock} units</p>
@@ -199,6 +200,7 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SalesVsExpensesChart data={dashboardData.salesVsExpenses} />
+          {userRole === "admin" && <ProfitLossWidget />}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
