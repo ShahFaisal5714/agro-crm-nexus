@@ -11,6 +11,7 @@ import {
 import { Loader2, Users } from "lucide-react";
 import { useDealers } from "@/hooks/useDealers";
 import { useDealerCredits } from "@/hooks/useDealerCredits";
+import { useRegions } from "@/hooks/useRegions";
 import { AddDealerDialog } from "@/components/dealers/AddDealerDialog";
 import { EditDealerDialog } from "@/components/dealers/EditDealerDialog";
 import { DeleteDealerDialog } from "@/components/dealers/DeleteDealerDialog";
@@ -24,18 +25,20 @@ interface Territory {
   id: string;
   name: string;
   code: string;
+  region_id?: string | null;
 }
 
 const Dealers = () => {
   const { dealers, isLoading } = useDealers();
   const { dealerSummaries } = useDealerCredits();
+  const { regions } = useRegions();
 
   const { data: territories = [] } = useQuery({
     queryKey: ["territories"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("territories")
-        .select("*")
+        .select("id, name, code, region_id")
         .order("name");
       if (error) throw error;
       return data as Territory[];
@@ -45,6 +48,14 @@ const Dealers = () => {
   const getDealerCredit = (dealerId: string) => {
     const summary = dealerSummaries.find((s) => s.dealer_id === dealerId);
     return summary?.remaining || 0;
+  };
+
+  const getDealerRegion = (territoryId?: string | null) => {
+    if (!territoryId) return "-";
+    const territory = territories.find((t) => t.id === territoryId);
+    if (!territory?.region_id) return "-";
+    const region = regions.find((r) => r.id === territory.region_id);
+    return region ? `${region.name} (${region.code})` : "-";
   };
 
   return (
@@ -86,6 +97,7 @@ const Dealers = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Dealer Name</TableHead>
+                    <TableHead>Region</TableHead>
                     <TableHead>Contact Person</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Email</TableHead>
@@ -100,6 +112,9 @@ const Dealers = () => {
                       <TableRow key={dealer.id}>
                         <TableCell className="font-medium">
                           {dealer.dealer_name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {getDealerRegion(dealer.territory_id)}
                         </TableCell>
                         <TableCell>{dealer.contact_person || "-"}</TableCell>
                         <TableCell>{dealer.phone || "-"}</TableCell>
