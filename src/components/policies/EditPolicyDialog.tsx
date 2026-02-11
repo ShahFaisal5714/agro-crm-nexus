@@ -151,191 +151,190 @@ export const EditPolicyDialog = ({ policy }: EditPolicyDialogProps) => {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Policy {policy.policy_number}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="flex-1 pr-4">
-          <form onSubmit={handleSubmit} className="space-y-4 pb-4">
-            <div className="space-y-2">
-              <Label>Policy Name</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter policy name (optional)"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Dealer</Label>
-              <Select value={dealerId} onValueChange={setDealerId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {dealers.map((dealer) => (
-                    <SelectItem key={dealer.id} value={dealer.id}>
-                      {dealer.dealer_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-4 pb-4">
               <div className="space-y-2">
-                <Label>Start Date</Label>
+                <Label>Policy Name</Label>
                 <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter policy name (optional)"
                 />
               </div>
+
               <div className="space-y-2">
-                <Label>End Date</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Products</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addItem}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Product
-                </Button>
+                <Label>Dealer</Label>
+                <Select value={dealerId} onValueChange={setDealerId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dealers.map((dealer) => (
+                      <SelectItem key={dealer.id} value={dealer.id}>
+                        {dealer.dealer_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {items.map((item, index) => (
-                <div key={index} className="p-3 border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Product {index + 1}</span>
-                    {items.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeItem(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Product</Label>
-                    <Select
-                      value={item.product_id}
-                      onValueChange={(v) => handleItemChange(index, "product_id", v)}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} ({product.sku})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Quantity</Label>
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleItemChange(index, "quantity", e.target.value)
-                        }
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Rate per Unit</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={item.rate_per_unit}
-                        onChange={(e) =>
-                          handleItemChange(index, "rate_per_unit", e.target.value)
-                        }
-                        min="0"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="text-sm text-right text-muted-foreground">
-                    Subtotal:{" "}
-                    {formatCurrency(
-                      (parseFloat(item.quantity) || 0) *
-                        (parseFloat(item.rate_per_unit) || 0)
-                    )}
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
 
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="flex justify-between text-sm">
-                <span>Total Amount:</span>
-                <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Products</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Product
+                  </Button>
+                </div>
+
+                {items.map((item, index) => (
+                  <div key={index} className="p-3 border rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Product {index + 1}</span>
+                      {items.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItem(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Product</Label>
+                      <Select
+                        value={item.product_id}
+                        onValueChange={(v) => handleItemChange(index, "product_id", v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} ({product.sku})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Quantity</Label>
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            handleItemChange(index, "quantity", e.target.value)
+                          }
+                          min="1"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Rate per Unit</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={item.rate_per_unit}
+                          onChange={(e) =>
+                            handleItemChange(index, "rate_per_unit", e.target.value)
+                          }
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-sm text-right text-muted-foreground">
+                      Subtotal:{" "}
+                      {formatCurrency(
+                        (parseFloat(item.quantity) || 0) *
+                          (parseFloat(item.rate_per_unit) || 0)
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span>Total Amount:</span>
+                  <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Expected Delivery Date</Label>
+                <Input
+                  type="date"
+                  value={expectedDeliveryDate}
+                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Optional notes..."
+                  rows={3}
+                />
               </div>
             </div>
+          </ScrollArea>
 
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Expected Delivery Date</Label>
-              <Input
-                type="date"
-                value={expectedDeliveryDate}
-                onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional notes..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isUpdating}>
-                {isUpdating ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
-        </ScrollArea>
+          <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating ? "Saving..." : "Update Policy"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

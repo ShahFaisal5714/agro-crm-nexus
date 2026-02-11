@@ -16,6 +16,7 @@ import { DeleteDealerDialog } from "@/components/dealers/DeleteDealerDialog";
 import { AddTerritoryDialog } from "@/components/territories/AddTerritoryDialog";
 import { EditTerritoryDialog } from "@/components/territories/EditTerritoryDialog";
 import { DeleteTerritoryDialog } from "@/components/territories/DeleteTerritoryDialog";
+import { RegionManagementDialog } from "@/components/territories/RegionManagementDialog";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { EditUserProfileDialog } from "@/components/users/EditUserProfileDialog";
 import { ChangeEmailDialog } from "@/components/users/ChangeEmailDialog";
@@ -295,8 +296,11 @@ const Users = () => {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Territories</CardTitle>
-                  <AddTerritoryDialog />
+                  <CardTitle>Territories & Regions</CardTitle>
+                  <div className="flex gap-2">
+                    <RegionManagementDialog />
+                    <AddTerritoryDialog />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

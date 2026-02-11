@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,11 +25,21 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
   const [address, setAddress] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [territoryId, setTerritoryId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastSubmitRef = useRef<number>(0);
   const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Prevent duplicate submission within 20 seconds
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 20000) {
+      toast.error("Please wait before submitting again. This data may already be added.");
+      return;
+    }
+    lastSubmitRef.current = now;
+    setIsSubmitting(true);
     const { error } = await supabase.from("dealers").insert({
       dealer_name: dealerName,
       contact_person: contactPerson,
@@ -45,14 +55,16 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
       if (error.code === "42501" || error.message?.includes("policy")) {
         toast.error("You don't have permission to add dealers. Admin or Territory Manager role required.");
       } else {
-        toast.error(`Failed to add dealer: ${error.message}`);
+      toast.error(`Failed to add dealer: ${error.message}`);
       }
+      setIsSubmitting(false);
       return;
     }
 
     toast.success("Dealer added successfully");
     queryClient.invalidateQueries({ queryKey: ["dealers"] });
     setOpen(false);
+    setIsSubmitting(false);
     setDealerName("");
     setContactPerson("");
     setEmail("");
@@ -148,8 +160,8 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Add Dealer
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Adding..." : "Add Dealer"}
           </Button>
         </form>
       </DialogContent>

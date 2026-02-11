@@ -3,16 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRegions } from "@/hooks/useRegions";
 
 export const AddTerritoryDialog = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [regionId, setRegionId] = useState("");
   const queryClient = useQueryClient();
+  const { regions } = useRegions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +24,7 @@ export const AddTerritoryDialog = () => {
     const { error } = await supabase.from("territories").insert({
       name,
       code: code.toUpperCase(),
+      region_id: regionId || null,
     });
 
     if (error) {
@@ -33,6 +38,7 @@ export const AddTerritoryDialog = () => {
     setOpen(false);
     setName("");
     setCode("");
+    setRegionId("");
   };
 
   return (
@@ -48,6 +54,23 @@ export const AddTerritoryDialog = () => {
           <DialogTitle>Add New Territory</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="region">Region</Label>
+            <Select value={regionId} onValueChange={setRegionId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select region (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Region</SelectItem>
+                {regions.map((region) => (
+                  <SelectItem key={region.id} value={region.id}>
+                    {region.name} ({region.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Territory Name *</Label>
             <Input

@@ -23,7 +23,7 @@ export const exportToCSV = (data: Record<string, unknown>[], filename: string, h
   downloadFile(csvContent, `${filename}_${format(new Date(), "yyyy-MM-dd")}.csv`, "text/csv");
 };
 
-// PDF Export (simple HTML to PDF)
+// PDF Export (download as HTML file, with print option)
 export const exportToPDF = (
   title: string,
   data: Record<string, unknown>[],
@@ -31,7 +31,33 @@ export const exportToPDF = (
   filename: string,
   summary?: { label: string; value: string }[]
 ) => {
-  const htmlContent = `
+  const htmlContent = generatePDFHtml(title, data, columns, summary);
+  downloadFile(htmlContent, `${filename}_${format(new Date(), "yyyy-MM-dd")}.html`, "text/html");
+};
+
+// Print PDF (opens print preview)
+export const printPDF = (
+  title: string,
+  data: Record<string, unknown>[],
+  columns: { key: string; label: string; format?: (value: unknown) => string }[],
+  summary?: { label: string; value: string }[]
+) => {
+  const htmlContent = generatePDFHtml(title, data, columns, summary);
+  const printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.print();
+  }
+};
+
+const generatePDFHtml = (
+  title: string,
+  data: Record<string, unknown>[],
+  columns: { key: string; label: string; format?: (value: unknown) => string }[],
+  summary?: { label: string; value: string }[]
+) => {
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -81,13 +107,6 @@ export const exportToPDF = (
     </body>
     </html>
   `;
-
-  const printWindow = window.open("", "_blank");
-  if (printWindow) {
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.print();
-  }
 };
 
 const downloadFile = (content: string, filename: string, mimeType: string) => {

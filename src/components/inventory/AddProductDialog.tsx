@@ -67,8 +67,8 @@ export const AddProductDialog = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
-              <Input id="sku" name="sku" required />
+              <Label htmlFor="sku">Batch No *</Label>
+              <Input id="sku" name="sku" placeholder="e.g., B-001, BATCH-2024" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Product Name *</Label>

@@ -12,7 +12,7 @@ import { Eye, Download, FileSpreadsheet, Edit, Trash2 } from "lucide-react";
 import { useDealerCreditHistory, DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
+import { exportToCSV, exportToPDF, printPDF } from "@/lib/exportUtils";
 import {
   Table,
   TableBody,
@@ -122,6 +122,48 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
     );
   };
 
+  const handlePrintPDF = () => {
+    const transactions = [
+      ...credits.map((c) => ({
+        date: c.credit_date,
+        type: "Credit",
+        amount: c.amount,
+        product: c.products?.name || "-",
+        method: "-",
+        reference: "-",
+        description: c.description || "-",
+      })),
+      ...payments.map((p) => ({
+        date: p.payment_date,
+        type: "Payment",
+        amount: p.amount,
+        product: "-",
+        method: p.payment_method,
+        reference: p.reference_number || "-",
+        description: "-",
+      })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    printPDF(
+      `Credit History - ${dealerName}`,
+      transactions,
+      [
+        { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
+        { key: "type", label: "Type" },
+        { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
+        { key: "product", label: "Product" },
+        { key: "method", label: "Method" },
+        { key: "reference", label: "Reference" },
+        { key: "description", label: "Description" },
+      ],
+      [
+        { label: "Total Credit", value: formatCurrency(totalCredit) },
+        { label: "Total Paid", value: formatCurrency(totalPaid) },
+        { label: "Remaining Balance", value: formatCurrency(remaining) },
+      ]
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -176,7 +218,11 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
             </Button>
             <Button variant="outline" size="sm" onClick={handleExportDetailedPDF}>
               <Download className="h-4 w-4 mr-2" />
-              Export PDF
+              Download PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePrintPDF}>
+              <Eye className="h-4 w-4 mr-2" />
+              Print PDF
             </Button>
           </div>
 

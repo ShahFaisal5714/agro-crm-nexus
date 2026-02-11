@@ -119,7 +119,7 @@ const Inventory = () => {
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products by name, SKU, or description..."
+                  placeholder="Search products by name, batch no, or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -169,7 +169,7 @@ const Inventory = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>SKU</TableHead>
+                    <TableHead>Batch No</TableHead>
                     <TableHead>Product Name</TableHead>
                     <TableHead>Pack Size</TableHead>
                     <TableHead>Cost Price</TableHead>
