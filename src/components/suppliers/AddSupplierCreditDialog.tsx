@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +24,7 @@ interface AddSupplierCreditDialogProps {
 
 export const AddSupplierCreditDialog = ({ supplierId, supplierName }: AddSupplierCreditDialogProps) => {
   const [open, setOpen] = useState(false);
+  const lastSubmitRef = useRef<number>(0);
   const [amount, setAmount] = useState("");
   const [productId, setProductId] = useState<string>("");
   const [description, setDescription] = useState("");
@@ -39,6 +40,12 @@ export const AddSupplierCreditDialog = ({ supplierId, supplierName }: AddSupplie
     if (!amount || parseFloat(amount) <= 0) {
       return;
     }
+
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 20000) {
+      return;
+    }
+    lastSubmitRef.current = now;
 
     await addCredit({
       supplier_id: supplierId,

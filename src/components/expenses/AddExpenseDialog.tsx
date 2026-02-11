@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ export const AddExpenseDialog = () => {
   const [amount, setAmount] = useState("");
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split("T")[0]);
   const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastSubmitRef = useRef<number>(0);
 
   const { createExpense } = useExpenses();
 
@@ -35,6 +37,13 @@ export const AddExpenseDialog = () => {
       return;
     }
 
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 20000) {
+      return;
+    }
+    lastSubmitRef.current = now;
+    setIsSubmitting(true);
+
     await createExpense({
       category,
       amount: parseFloat(amount),
@@ -43,6 +52,7 @@ export const AddExpenseDialog = () => {
     });
 
     setOpen(false);
+    setIsSubmitting(false);
     setCategory("");
     setAmount("");
     setDescription("");
@@ -111,8 +121,8 @@ export const AddExpenseDialog = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Add Expense
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Adding..." : "Add Expense"}
           </Button>
         </form>
       </DialogContent>

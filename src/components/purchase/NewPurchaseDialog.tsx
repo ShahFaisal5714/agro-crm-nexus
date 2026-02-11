@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { toast } from "sonner";
 
 export const NewPurchaseDialog = () => {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastSubmitRef = useRef<number>(0);
   const [supplierId, setSupplierId] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
@@ -66,6 +68,12 @@ export const NewPurchaseDialog = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 20000) {
+      return;
+    }
+    lastSubmitRef.current = now;
+
     if (!supplierId || items.some((item) => !item.productId || item.quantity <= 0)) {
       toast.error("Please fill in all required fields");
       return;
@@ -76,6 +84,7 @@ export const NewPurchaseDialog = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const supplier = suppliers.find((s) => s.id === supplierId);
       
@@ -120,6 +129,8 @@ export const NewPurchaseDialog = () => {
     } catch (error) {
       console.error("Error creating purchase:", error);
       toast.error("Failed to create purchase order");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -332,8 +343,8 @@ export const NewPurchaseDialog = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Create Purchase Order
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Purchase Order"}
           </Button>
         </form>
       </DialogContent>
