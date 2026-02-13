@@ -73,12 +73,12 @@ export const AddInvoicePaymentDialog = ({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" disabled={remaining <= 0}>
           <CreditCard className="h-4 w-4 mr-2" />
-          Record Payment
+           Recovered Payment
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Payment - {invoiceNumber}</DialogTitle>
+          <DialogTitle>Recovered Payment - {invoiceNumber}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
@@ -175,7 +175,7 @@ export const AddInvoicePaymentDialog = ({
                   Recording...
                 </>
               ) : (
-                "Record Payment"
+                "Recovered Payment"
               )}
             </Button>
           </div>

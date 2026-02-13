@@ -207,7 +207,7 @@ export const NewPurchaseDialog = () => {
                     <SelectContent>
                       {products.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.name} ({product.sku})
+                          {product.name} (Batch: {product.sku})
                         </SelectItem>
                       ))}
                     </SelectContent>

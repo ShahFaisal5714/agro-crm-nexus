@@ -72,7 +72,7 @@ export const AddSupplierPaymentFromPurchaseDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Payment to {supplierName}</DialogTitle>
+          <DialogTitle>Recovered Payment to {supplierName}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-3 bg-muted/50 rounded-lg">
@@ -157,7 +157,7 @@ export const AddSupplierPaymentFromPurchaseDialog = ({
                   Recording...
                 </>
               ) : (
-                "Record Payment"
+                "Recovered Payment"
               )}
             </Button>
           </div>

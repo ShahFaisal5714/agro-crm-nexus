@@ -87,7 +87,7 @@ export const AddPaymentDialog = ({ policy }: AddPaymentDialogProps) => {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Payment for {policy.policy_number}</DialogTitle>
+          <DialogTitle>Recovered Payment for {policy.policy_number}</DialogTitle>
           <DialogDescription>
             Remaining amount: {formatCurrency(policy.remaining_amount)}
           </DialogDescription>
@@ -164,7 +164,7 @@ export const AddPaymentDialog = ({ policy }: AddPaymentDialogProps) => {
               type="submit"
               disabled={isSubmitting || parseFloat(amount) > maxPayment || !amount}
             >
-              {isSubmitting ? "Recording..." : "Record Payment"}
+              {isSubmitting ? "Recording..." : "Recovered Payment"}
             </Button>
           </div>
         </form>

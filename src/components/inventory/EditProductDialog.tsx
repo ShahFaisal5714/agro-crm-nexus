@@ -103,12 +103,6 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unit *</Label>
-              <Input id="unit" name="unit" defaultValue={product.unit} required />
-            </div>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>

@@ -83,12 +83,12 @@ export const AddDealerPaymentDialog = ({ dealerId, dealerName, remainingCredit =
       <DialogTrigger asChild>
         <Button size="sm" variant="default">
           <Banknote className="h-4 w-4 mr-1" />
-          Record Payment
+           Recovered Payment
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Payment from {dealerName}</DialogTitle>
+          <DialogTitle>Recovered Payment from {dealerName}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {remainingCredit > 0 && (
@@ -176,7 +176,7 @@ export const AddDealerPaymentDialog = ({ dealerId, dealerName, remainingCredit =
               Cancel
             </Button>
             <Button type="submit" disabled={isAddingPayment}>
-              {isAddingPayment ? "Recording..." : "Record Payment"}
+              {isAddingPayment ? "Recording..." : "Recovered Payment"}
             </Button>
           </div>
         </form>

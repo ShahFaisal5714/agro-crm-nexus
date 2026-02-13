@@ -339,7 +339,7 @@ const Reports = () => {
       case "stock":
         exportToPDF("Stock Report", stockReport, [
           { key: "name", label: "Product" },
-          { key: "sku", label: "SKU" },
+           { key: "sku", label: "Batch No" },
           { key: "stock", label: "Quantity" },
           { key: "value", label: "Value", format: (v) => formatCurrency(v as number) },
           { key: "category", label: "Category" },
@@ -545,11 +545,15 @@ const Reports = () => {
               <Wallet className="h-3 w-3" />
               Credit Recovery
             </TabsTrigger>
-            <TabsTrigger value="territory-officers" className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              Territory Officers
-            </TabsTrigger>
-          </TabsList>
+             <TabsTrigger value="territory-officers" className="flex items-center gap-1">
+               <Users className="h-3 w-3" />
+               Territory Officers
+             </TabsTrigger>
+             <TabsTrigger value="annual" className="flex items-center gap-1">
+               <CalendarIcon className="h-3 w-3" />
+               Annual Sales
+             </TabsTrigger>
+           </TabsList>
 
           {/* Time Comparison */}
           <TabsContent value="time" className="space-y-4">
@@ -1086,8 +1090,122 @@ const Reports = () => {
           {/* Territory Officers Report */}
           <TabsContent value="territory-officers" className="space-y-4">
             <TerritoryOfficerReport dateRange={dateRange} />
-          </TabsContent>
-        </Tabs>
+           </TabsContent>
+
+           {/* Annual Sales Report */}
+           <TabsContent value="annual" className="space-y-4">
+             <Card>
+               <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                   <CalendarIcon className="h-5 w-5" />
+                   Annual Sales Report
+                 </CardTitle>
+               </CardHeader>
+               <CardContent>
+                 {(() => {
+                   const now = new Date();
+                   const annualData: Array<{ year: string; revenue: number; orders: number; expenses: number; profit: number }> = [];
+                   
+                   for (let i = 0; i < 5; i++) {
+                     const year = now.getFullYear() - i;
+                     const yearStart = new Date(year, 0, 1);
+                     const yearEnd = new Date(year, 11, 31, 23, 59, 59);
+                     
+                     const yearRevenue = reportData.salesItems
+                       .filter(item => {
+                         const d = new Date(item.sales_orders.order_date);
+                         return d >= yearStart && d <= yearEnd;
+                       })
+                       .reduce((sum, item) => sum + item.total, 0);
+                     
+                     const yearOrders = new Set(
+                       reportData.salesItems
+                         .filter(item => {
+                           const d = new Date(item.sales_orders.order_date);
+                           return d >= yearStart && d <= yearEnd;
+                         })
+                         .map(item => item.sales_order_id)
+                     ).size;
+                     
+                     const yearExpenses = safeExpenses
+                       .filter(e => {
+                         const d = new Date(e.expense_date);
+                         return d >= yearStart && d <= yearEnd;
+                       })
+                       .reduce((sum, e) => sum + e.amount, 0);
+                     
+                     annualData.push({
+                       year: year.toString(),
+                       revenue: yearRevenue,
+                       orders: yearOrders,
+                       expenses: yearExpenses,
+                       profit: yearRevenue - yearExpenses,
+                     });
+                   }
+
+                   const currentYear = annualData[0];
+                   const lastYear = annualData[1];
+                   const growthRate = lastYear && lastYear.revenue > 0 
+                     ? ((currentYear.revenue - lastYear.revenue) / lastYear.revenue * 100).toFixed(1)
+                     : "0";
+
+                   return (
+                     <div className="space-y-6">
+                       {/* Annual Summary Cards */}
+                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                         <div className="p-4 bg-muted/50 rounded-lg text-center">
+                           <p className="text-sm text-muted-foreground">This Year Revenue</p>
+                           <p className="text-2xl font-bold text-primary">{formatCurrency(currentYear.revenue)}</p>
+                         </div>
+                         <div className="p-4 bg-muted/50 rounded-lg text-center">
+                           <p className="text-sm text-muted-foreground">This Year Orders</p>
+                           <p className="text-2xl font-bold">{currentYear.orders}</p>
+                         </div>
+                         <div className="p-4 bg-muted/50 rounded-lg text-center">
+                           <p className="text-sm text-muted-foreground">This Year Expenses</p>
+                           <p className="text-2xl font-bold text-destructive">{formatCurrency(currentYear.expenses)}</p>
+                         </div>
+                         <div className="p-4 bg-muted/50 rounded-lg text-center">
+                           <p className="text-sm text-muted-foreground">YoY Growth</p>
+                           <p className={`text-2xl font-bold ${parseFloat(growthRate) >= 0 ? "text-green-600" : "text-destructive"}`}>
+                             {parseFloat(growthRate) >= 0 ? "+" : ""}{growthRate}%
+                           </p>
+                         </div>
+                       </div>
+
+                       {/* Annual Chart */}
+                       <ResponsiveContainer width="100%" height={350}>
+                         <BarChart data={annualData.reverse()}>
+                           <CartesianGrid strokeDasharray="3 3" />
+                           <XAxis dataKey="year" />
+                           <YAxis />
+                           <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                           <Legend />
+                           <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" />
+                           <Bar dataKey="expenses" name="Expenses" fill="hsl(var(--destructive))" />
+                           <Bar dataKey="profit" name="Profit" fill="hsl(var(--chart-2))" />
+                         </BarChart>
+                       </ResponsiveContainer>
+
+                       {/* Year-wise Table */}
+                       <ReportDetailTable
+                         title="Annual Sales Summary"
+                         data={annualData}
+                          columns={[
+                           { key: "year", label: "Year" },
+                           { key: "orders", label: "Orders", format: "number" },
+                           { key: "revenue", label: "Revenue", format: "currency" },
+                           { key: "expenses", label: "Expenses", format: "currency" },
+                           { key: "profit", label: "Net Profit", format: "currency" },
+                         ]}
+                       />
+                     </div>
+                   );
+                 })()}
+               </CardContent>
+             </Card>
+           </TabsContent>
+         </Tabs>
       </div>
     </DashboardLayout>
   );

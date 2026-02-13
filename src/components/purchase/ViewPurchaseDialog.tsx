@@ -198,20 +198,20 @@ export const ViewPurchaseDialog = ({ purchase }: ViewPurchaseDialogProps) => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>SKU</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Unit Price</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.products?.name}
-                        </TableCell>
-                        <TableCell>{item.products?.sku}</TableCell>
+                       <TableHead>Product</TableHead>
+                       <TableHead>Batch No</TableHead>
+                       <TableHead className="text-right">Qty</TableHead>
+                       <TableHead className="text-right">Unit Price</TableHead>
+                       <TableHead className="text-right">Total</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {items.map((item) => (
+                       <TableRow key={item.id}>
+                         <TableCell className="font-medium">
+                           {item.products?.name}
+                         </TableCell>
+                         <TableCell>{item.products?.sku}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(item.unit_price)}
