@@ -18,6 +18,8 @@ import { useDealers } from "@/hooks/useDealers";
 import { useInvoices } from "@/hooks/useInvoices";
 import { InvoiceAgingReport } from "@/components/reports/InvoiceAgingReport";
 import { CreditRecoveryReport } from "@/components/reports/CreditRecoveryReport";
+import { ReportDetailTable } from "@/components/reports/ReportDetailTable";
+import { TerritoryOfficerReport } from "@/components/reports/TerritoryOfficerReport";
 import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, isWithinInterval, startOfDay, endOfDay, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 
@@ -543,6 +545,10 @@ const Reports = () => {
               <Wallet className="h-3 w-3" />
               Credit Recovery
             </TabsTrigger>
+            <TabsTrigger value="territory-officers" className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              Territory Officers
+            </TabsTrigger>
           </TabsList>
 
           {/* Time Comparison */}
@@ -595,6 +601,18 @@ const Reports = () => {
                 )}
               </CardContent>
             </Card>
+
+            <ReportDetailTable
+              title="Time Comparison Details"
+              data={timeComparisonData}
+              columns={[
+                { key: "period", label: "Period" },
+                { key: "revenue", label: "Revenue", format: "currency", align: "right" },
+                { key: "cost", label: "Cost", format: "currency", align: "right" },
+                { key: "profit", label: "Profit", format: "currency", align: "right" },
+              ]}
+              totalColumns={["revenue", "cost", "profit"]}
+            />
           </TabsContent>
 
           {/* Stock Report */}
@@ -646,6 +664,19 @@ const Reports = () => {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
+            <ReportDetailTable
+              title="Stock Details"
+              data={stockReport}
+              columns={[
+                { key: "name", label: "Product" },
+                { key: "sku", label: "SKU" },
+                { key: "category", label: "Category" },
+                { key: "stock", label: "Quantity", format: "number", align: "right" },
+                { key: "value", label: "Stock Value", format: "currency", align: "right" },
+              ]}
+              totalColumns={["stock", "value"]}
+            />
           </TabsContent>
 
           {/* Product Analysis */}
@@ -705,9 +736,20 @@ const Reports = () => {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
 
-          {/* Category Analysis */}
+            <ReportDetailTable
+              title="Product-wise Details"
+              data={productWiseData}
+              columns={[
+                { key: "name", label: "Product" },
+                { key: "quantity", label: "Qty Sold", format: "number", align: "right" },
+                { key: "revenue", label: "Revenue", format: "currency", align: "right" },
+                { key: "cost", label: "Cost", format: "currency", align: "right" },
+                { key: "profit", label: "Profit", format: "currency", align: "right" },
+              ]}
+              totalColumns={["quantity", "revenue", "cost", "profit"]}
+            />
+          </TabsContent>
           <TabsContent value="category" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
@@ -759,6 +801,19 @@ const Reports = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <ReportDetailTable
+              title="Category-wise Details"
+              data={categoryWiseData}
+              columns={[
+                { key: "name", label: "Category" },
+                { key: "quantity", label: "Qty Sold", format: "number", align: "right" },
+                { key: "revenue", label: "Revenue", format: "currency", align: "right" },
+                { key: "cost", label: "Cost", format: "currency", align: "right" },
+                { key: "profit", label: "Profit", format: "currency", align: "right" },
+              ]}
+              totalColumns={["quantity", "revenue", "cost", "profit"]}
+            />
           </TabsContent>
 
           {/* Territory Sales */}
@@ -809,8 +864,18 @@ const Reports = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
 
+            <ReportDetailTable
+              title="Territory-wise Sales Details"
+              data={territoryWiseData}
+              columns={[
+                { key: "name", label: "Territory" },
+                { key: "orders", label: "Orders", format: "number", align: "right" },
+                { key: "revenue", label: "Revenue", format: "currency", align: "right" },
+              ]}
+              totalColumns={["orders", "revenue"]}
+            />
+          </TabsContent>
           {/* Sales Officers */}
           <TabsContent value="officer" className="space-y-4">
             <Card>
@@ -857,6 +922,18 @@ const Reports = () => {
                 )}
               </CardContent>
             </Card>
+
+            <ReportDetailTable
+              title="Sales Officer Details"
+              data={salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) }))}
+              columns={[
+                { key: "name", label: "Officer Name" },
+                { key: "orders", label: "Orders", format: "number", align: "right" },
+                { key: "revenue", label: "Revenue", format: "currency", align: "right" },
+                { key: "avgOrder", label: "Avg Order", format: "currency", align: "right" },
+              ]}
+              totalColumns={["orders", "revenue"]}
+            />
           </TabsContent>
 
           {/* Policy Collection */}
@@ -1004,6 +1081,11 @@ const Reports = () => {
           {/* Credit Recovery Report */}
           <TabsContent value="recovery" className="space-y-4">
             <CreditRecoveryReport dateRange={dateRange} />
+          </TabsContent>
+
+          {/* Territory Officers Report */}
+          <TabsContent value="territory-officers" className="space-y-4">
+            <TerritoryOfficerReport dateRange={dateRange} />
           </TabsContent>
         </Tabs>
       </div>
