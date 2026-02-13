@@ -119,10 +119,10 @@ export const ViewPolicyDialog = ({ policy }: ViewPolicyDialogProps) => {
                     <TableRow key={item.id || index}>
                       <TableCell>
                         {item.product?.name || "Unknown Product"}
-                        {item.product?.sku && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({item.product.sku})
-                          </span>
+                         {item.product?.sku && (
+                           <span className="text-xs text-muted-foreground ml-1">
+                             (Batch: {item.product.sku})
+                           </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
@@ -140,9 +140,9 @@ export const ViewPolicyDialog = ({ policy }: ViewPolicyDialogProps) => {
               <div className="p-3 bg-muted rounded-lg">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-medium">
-                      {policy.products?.name} ({policy.products?.sku})
-                    </p>
+                     <p className="font-medium">
+                       {policy.products?.name} (Batch: {policy.products?.sku})
+                     </p>
                     <p className="text-sm text-muted-foreground">
                       {policy.quantity} × {formatCurrency(policy.rate_per_unit)}
                     </p>

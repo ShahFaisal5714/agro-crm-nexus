@@ -177,7 +177,7 @@ const Inventory = () => {
                     <TableHead>Margin %</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Stock</TableHead>
-                    <TableHead>Unit</TableHead>
+                    
                     <TableHead>Value</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -214,7 +214,7 @@ const Inventory = () => {
                           <Badge variant="outline">{product.category?.name || "Uncategorized"}</Badge>
                         </TableCell>
                         <TableCell>{product.stock_quantity}</TableCell>
-                        <TableCell>{product.unit}</TableCell>
+                        
                         <TableCell>{formatCurrency(product.unit_price * product.stock_quantity)}</TableCell>
                         <TableCell>
                           <Badge variant={isOutOfStock ? "destructive" : isLowStock ? "secondary" : "default"}>

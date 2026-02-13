@@ -80,12 +80,12 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <FileText className="h-4 w-4 mr-2" />
-          Record Payment
+           Recovered Payment
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record Payment to Supplier - {supplierName}</DialogTitle>
+          <DialogTitle>Recovered Payment to Supplier - {supplierName}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -191,7 +191,7 @@ export const CreateInvoiceFromSupplierCreditsDialog = ({
                   Recording...
                 </>
               ) : (
-                `Record Payment of ${formatCurrency(remaining)}`
+                `Recovered Payment of ${formatCurrency(remaining)}`
               )}
             </Button>
           </div>

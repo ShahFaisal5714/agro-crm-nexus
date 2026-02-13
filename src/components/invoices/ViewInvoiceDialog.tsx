@@ -125,46 +125,46 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
           <style>
             @page { margin: 20mm; }
             * { box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; color: #333; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #2d5a27; }
+            body { font-family: Arial, sans-serif; padding: 15px; max-width: 800px; margin: 0 auto; color: #333; font-size: 12px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #2d5a27; }
             .logo-section { display: flex; align-items: center; gap: 15px; }
-            .logo { height: 70px; width: auto; }
-            .company-name { font-size: 22px; font-weight: bold; color: #2d5a27; }
-            .company-contact { text-align: right; font-size: 12px; color: #666; line-height: 1.6; }
-            .invoice-title { font-size: 26px; font-weight: bold; color: #2d5a27; margin: 25px 0 10px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-            .invoice-type-badge { background: #e8f5e9; color: #2d5a27; padding: 6px 20px; border-radius: 20px; font-size: 13px; display: inline-block; margin: 0 auto 25px; }
-            .details { display: flex; justify-content: space-between; margin-bottom: 25px; }
-            .details-section h3 { font-size: 13px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-            .details-section p { margin: 4px 0; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
-            th, td { border: 1px solid #e0e0e0; padding: 12px 10px; text-align: left; font-size: 13px; }
-            th { background-color: #2d5a27; color: white; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+            .logo { height: 50px; width: auto; }
+            .company-name { font-size: 18px; font-weight: bold; color: #2d5a27; }
+            .company-contact { text-align: right; font-size: 10px; color: #666; line-height: 1.5; }
+            .invoice-title { font-size: 20px; font-weight: bold; color: #2d5a27; margin: 15px 0 8px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+            .invoice-type-badge { background: #e8f5e9; color: #2d5a27; padding: 4px 14px; border-radius: 20px; font-size: 10px; display: inline-block; margin: 0 auto 15px; }
+            .details { display: flex; justify-content: space-between; margin-bottom: 15px; }
+             .details-section h3 { font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+             .details-section p { margin: 2px 0; font-size: 11px; }
+             table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+            th, td { border: 1px solid #e0e0e0; padding: 8px 8px; text-align: left; font-size: 11px; }
+            th { background-color: #2d5a27; color: white; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
             tr:nth-child(even) { background-color: #f9f9f9; }
-            .totals { text-align: right; margin-bottom: 30px; }
-            .totals p { margin: 6px 0; font-size: 14px; }
-            .total-row { font-size: 18px; font-weight: bold; color: #2d5a27; margin-top: 10px !important; padding-top: 10px; border-top: 2px solid #2d5a27; }
-            .paid-row { color: #2d5a27; }
-            .remaining-row { font-weight: bold; }
-            .status { display: inline-block; padding: 5px 14px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+             .totals { text-align: right; margin-bottom: 20px; }
+             .totals p { margin: 4px 0; font-size: 11px; }
+             .total-row { font-size: 14px; font-weight: bold; color: #2d5a27; margin-top: 8px !important; padding-top: 8px; border-top: 2px solid #2d5a27; }
+             .paid-row { color: #2d5a27; }
+             .remaining-row { font-weight: bold; }
+             .status { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
             .status-paid { background: #d4edda; color: #155724; }
             .status-unpaid { background: #fff3cd; color: #856404; }
             .status-partial { background: #cce5ff; color: #004085; }
             .status-overdue { background: #f8d7da; color: #721c24; }
             .status-cancelled { background: #e9ecef; color: #6c757d; }
-            .summary-section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
-            .summary-section h4 { color: #2d5a27; margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
-            .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-            .summary-item { text-align: center; }
-            .summary-label { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
-            .summary-value { font-size: 16px; font-weight: bold; color: #333; }
-            .payment-section { margin-top: 30px; }
-            .payment-section h4 { color: #2d5a27; margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
-            .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; }
-            .footer p { font-size: 12px; color: #666; margin: 5px 0; }
-            .signature-section { margin-top: 50px; display: flex; justify-content: space-between; }
-            .signature-box { width: 200px; text-align: center; }
-            .signature-line { border-top: 1px solid #333; margin-top: 50px; padding-top: 8px; font-size: 12px; color: #666; }
-            @media print {
+             .summary-section { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+             .summary-section h4 { color: #2d5a27; margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+             .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+             .summary-item { text-align: center; }
+             .summary-label { font-size: 9px; color: #666; text-transform: uppercase; margin-bottom: 2px; }
+             .summary-value { font-size: 13px; font-weight: bold; color: #333; }
+             .payment-section { margin-top: 20px; }
+             .payment-section h4 { color: #2d5a27; margin-bottom: 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+             .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; }
+             .footer p { font-size: 10px; color: #666; margin: 3px 0; }
+             .signature-section { margin-top: 30px; display: flex; justify-content: space-between; }
+             .signature-box { width: 180px; text-align: center; }
+             .signature-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 6px; font-size: 10px; color: #666; }
+             @media print {
               body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
               .no-print { display: none !important; }
             }

@@ -134,7 +134,7 @@ export const AddSupplierPaymentDialog = ({ supplierId, supplierName }: AddSuppli
             </Button>
             <Button type="submit" disabled={isAddingPayment}>
               {isAddingPayment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Record Payment
+              Recovered Payment
             </Button>
           </DialogFooter>
         </form>
