@@ -485,6 +485,51 @@ export type Database = {
           },
         ]
       }
+      officer_targets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credits_target: number
+          id: string
+          notes: string | null
+          orders_target: number
+          payments_target: number
+          sales_target: number
+          target_month: string
+          territory_code: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credits_target?: number
+          id?: string
+          notes?: string | null
+          orders_target?: number
+          payments_target?: number
+          sales_target?: number
+          target_month: string
+          territory_code: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credits_target?: number
+          id?: string
+          notes?: string | null
+          orders_target?: number
+          payments_target?: number
+          sales_target?: number
+          target_month?: string
+          territory_code?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       policies: {
         Row: {
           advance_amount: number
