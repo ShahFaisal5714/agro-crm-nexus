@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useInvoices, Invoice, InvoiceItem } from "@/hooks/useInvoices";
 import { useInvoicePayments, InvoicePayment } from "@/hooks/useInvoicePayments";
 import { AddInvoicePaymentDialog } from "./AddInvoicePaymentDialog";
+import { InvoiceValidationDialog } from "./InvoiceValidationDialog";
 
 // Import company logo
 import companyLogo from "@/assets/company-logo.png";
@@ -354,6 +355,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
               {sourceLabels[invoiceSource]} - {invoice.invoice_number}
             </DialogTitle>
             <div className="flex gap-2">
+              <InvoiceValidationDialog invoiceId={invoice.id} invoiceNumber={invoice.invoice_number} />
               <AddInvoicePaymentDialog
                 invoiceId={invoice.id}
                 invoiceNumber={invoice.invoice_number}

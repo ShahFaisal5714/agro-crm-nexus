@@ -37,6 +37,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Purchase, usePurchases } from "@/hooks/usePurchases";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import { SupplierRatingStars } from "./SupplierRatingStars";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   supplier_id: z.string().min(1, "Supplier is required"),
@@ -53,6 +55,10 @@ export const EditPurchaseDialog = ({ purchase }: EditPurchaseDialogProps) => {
   const [open, setOpen] = useState(false);
   const { updatePurchase, isUpdating } = usePurchases();
   const { suppliers } = useSuppliers();
+  const [qualityRating, setQualityRating] = useState<number>(purchase.quality_rating || 0);
+  const [deliveryRating, setDeliveryRating] = useState<number>(purchase.delivery_rating || 0);
+  const [priceRating, setPriceRating] = useState<number>(purchase.price_rating || 0);
+  const [supplierNotes, setSupplierNotes] = useState(purchase.supplier_notes || "");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,6 +77,10 @@ export const EditPurchaseDialog = ({ purchase }: EditPurchaseDialogProps) => {
       purchase_date: format(values.purchase_date, "yyyy-MM-dd"),
       status: values.status,
       notes: values.notes,
+      quality_rating: qualityRating || null,
+      delivery_rating: deliveryRating || null,
+      price_rating: priceRating || null,
+      supplier_notes: supplierNotes || null,
     });
     setOpen(false);
   };
@@ -193,6 +203,27 @@ export const EditPurchaseDialog = ({ purchase }: EditPurchaseDialogProps) => {
                 </FormItem>
               )}
             />
+
+            {/* Supplier Rating Section */}
+            <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+              <Label className="font-semibold text-sm">Supplier Rating</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <SupplierRatingStars rating={qualityRating} onChange={setQualityRating} label="Quality" />
+                <SupplierRatingStars rating={deliveryRating} onChange={setDeliveryRating} label="Delivery" />
+                <SupplierRatingStars rating={priceRating} onChange={setPriceRating} label="Price" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="supplierNotes">Supplier Notes</Label>
+                <Textarea
+                  id="supplierNotes"
+                  value={supplierNotes}
+                  onChange={(e) => setSupplierNotes(e.target.value)}
+                  placeholder="Notes about supplier performance..."
+                  className="resize-none"
+                  maxLength={1000}
+                />
+              </div>
+            </div>
 
             <div className="flex justify-end gap-2 pt-4">
               <Button

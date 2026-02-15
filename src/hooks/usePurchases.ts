@@ -10,6 +10,10 @@ export interface Purchase {
   total_amount: number;
   status: string;
   notes?: string;
+  quality_rating?: number | null;
+  delivery_rating?: number | null;
+  price_rating?: number | null;
+  supplier_notes?: string | null;
   created_at: string;
   created_by: string;
   suppliers?: {
@@ -150,12 +154,20 @@ export const usePurchases = () => {
       purchase_date,
       status,
       notes,
+      quality_rating,
+      delivery_rating,
+      price_rating,
+      supplier_notes,
     }: {
       id: string;
       supplier_id: string;
       purchase_date: string;
       status: string;
       notes?: string;
+      quality_rating?: number | null;
+      delivery_rating?: number | null;
+      price_rating?: number | null;
+      supplier_notes?: string | null;
     }) => {
       const { data, error } = await supabase
         .from("purchases")
@@ -164,6 +176,10 @@ export const usePurchases = () => {
           purchase_date,
           status,
           notes,
+          quality_rating,
+          delivery_rating,
+          price_rating,
+          supplier_notes,
         })
         .eq("id", id)
         .select()

@@ -847,36 +847,48 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          delivery_rating: number | null
           id: string
           notes: string | null
+          price_rating: number | null
           purchase_date: string
           purchase_number: string
+          quality_rating: number | null
           status: string
           supplier_id: string
+          supplier_notes: string | null
           total_amount: number
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          delivery_rating?: number | null
           id?: string
           notes?: string | null
+          price_rating?: number | null
           purchase_date?: string
           purchase_number: string
+          quality_rating?: number | null
           status?: string
           supplier_id: string
+          supplier_notes?: string | null
           total_amount?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          delivery_rating?: number | null
           id?: string
           notes?: string | null
+          price_rating?: number | null
           purchase_date?: string
           purchase_number?: string
+          quality_rating?: number | null
           status?: string
           supplier_id?: string
+          supplier_notes?: string | null
           total_amount?: number
           updated_at?: string
         }

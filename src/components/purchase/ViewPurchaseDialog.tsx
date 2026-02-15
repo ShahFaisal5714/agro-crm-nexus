@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, FileText, Loader2, CreditCard, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Eye, FileText, Loader2, CreditCard, ArrowDownCircle, ArrowUpCircle, Star } from "lucide-react";
 import { Purchase, usePurchases, PurchaseItemWithProduct } from "@/hooks/usePurchases";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useDealers } from "@/hooks/useDealers";
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { AddSupplierPaymentFromPurchaseDialog } from "@/components/suppliers/AddSupplierPaymentFromPurchaseDialog";
+import { SupplierRatingStars } from "./SupplierRatingStars";
 
 interface ViewPurchaseDialogProps {
   purchase: Purchase;
@@ -184,6 +185,24 @@ export const ViewPurchaseDialog = ({ purchase }: ViewPurchaseDialogProps) => {
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Notes</p>
                 <p>{purchase.notes}</p>
+              </div>
+            )}
+
+            {/* Supplier Rating */}
+            {(purchase.quality_rating || purchase.delivery_rating || purchase.price_rating) && (
+              <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                <p className="text-sm font-medium mb-2">Supplier Rating</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <SupplierRatingStars rating={purchase.quality_rating} label="Quality" readOnly size="sm" />
+                  <SupplierRatingStars rating={purchase.delivery_rating} label="Delivery" readOnly size="sm" />
+                  <SupplierRatingStars rating={purchase.price_rating} label="Price" readOnly size="sm" />
+                </div>
+                {purchase.supplier_notes && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground">Supplier Notes</p>
+                    <p className="text-sm">{purchase.supplier_notes}</p>
+                  </div>
+                )}
               </div>
             )}
 
