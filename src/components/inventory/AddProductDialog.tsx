@@ -30,7 +30,6 @@ export const AddProductDialog = () => {
       unit_price: parseFloat(formData.get("unit_price") as string),
       cost_price: parseFloat(formData.get("cost_price") as string) || 0,
       stock_quantity: parseInt(formData.get("stock_quantity") as string),
-      unit: formData.get("unit") as string,
       pack_size: formData.get("pack_size") as string || null,
       category_id: categoryId || null,
     };
