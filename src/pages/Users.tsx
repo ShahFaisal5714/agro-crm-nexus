@@ -441,10 +441,11 @@ const Users = () => {
                               </div>
                             </div>
                             <Table>
-                              <TableHeader>
+                                <TableHeader>
                                 <TableRow>
                                   <TableHead>Territory Name</TableHead>
                                   <TableHead>Code</TableHead>
+                                  <TableHead>Assigned Officer</TableHead>
                                   <TableHead>Dealers</TableHead>
                                   <TableHead>Actions</TableHead>
                                 </TableRow>
@@ -452,10 +453,18 @@ const Users = () => {
                               <TableBody>
                                 {regionTerritories.map((territory) => {
                                   const dealerCount = dealers.filter((d) => d.territory_id === territory.id).length;
+                                  const assignedOfficer = officers.find((o) => o.territory_id === territory.id);
                                   return (
                                     <TableRow key={territory.id}>
                                       <TableCell className="font-medium">{territory.name}</TableCell>
                                       <TableCell className="font-mono text-sm">{territory.code}</TableCell>
+                                      <TableCell>
+                                        {assignedOfficer ? (
+                                          <span className="text-sm font-medium">{assignedOfficer.officer_name}</span>
+                                        ) : (
+                                          <Badge variant="outline" className="text-muted-foreground text-xs">No Officer</Badge>
+                                        )}
+                                      </TableCell>
                                       <TableCell>{dealerCount}</TableCell>
                                       <TableCell>
                                         <div className="flex items-center gap-1">

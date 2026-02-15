@@ -12,6 +12,7 @@ import { Users, MapPin, Target, TrendingUp } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { isWithinInterval, startOfDay, endOfDay, startOfMonth, format } from "date-fns";
 import { SetOfficerTargetDialog } from "./SetOfficerTargetDialog";
+import { useTerritoryOfficers } from "@/hooks/useTerritoryOfficers";
 
 interface TerritoryOfficerReportProps {
   dateRange?: DateRange;
@@ -26,23 +27,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
 
   const targetMonth = dateRange?.from || new Date();
 
-  const { data: userRoles = [] } = useQuery({
-    queryKey: ["report-user-roles"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("user_roles").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["report-profiles"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, full_name, email, phone");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { officers } = useTerritoryOfficers();
 
   const { data: territories = [] } = useQuery({
     queryKey: ["report-territories"],
@@ -53,12 +38,21 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     },
   });
 
+  const { data: dealers = [] } = useQuery({
+    queryKey: ["report-dealers-territory"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("dealers").select("id, dealer_name, territory_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: salesOrders = [] } = useQuery({
     queryKey: ["report-sales-orders-full"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales_orders")
-        .select("id, order_date, total_amount, created_by, dealer_id, dealers(dealer_name, territory_id)");
+        .select("id, order_date, total_amount, dealer_id, dealers(dealer_name, territory_id)");
       if (error) throw error;
       return data;
     },
@@ -69,7 +63,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dealer_credits")
-        .select("id, amount, credit_date, created_by, dealer_id, dealers(dealer_name, territory_id)");
+        .select("id, amount, credit_date, dealer_id, dealers(dealer_name, territory_id)");
       if (error) throw error;
       return data;
     },
@@ -80,7 +74,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dealer_payments")
-        .select("id, amount, payment_date, created_by, dealer_id, dealers(dealer_name, territory_id)");
+        .select("id, amount, payment_date, dealer_id, dealers(dealer_name, territory_id)");
       if (error) throw error;
       return data;
     },
@@ -95,27 +89,23 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     },
   });
 
-  const territoryOfficerData = useMemo(() => {
-    const territoryByCode = new Map(territories.map(t => [t.code, t]));
+  interface OfficerData {
+    officerId: string;
+    officerName: string;
+    phone: string | null;
+    territoryName: string;
+    territoryCode: string;
+    territoryId: string;
+    dealerCount: number;
+    activeDealerCount: number;
+    sales: number;
+    orders: number;
+    creditsIssued: number;
+    paymentsCollected: number;
+  }
+
+  const territoryOfficerData: OfficerData[] = useMemo(() => {
     const territoryById = new Map(territories.map(t => [t.id, t]));
-
-    const officersByTerritory = new Map<string, Array<{
-      userId: string; name: string; role: string; territory: string; territoryName: string;
-      sales: number; orders: number; creditsIssued: number; paymentsCollected: number; dealers: Set<string>;
-    }>>();
-
-    userRoles.forEach(ur => {
-      if (!ur.territory) return;
-      const profile = profiles.find(p => p.id === ur.user_id);
-      if (!profile) return;
-      const territory = territoryByCode.get(ur.territory);
-      const territoryName = territory?.name || ur.territory;
-      if (!officersByTerritory.has(ur.territory)) officersByTerritory.set(ur.territory, []);
-      officersByTerritory.get(ur.territory)!.push({
-        userId: ur.user_id, name: profile.full_name, role: ur.role, territory: ur.territory,
-        territoryName, sales: 0, orders: 0, creditsIssued: 0, paymentsCollected: 0, dealers: new Set(),
-      });
-    });
 
     const inRange = (dateStr: string) => {
       if (!dateRange?.from || !dateRange?.to) return true;
@@ -123,51 +113,64 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
       return isWithinInterval(d, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) });
     };
 
-    salesOrders.forEach(order => {
-      if (!inRange(order.order_date)) return;
-      const dealer = order.dealers as any;
-      const territory = territoryById.get(dealer?.territory_id);
-      if (!territory) return;
-      const officers = officersByTerritory.get(territory.code);
-      const officer = officers?.find(o => o.userId === order.created_by);
-      if (officer) { officer.sales += order.total_amount; officer.orders += 1; officer.dealers.add(order.dealer_id); }
-    });
+    const results: OfficerData[] = [];
 
-    dealerCredits.forEach(credit => {
-      if (!inRange(credit.credit_date)) return;
-      const dealer = credit.dealers as any;
-      const territory = territoryById.get(dealer?.territory_id);
-      if (!territory) return;
-      const officer = officersByTerritory.get(territory.code)?.find(o => o.userId === credit.created_by);
-      if (officer) officer.creditsIssued += credit.amount;
-    });
+    officers
+      .filter(o => o.territory_id)
+      .forEach(officer => {
+        const territory = territoryById.get(officer.territory_id!);
+        if (!territory) return;
 
-    dealerPayments.forEach(payment => {
-      if (!inRange(payment.payment_date)) return;
-      const dealer = payment.dealers as any;
-      const territory = territoryById.get(dealer?.territory_id);
-      if (!territory) return;
-      const officer = officersByTerritory.get(territory.code)?.find(o => o.userId === payment.created_by);
-      if (officer) officer.paymentsCollected += payment.amount;
-    });
+        const territoryDealers = dealers.filter(d => d.territory_id === officer.territory_id);
+        const dealerIds = new Set(territoryDealers.map(d => d.id));
 
-    const result: Array<{
-      territoryName: string; territoryCode: string; officerName: string; role: string; userId: string;
-      sales: number; orders: number; creditsIssued: number; paymentsCollected: number; dealerCount: number;
-    }> = [];
+        let sales = 0;
+        let orders = 0;
+        const activeDealerIds = new Set<string>();
 
-    officersByTerritory.forEach((officers, code) => {
-      officers.forEach(o => {
-        result.push({
-          territoryName: o.territoryName, territoryCode: code, officerName: o.name, role: o.role,
-          userId: o.userId, sales: o.sales, orders: o.orders, creditsIssued: o.creditsIssued,
-          paymentsCollected: o.paymentsCollected, dealerCount: o.dealers.size,
+        salesOrders.forEach(order => {
+          if (!inRange(order.order_date)) return;
+          if (dealerIds.has(order.dealer_id)) {
+            sales += order.total_amount;
+            orders += 1;
+            activeDealerIds.add(order.dealer_id);
+          }
+        });
+
+        let creditsIssued = 0;
+        dealerCredits.forEach(credit => {
+          if (!inRange(credit.credit_date)) return;
+          if (dealerIds.has(credit.dealer_id)) {
+            creditsIssued += credit.amount;
+          }
+        });
+
+        let paymentsCollected = 0;
+        dealerPayments.forEach(payment => {
+          if (!inRange(payment.payment_date)) return;
+          if (dealerIds.has(payment.dealer_id)) {
+            paymentsCollected += payment.amount;
+          }
+        });
+
+        results.push({
+          officerId: officer.id,
+          officerName: officer.officer_name,
+          phone: officer.phone || null,
+          territoryName: territory.name,
+          territoryCode: territory.code,
+          territoryId: officer.territory_id!,
+          dealerCount: territoryDealers.length,
+          activeDealerCount: activeDealerIds.size,
+          sales,
+          orders,
+          creditsIssued,
+          paymentsCollected,
         });
       });
-    });
 
-    return result.sort((a, b) => b.sales - a.sales);
-  }, [userRoles, profiles, territories, salesOrders, dealerCredits, dealerPayments, dateRange]);
+    return results.sort((a, b) => b.sales - a.sales);
+  }, [officers, territories, dealers, salesOrders, dealerCredits, dealerPayments, dateRange]);
 
   // Filter by selected territory
   const filteredData = useMemo(() => {
@@ -175,16 +178,17 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     return territoryOfficerData.filter(d => d.territoryCode === selectedTerritory);
   }, [territoryOfficerData, selectedTerritory]);
 
-  // Territory summary from filtered data
+  // Territory summary
   const territorySummary = useMemo(() => {
-    const map = new Map<string, { name: string; officers: number; sales: number; orders: number; credits: number; payments: number }>();
-    filteredData.forEach(d => {
-      const existing = map.get(d.territoryCode) || { name: d.territoryName, officers: 0, sales: 0, orders: 0, credits: 0, payments: 0 };
-      existing.officers += 1; existing.sales += d.sales; existing.orders += d.orders;
-      existing.credits += d.creditsIssued; existing.payments += d.paymentsCollected;
-      map.set(d.territoryCode, existing);
-    });
-    return Array.from(map.values()).sort((a, b) => b.sales - a.sales);
+    return filteredData.map(d => ({
+      name: d.territoryName,
+      officer: d.officerName,
+      sales: d.sales,
+      orders: d.orders,
+      credits: d.creditsIssued,
+      payments: d.paymentsCollected,
+      dealers: d.dealerCount,
+    }));
   }, [filteredData]);
 
   // Build targets map
@@ -193,7 +197,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     const map = new Map<string, typeof officerTargets[0]>();
     officerTargets.forEach(t => {
       if (t.target_month === monthStr) {
-        map.set(`${t.user_id}_${t.territory_code}`, t);
+        map.set(t.territory_code, t);
       }
     });
     return map;
@@ -205,14 +209,6 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [territoryOfficerData]);
 
-  const roleLabel = (role: string) => {
-    const labels: Record<string, string> = {
-      admin: "Admin", territory_sales_manager: "Territory Manager", dealer: "Dealer",
-      finance: "Finance", accountant: "Accountant", employee: "Employee",
-    };
-    return labels[role] || role;
-  };
-
   const getProgress = (actual: number, target: number) => {
     if (target <= 0) return 0;
     return Math.min(Math.round((actual / target) * 100), 100);
@@ -220,7 +216,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
 
   const handleSetTarget = (d: typeof filteredData[0]) => {
     setSelectedOfficer({
-      userId: d.userId, name: d.officerName, territoryCode: d.territoryCode, territoryName: d.territoryName,
+      userId: d.officerId, name: d.officerName, territoryCode: d.territoryCode, territoryName: d.territoryName,
     });
     setTargetDialogOpen(true);
   };
@@ -244,14 +240,14 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Total Territories</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{territorySummary.length}</div></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Total Officers</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{filteredData.length}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Total Officers Assigned</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{filteredData.length}</div></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Total Dealers</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{filteredData.reduce((s, d) => s + d.dealerCount, 0)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Combined Sales</CardTitle></CardHeader>
@@ -261,23 +257,32 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Payments Collected</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(filteredData.reduce((s, d) => s + d.paymentsCollected, 0))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Territory Summary Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Territory Summary</CardTitle>
+          <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Territory & Officer Summary</CardTitle>
         </CardHeader>
         <CardContent>
           {territorySummary.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">No territory assignments found</p>
+            <p className="text-center py-8 text-muted-foreground">No territory officers assigned. Add officers from User Management page.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Territory</TableHead>
-                    <TableHead className="text-right">Officers</TableHead>
+                    <TableHead>Sales Officer</TableHead>
+                    <TableHead className="text-right">Dealers</TableHead>
                     <TableHead className="text-right">Orders</TableHead>
                     <TableHead className="text-right">Sales</TableHead>
                     <TableHead className="text-right">Credits Issued</TableHead>
@@ -288,7 +293,8 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
                   {territorySummary.map((t, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{t.name}</TableCell>
-                      <TableCell className="text-right">{t.officers}</TableCell>
+                      <TableCell>{t.officer}</TableCell>
+                      <TableCell className="text-right">{t.dealers}</TableCell>
                       <TableCell className="text-right">{t.orders}</TableCell>
                       <TableCell className="text-right font-semibold text-primary">{formatCurrency(t.sales)}</TableCell>
                       <TableCell className="text-right text-orange-600">{formatCurrency(t.credits)}</TableCell>
@@ -296,8 +302,8 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
                     </TableRow>
                   ))}
                   <TableRow className="bg-muted/50 font-bold">
-                    <TableCell>Total</TableCell>
-                    <TableCell className="text-right">{territorySummary.reduce((s, t) => s + t.officers, 0)}</TableCell>
+                    <TableCell colSpan={2}>Total</TableCell>
+                    <TableCell className="text-right">{territorySummary.reduce((s, t) => s + t.dealers, 0)}</TableCell>
                     <TableCell className="text-right">{territorySummary.reduce((s, t) => s + t.orders, 0)}</TableCell>
                     <TableCell className="text-right text-primary">{formatCurrency(territorySummary.reduce((s, t) => s + t.sales, 0))}</TableCell>
                     <TableCell className="text-right text-orange-600">{formatCurrency(territorySummary.reduce((s, t) => s + t.credits, 0))}</TableCell>
@@ -310,12 +316,12 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
         </CardContent>
       </Card>
 
-      {/* Officer-wise Performance with Targets */}
+      {/* Officer Performance with Targets */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Officer-wise Performance & Targets
+            Officer Performance & Targets
             <Badge variant="outline" className="ml-2">
               <Target className="h-3 w-3 mr-1" />
               {format(targetMonth, "MMM yyyy")}
@@ -332,7 +338,6 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
                   <TableRow>
                     <TableHead>Officer Name</TableHead>
                     <TableHead>Territory</TableHead>
-                    <TableHead>Role</TableHead>
                     <TableHead className="text-right">Dealers</TableHead>
                     <TableHead className="text-right">Orders</TableHead>
                     <TableHead className="text-right">Sales</TableHead>
@@ -345,13 +350,12 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
                 </TableHeader>
                 <TableBody>
                   {filteredData.map((d, i) => {
-                    const target = targetsMap.get(`${d.userId}_${d.territoryCode}`);
+                    const target = targetsMap.get(d.territoryCode);
                     const salesProgress = getProgress(d.sales, target?.sales_target || 0);
                     return (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{d.officerName}</TableCell>
                         <TableCell><Badge variant="outline">{d.territoryName}</Badge></TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{roleLabel(d.role)}</TableCell>
                         <TableCell className="text-right">{d.dealerCount}</TableCell>
                         <TableCell className="text-right">{d.orders}</TableCell>
                         <TableCell className="text-right font-semibold text-primary">{formatCurrency(d.sales)}</TableCell>
@@ -387,7 +391,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
       </Card>
 
       {/* Target Achievement Summary */}
-      {filteredData.some(d => targetsMap.has(`${d.userId}_${d.territoryCode}`)) && (
+      {filteredData.some(d => targetsMap.has(d.territoryCode)) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -398,7 +402,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredData.map((d, i) => {
-                const target = targetsMap.get(`${d.userId}_${d.territoryCode}`);
+                const target = targetsMap.get(d.territoryCode);
                 if (!target) return null;
                 const salesPct = getProgress(d.sales, target.sales_target);
                 const ordersPct = getProgress(d.orders, target.orders_target);
@@ -444,7 +448,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
         open={targetDialogOpen}
         onOpenChange={setTargetDialogOpen}
         officer={selectedOfficer}
-        existingTarget={selectedOfficer ? targetsMap.get(`${selectedOfficer.userId}_${selectedOfficer.territoryCode}`) || null : null}
+        existingTarget={selectedOfficer ? targetsMap.get(selectedOfficer.territoryCode) || null : null}
         targetMonth={targetMonth}
       />
     </div>
