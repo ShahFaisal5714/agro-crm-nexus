@@ -24,6 +24,7 @@ import { CashInHandWidget } from "@/components/dashboard/CashInHandWidget";
 import { CashFlowChart } from "@/components/dashboard/CashFlowChart";
 import { CreditRecoverySummaryWidget } from "@/components/dashboard/CreditRecoverySummaryWidget";
 import { ProfitLossWidget } from "@/components/dashboard/ProfitLossWidget";
+import { TopOfficersWidget } from "@/components/dashboard/TopOfficersWidget";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -209,9 +210,10 @@ const Dashboard = () => {
           <SupplierPaymentsDueWidget />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CreditRecoverySummaryWidget />
           <DealerCreditsWidget />
+          <TopOfficersWidget />
         </div>
       </div>
     </DashboardLayout>
