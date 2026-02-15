@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarClock, Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { exportToCSV } from "@/lib/exportUtils";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import JSZip from "jszip";
 
 const ALL_MODULES = [
   { key: "sales_orders", label: "Sales Orders", table: "sales_orders" },
@@ -67,6 +67,24 @@ export const MonthlyExportSection = () => {
     return dateMap[table] || "created_at";
   };
 
+  const convertToCSV = (data: Record<string, unknown>[]): string => {
+    if (data.length === 0) return "";
+    const headers = Object.keys(data[0]);
+    const csvHeader = headers.join(",");
+    const csvRows = data.map(row =>
+      headers.map(header => {
+        const value = row[header];
+        if (value === null || value === undefined) return "";
+        const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+        if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      }).join(",")
+    );
+    return [csvHeader, ...csvRows].join("\n");
+  };
+
   const handleExport = async () => {
     if (selectedModules.size === 0) {
       toast.error("Please select at least one module");
@@ -83,6 +101,8 @@ export const MonthlyExportSection = () => {
     let exportedCount = 0;
 
     try {
+      const zip = new JSZip();
+
       for (const mod of ALL_MODULES) {
         if (!selectedModules.has(mod.key)) continue;
 
@@ -100,12 +120,22 @@ export const MonthlyExportSection = () => {
         }
 
         if (data && (data as any[]).length > 0) {
-          exportToCSV(data as Record<string, unknown>[], `${mod.key}_${monthLabel}`);
+          const csv = convertToCSV(data as Record<string, unknown>[]);
+          zip.file(`${mod.key}_${monthLabel}.csv`, csv);
           exportedCount++;
         }
       }
 
       if (exportedCount > 0) {
+        const content = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(content);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `monthly_export_${monthLabel}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         toast.success(`Exported ${exportedCount} module(s) for ${format(targetMonth, "MMMM yyyy")}`);
       } else {
         toast.info("No data found for the selected month and modules");
