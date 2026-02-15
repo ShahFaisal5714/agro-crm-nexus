@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Bell, Lock, Database, Upload, BookOpen, FileCode, Clock, History } from "lucide-react";
+import { User, Bell, Lock, Database, Upload, BookOpen, FileCode, Clock, History, CalendarClock } from "lucide-react";
 import { DataExportSection } from "@/components/settings/DataExportSection";
 import { DataImportSection } from "@/components/settings/DataImportSection";
 import { MigrationGuide } from "@/components/settings/MigrationGuide";
@@ -16,6 +16,7 @@ import { SQLExportSection } from "@/components/settings/SQLExportSection";
 import { SQLImportSection } from "@/components/settings/SQLImportSection";
 import { ScheduledBackupSection } from "@/components/settings/ScheduledBackupSection";
 import { BackupHistorySection } from "@/components/settings/BackupHistorySection";
+import { MonthlyExportSection } from "@/components/settings/MonthlyExportSection";
 
 const Settings = () => {
   const { data: profile } = useQuery({
@@ -84,6 +85,10 @@ const Settings = () => {
             <TabsTrigger value="data">
               <Database className="h-4 w-4 mr-2" />
               Data Export
+            </TabsTrigger>
+            <TabsTrigger value="monthly-export">
+              <CalendarClock className="h-4 w-4 mr-2" />
+              Monthly Export
             </TabsTrigger>
             <TabsTrigger value="import">
               <Upload className="h-4 w-4 mr-2" />
@@ -199,6 +204,10 @@ const Settings = () => {
 
           <TabsContent value="data">
             <DataExportSection />
+          </TabsContent>
+
+          <TabsContent value="monthly-export">
+            <MonthlyExportSection />
           </TabsContent>
 
           <TabsContent value="import">

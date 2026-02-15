@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Star } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -206,12 +207,13 @@ const PurchasePage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>PO Number</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                     <TableHead>PO Number</TableHead>
+                     <TableHead>Supplier</TableHead>
+                     <TableHead>Date</TableHead>
+                     <TableHead>Amount</TableHead>
+                     <TableHead>Rating</TableHead>
+                     <TableHead>Status</TableHead>
+                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -221,6 +223,20 @@ const PurchasePage = () => {
                       <TableCell>{purchase.suppliers?.name || "Unknown"}</TableCell>
                       <TableCell>{format(new Date(purchase.purchase_date), "MMM dd, yyyy")}</TableCell>
                       <TableCell>{formatCurrency(purchase.total_amount)}</TableCell>
+                      <TableCell>
+                        {purchase.quality_rating || purchase.delivery_rating || purchase.price_rating ? (
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm">
+                              {(((purchase.quality_rating || 0) + (purchase.delivery_rating || 0) + (purchase.price_rating || 0)) / 
+                                [purchase.quality_rating, purchase.delivery_rating, purchase.price_rating].filter(Boolean).length
+                              ).toFixed(1)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={getStatusColor(purchase.status)}>
                           {purchase.status}
