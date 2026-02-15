@@ -1169,6 +1169,41 @@ export type Database = {
           },
         ]
       }
+      territory_officers: {
+        Row: {
+          created_at: string
+          id: string
+          officer_name: string
+          phone: string | null
+          territory_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          officer_name: string
+          phone?: string | null
+          territory_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          officer_name?: string
+          phone?: string | null
+          territory_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "territory_officers_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: true
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

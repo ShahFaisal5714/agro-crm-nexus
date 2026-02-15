@@ -110,12 +110,12 @@ export const AddDealerDialog = ({ territories }: { territories: Territory[] }) =
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="region">Region</Label>
-              <Select value={regionId} onValueChange={(val) => { setRegionId(val); setTerritoryId(""); }}>
+              <Select value={regionId} onValueChange={(val) => { setRegionId(val === "all" ? "" : val); setTerritoryId(""); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="All regions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Regions</SelectItem>
+                  <SelectItem value="all">All Regions</SelectItem>
                   {regions.map((region) => (
                     <SelectItem key={region.id} value={region.id}>
                       {region.name} ({region.code})

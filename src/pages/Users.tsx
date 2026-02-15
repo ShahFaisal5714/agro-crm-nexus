@@ -5,10 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users as UsersIcon, MapPin, ShieldCheck, FileText } from "lucide-react";
+import { Search, Users as UsersIcon, MapPin, ShieldCheck, FileText, UserCheck } from "lucide-react";
 import { useDealers } from "@/hooks/useDealers";
 import { useRegions } from "@/hooks/useRegions";
 import { useUsers } from "@/hooks/useUsers";
+import { useTerritoryOfficers } from "@/hooks/useTerritoryOfficers";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddDealerDialog } from "@/components/dealers/AddDealerDialog";
@@ -22,6 +23,9 @@ import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { EditUserProfileDialog } from "@/components/users/EditUserProfileDialog";
 import { ChangeEmailDialog } from "@/components/users/ChangeEmailDialog";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
+import { AddOfficerDialog } from "@/components/officers/AddOfficerDialog";
+import { EditOfficerDialog } from "@/components/officers/EditOfficerDialog";
+import { DeleteOfficerDialog } from "@/components/officers/DeleteOfficerDialog";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { useAuth } from "@/lib/auth";
 
@@ -36,9 +40,11 @@ const Users = () => {
   const { dealers, isLoading: dealersLoading } = useDealers();
   const { regions } = useRegions();
   const { users, userRoles, isLoading: usersLoading } = useUsers();
+  const { officers, isLoading: officersLoading } = useTerritoryOfficers();
   const { userRole } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [officerSearchTerm, setOfficerSearchTerm] = useState("");
   const isAdmin = userRole === "admin";
 
   const { data: territories = [] } = useQuery({
@@ -64,6 +70,13 @@ const Users = () => {
       user.full_name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
   );
+
+  const filteredOfficers = officers.filter(
+    (o) => o.officer_name.toLowerCase().includes(officerSearchTerm.toLowerCase())
+  );
+
+  const assignedTerritoryIds = officers.filter(o => o.territory_id).map(o => o.territory_id!);
+
 
   const getUserRole = (userId: string) => {
     const role = userRoles.find((r) => r.user_id === userId);
@@ -109,7 +122,7 @@ const Users = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -142,6 +155,16 @@ const Users = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Sales Officers</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{officers.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Unassigned Dealers</CardTitle>
               <UsersIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -157,6 +180,7 @@ const Users = () => {
           <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="dealers">Dealers</TabsTrigger>
+            <TabsTrigger value="sales-officers">Territory Sales Officers</TabsTrigger>
             <TabsTrigger value="territories">Territories</TabsTrigger>
             {isAdmin && <TabsTrigger value="audit">Audit Logs</TabsTrigger>}
           </TabsList>
@@ -288,6 +312,71 @@ const Users = () => {
                           </TableCell>
                         </TableRow>
                       ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="sales-officers" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search sales officers..."
+                      value={officerSearchTerm}
+                      onChange={(e) => setOfficerSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <AddOfficerDialog territories={territories} assignedTerritoryIds={assignedTerritoryIds} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {officersLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading sales officers...</div>
+                ) : filteredOfficers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {officerSearchTerm ? "No sales officers found matching your search" : "No territory sales officers yet. Add your first sales officer to get started."}
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Officer Name</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Territory</TableHead>
+                        <TableHead>Dealers</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOfficers.map((officer) => {
+                        const dealerCount = officer.territory_id
+                          ? dealers.filter((d) => d.territory_id === officer.territory_id).length
+                          : 0;
+                        return (
+                          <TableRow key={officer.id}>
+                            <TableCell className="font-medium">{officer.officer_name}</TableCell>
+                            <TableCell>{officer.phone || "-"}</TableCell>
+                            <TableCell>
+                              {officer.territory_id ? getTerritoryName(officer.territory_id) : (
+                                <Badge variant="outline" className="text-muted-foreground">Unassigned</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{dealerCount}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <EditOfficerDialog officer={officer} territories={territories} assignedTerritoryIds={assignedTerritoryIds} />
+                                <DeleteOfficerDialog officerId={officer.id} officerName={officer.officer_name} />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
