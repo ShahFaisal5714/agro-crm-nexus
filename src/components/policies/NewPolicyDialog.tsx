@@ -41,8 +41,13 @@ export const NewPolicyDialog = () => {
   const [endDate, setEndDate] = useState("");
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [advanceAmount, setAdvanceAmount] = useState("");
+  const [advancePaymentMethod, setAdvancePaymentMethod] = useState("cash");
+  const [advancePaymentDate, setAdvancePaymentDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
-  const { createPolicy, isCreating } = usePolicies();
+  const { createPolicy, addPayment, isCreating } = usePolicies();
   const { dealers } = useDealers();
   const { products } = useProducts();
 
@@ -81,6 +86,9 @@ export const NewPolicyDialog = () => {
     return sum + qty * rate;
   }, 0);
 
+  const advance = parseFloat(advanceAmount) || 0;
+  const remaining = totalAmount - advance;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -96,7 +104,7 @@ export const NewPolicyDialog = () => {
       return;
     }
 
-    await createPolicy({
+    const policy = await createPolicy({
       name: name || undefined,
       dealer_id: dealerId,
       items: validItems,
@@ -105,6 +113,17 @@ export const NewPolicyDialog = () => {
       expected_delivery_date: expectedDeliveryDate || undefined,
       notes: notes || undefined,
     });
+
+    // Record advance payment if provided
+    if (advance > 0 && policy) {
+      await addPayment({
+        policy_id: policy.id,
+        amount: advance,
+        payment_date: advancePaymentDate,
+        payment_method: advancePaymentMethod,
+        notes: "Advance payment at policy creation",
+      });
+    }
 
     setOpen(false);
     resetForm();
@@ -118,6 +137,9 @@ export const NewPolicyDialog = () => {
     setEndDate("");
     setExpectedDeliveryDate("");
     setNotes("");
+    setAdvanceAmount("");
+    setAdvancePaymentMethod("cash");
+    setAdvancePaymentDate(new Date().toISOString().split("T")[0]);
   };
 
   return (
@@ -262,10 +284,65 @@ export const NewPolicyDialog = () => {
               ))}
             </div>
 
-            <div className="p-3 bg-muted rounded-lg">
+            <div className="p-3 bg-muted rounded-lg space-y-1">
               <div className="flex justify-between text-sm">
                 <span>Total Amount:</span>
                 <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+              </div>
+              {advance > 0 && (
+                <>
+                  <div className="flex justify-between text-sm text-primary">
+                    <span>Advance Payment:</span>
+                    <span>- {formatCurrency(advance)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-semibold border-t pt-1">
+                    <span>Remaining:</span>
+                    <span className={remaining > 0 ? "text-destructive" : "text-primary"}>
+                      {formatCurrency(Math.max(0, remaining))}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Advance Payment Section */}
+            <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
+              <Label className="font-medium text-sm">Advance Payment (Optional)</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Amount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={totalAmount}
+                    value={advanceAmount}
+                    onChange={(e) => setAdvanceAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Payment Method</Label>
+                  <Select value={advancePaymentMethod} onValueChange={setAdvancePaymentMethod}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="upi">UPI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Payment Date</Label>
+                <Input
+                  type="date"
+                  value={advancePaymentDate}
+                  onChange={(e) => setAdvancePaymentDate(e.target.value)}
+                />
               </div>
             </div>
 

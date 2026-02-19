@@ -84,11 +84,12 @@ export const EditDealerDialog = ({ dealer, territories }: EditDealerDialogProps)
 
           <div className="space-y-2">
             <Label htmlFor="territory">Territory</Label>
-            <Select value={territoryId || ""} onValueChange={setTerritoryId}>
+            <Select value={territoryId || "none"} onValueChange={(v) => setTerritoryId(v === "none" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select territory" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">-- No Territory --</SelectItem>
                 {territories.map((territory) => (
                   <SelectItem key={territory.id} value={territory.id}>
                     {territory.name} ({territory.code})

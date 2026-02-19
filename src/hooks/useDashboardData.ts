@@ -76,38 +76,22 @@ export const useDashboardData = () => {
         .order("stock_quantity", { ascending: true })
         .limit(5);
 
-      // Fetch policies (to include in total sales)
-      const { data: policies } = await supabase
-        .from("policies")
-        .select("total_amount, created_at");
-
       const safeOrders = salesOrders || [];
       const safePurchases = purchases || [];
       const safeExpenses = expenses || [];
       const safeDealers = dealers || [];
 
-      const safePolicies = policies || [];
-
-      // Calculate current month totals (sales orders + policies)
+      // Calculate current month totals (sales orders only - policies NOT included until invoiced)
       const currentMonthSales = safeOrders
         .filter(o => new Date(o.order_date) >= currentMonthStart)
-        .reduce((sum, o) => sum + o.total_amount, 0) +
-        safePolicies
-          .filter(p => new Date(p.created_at) >= currentMonthStart)
-          .reduce((sum, p) => sum + p.total_amount, 0);
+        .reduce((sum, o) => sum + o.total_amount, 0);
 
       const lastMonthSales = safeOrders
         .filter(o => {
           const d = new Date(o.order_date);
           return d >= lastMonthStart && d <= lastMonthEnd;
         })
-        .reduce((sum, o) => sum + o.total_amount, 0) +
-        safePolicies
-          .filter(p => {
-            const d = new Date(p.created_at);
-            return d >= lastMonthStart && d <= lastMonthEnd;
-          })
-          .reduce((sum, p) => sum + p.total_amount, 0);
+        .reduce((sum, o) => sum + o.total_amount, 0);
 
       const currentMonthPurchases = safePurchases
         .filter(p => new Date(p.purchase_date) >= currentMonthStart)
