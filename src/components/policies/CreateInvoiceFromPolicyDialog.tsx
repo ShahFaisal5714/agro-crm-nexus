@@ -80,7 +80,7 @@ export const CreateInvoiceFromPolicyDialog = ({
     }
   };
 
-  const canCreateInvoice = policy.status === "paid";
+  const canCreateInvoice = policy.status !== "invoiced" && policy.status !== "cancelled";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -89,7 +89,7 @@ export const CreateInvoiceFromPolicyDialog = ({
           variant="outline"
           size="sm"
           disabled={!canCreateInvoice}
-          title={!canCreateInvoice ? "Policy must be fully paid to create invoice" : ""}
+          title={!canCreateInvoice ? "Policy is already invoiced or cancelled" : ""}
         >
           <FileText className="mr-1 h-3 w-3" />
           Create Invoice
