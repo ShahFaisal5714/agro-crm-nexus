@@ -17,6 +17,7 @@ import { EditDealerDialog } from "@/components/dealers/EditDealerDialog";
 import { DeleteDealerDialog } from "@/components/dealers/DeleteDealerDialog";
 import { AddCreditDialog } from "@/components/dealers/AddCreditDialog";
 import { AddDealerPaymentDialog } from "@/components/dealers/AddDealerPaymentDialog";
+import { DealerAdvancePaymentDialog } from "@/components/dealers/DealerAdvancePaymentDialog";
 import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,6 +133,10 @@ const Dealers = () => {
                               dealerId={dealer.id}
                               dealerName={dealer.dealer_name}
                               remainingCredit={getDealerCredit(dealer.id)}
+                            />
+                            <DealerAdvancePaymentDialog
+                              dealerId={dealer.id}
+                              dealerName={dealer.dealer_name}
                             />
                             <EditDealerDialog dealer={dealer} territories={territories} />
                             <DeleteDealerDialog

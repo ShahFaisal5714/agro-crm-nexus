@@ -41,6 +41,7 @@ import { useDealers } from "@/hooks/useDealers";
 import { useProducts } from "@/hooks/useProducts";
 import { useSalesOrders, SalesOrderItem } from "@/hooks/useSalesOrders";
 import { Badge } from "@/components/ui/badge";
+import { ProductSearchSelect } from "@/components/ui/ProductSearchSelect";
 
 const formSchema = z.object({
   dealerId: z.string().min(1, "Please select a dealer"),
@@ -265,36 +266,13 @@ export const NewSalesOrderDialog = () => {
               {items.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-5">
-                    <Select
+                    <ProductSearchSelect
+                      products={products}
                       value={item.product_id}
-                      onValueChange={(value) =>
-                        updateItem(index, "product_id", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => {
-                          const isLowStock = product.stock_quantity > 0 && product.stock_quantity < 50;
-                          const isOutOfStock = product.stock_quantity <= 0;
-                          return (
-                            <SelectItem key={product.id} value={product.id}>
-                              <div className="flex items-center gap-2">
-                                <span>{product.name} {product.pack_size ? `(${product.pack_size})` : ""} - {formatCurrency(product.unit_price)}</span>
-                                {isOutOfStock ? (
-                                  <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
-                                ) : isLowStock ? (
-                                  <Badge variant="outline" className="text-xs border-orange-500 text-orange-500">Low: {product.stock_quantity}</Badge>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">Stock: {product.stock_quantity}</span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(value) => updateItem(index, "product_id", value)}
+                      placeholder="Select product"
+                      showStock
+                    />
                   </div>
                   <div className="col-span-2">
                     <Input
