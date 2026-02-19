@@ -12,6 +12,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { useProducts } from "@/hooks/useProducts";
 import { useSupplierCredits } from "@/hooks/useSupplierCredits";
 import { toast } from "sonner";
+import { ProductSearchSelect } from "@/components/ui/ProductSearchSelect";
 
 export const NewPurchaseDialog = () => {
   const [open, setOpen] = useState(false);
@@ -197,22 +198,13 @@ export const NewPurchaseDialog = () => {
             {items.map((item, index) => (
               <div key={index} className="flex gap-2 items-end">
                 <div className="flex-1">
-                  <Select
-                    value={item.productId}
-                    onValueChange={(value) => handleProductSelect(index, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select product" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name} (Batch: {product.sku})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <ProductSearchSelect
+                      products={products}
+                      value={item.productId}
+                      onValueChange={(value) => handleProductSelect(index, value)}
+                      placeholder="Select product"
+                    />
+                  </div>
                 <div className="w-24">
                   <Input
                     type="number"
@@ -263,7 +255,7 @@ export const NewPurchaseDialog = () => {
               </div>
               <div className="bg-background rounded-lg p-3 border">
                 <div className="text-xs text-muted-foreground mb-1">Paid Amount</div>
-                <div className="text-lg font-bold text-green-600">{formatCurrency(paidAmount)}</div>
+                <div className="text-lg font-bold text-primary">{formatCurrency(paidAmount)}</div>
               </div>
               <div className="bg-background rounded-lg p-3 border">
                 <div className="text-xs text-muted-foreground mb-1">Credit Amount</div>

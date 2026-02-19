@@ -40,6 +40,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { useDealers } from "@/hooks/useDealers";
 import { useProducts } from "@/hooks/useProducts";
 import { useInvoices, InvoiceItem } from "@/hooks/useInvoices";
+import { ProductSearchSelect } from "@/components/ui/ProductSearchSelect";
 
 const formSchema = z.object({
   dealerId: z.string().min(1, "Please select a dealer"),
@@ -283,21 +284,12 @@ export const NewInvoiceDialog = () => {
               {items.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-5">
-                    <Select
+                    <ProductSearchSelect
+                      products={products}
                       value={item.product_id}
                       onValueChange={(value) => updateItem(index, "product_id", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} - {formatCurrency(product.unit_price)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select product"
+                    />
                   </div>
                   <div className="col-span-2">
                     <Input

@@ -23,6 +23,7 @@ import { usePolicies } from "@/hooks/usePolicies";
 import { useDealers } from "@/hooks/useDealers";
 import { useProducts } from "@/hooks/useProducts";
 import { formatCurrency } from "@/lib/utils";
+import { ProductSearchSelect } from "@/components/ui/ProductSearchSelect";
 
 interface PolicyItemInput {
   product_id: string;
@@ -227,22 +228,12 @@ export const NewPolicyDialog = () => {
 
                   <div className="space-y-2">
                     <Label>Product</Label>
-                    <Select
+                    <ProductSearchSelect
+                      products={products}
                       value={item.product_id}
                       onValueChange={(v) => handleItemChange(index, "product_id", v)}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} (Batch: {product.sku})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select product"
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

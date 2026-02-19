@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -7,14 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Dealer } from "@/hooks/useDealers";
+import { useRegions } from "@/hooks/useRegions";
 
 interface Territory {
   id: string;
   name: string;
   code: string;
+  region_id?: string | null;
 }
 
 interface EditDealerDialogProps {
@@ -30,8 +32,44 @@ export const EditDealerDialog = ({ dealer, territories }: EditDealerDialogProps)
   const [phone, setPhone] = useState(dealer.phone || "");
   const [address, setAddress] = useState(dealer.address || "");
   const [gstNumber, setGstNumber] = useState(dealer.gst_number || "");
-  const [territoryId, setTerritoryId] = useState(dealer.territory_id || "");
+  const [territoryId, setTerritoryId] = useState(dealer.territory_id || "none");
+  const [regionId, setRegionId] = useState<string>("all");
   const queryClient = useQueryClient();
+  const { regions } = useRegions();
+
+  // Determine region from current territory on open
+  const initRegion = () => {
+    if (dealer.territory_id) {
+      const t = territories.find((t) => t.id === dealer.territory_id);
+      if (t?.region_id) setRegionId(t.region_id);
+    }
+  };
+
+  const handleOpenChange = (val: boolean) => {
+    if (val) {
+      // Reset all state to dealer values when dialog opens
+      setDealerName(dealer.dealer_name);
+      setContactPerson(dealer.contact_person || "");
+      setEmail(dealer.email || "");
+      setPhone(dealer.phone || "");
+      setAddress(dealer.address || "");
+      setGstNumber(dealer.gst_number || "");
+      setTerritoryId(dealer.territory_id || "none");
+      setRegionId("all");
+      initRegion();
+    }
+    setOpen(val);
+  };
+
+  const filteredTerritories = useMemo(() => {
+    if (regionId === "all") return territories;
+    return territories.filter((t) => t.region_id === regionId);
+  }, [regionId, territories]);
+
+  const handleRegionChange = (val: string) => {
+    setRegionId(val);
+    setTerritoryId("none");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,17 +78,17 @@ export const EditDealerDialog = ({ dealer, territories }: EditDealerDialogProps)
       .from("dealers")
       .update({
         dealer_name: dealerName,
-        contact_person: contactPerson,
-        email,
-        phone,
-        address,
-        gst_number: gstNumber,
-        territory_id: territoryId || null,
+        contact_person: contactPerson || null,
+        email: email || null,
+        phone: phone || null,
+        address: address || null,
+        gst_number: gstNumber || null,
+        territory_id: territoryId === "none" ? null : territoryId,
       })
       .eq("id", dealer.id);
 
     if (error) {
-      toast.error("Failed to update dealer");
+      toast.error("Failed to update dealer: " + error.message);
       console.error(error);
       return;
     }
@@ -61,7 +99,7 @@ export const EditDealerDialog = ({ dealer, territories }: EditDealerDialogProps)
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
           <Pencil className="h-4 w-4" />
@@ -82,21 +120,40 @@ export const EditDealerDialog = ({ dealer, territories }: EditDealerDialogProps)
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="territory">Territory</Label>
-            <Select value={territoryId || "none"} onValueChange={(v) => setTerritoryId(v === "none" ? "" : v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select territory" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">-- No Territory --</SelectItem>
-                {territories.map((territory) => (
-                  <SelectItem key={territory.id} value={territory.id}>
-                    {territory.name} ({territory.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Region</Label>
+              <Select value={regionId} onValueChange={handleRegionChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Regions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Regions</SelectItem>
+                  {regions.map((region) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="territory">Territory</Label>
+              <Select value={territoryId} onValueChange={setTerritoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select territory" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">-- No Territory --</SelectItem>
+                  {filteredTerritories.map((territory) => (
+                    <SelectItem key={territory.id} value={territory.id}>
+                      {territory.name} ({territory.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
