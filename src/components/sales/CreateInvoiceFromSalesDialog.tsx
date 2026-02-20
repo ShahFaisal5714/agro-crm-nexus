@@ -142,7 +142,10 @@ export const CreateInvoiceFromSalesDialog = ({
                 <TableBody>
                   {items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.products?.name || "-"}</TableCell>
+                      <TableCell>
+                        {item.products?.name || "-"}
+                        {item.products?.pack_size && <span className="text-xs text-muted-foreground ml-1">({item.products.pack_size})</span>}
+                      </TableCell>
                       <TableCell>{item.products?.sku || "-"}</TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>

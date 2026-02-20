@@ -240,7 +240,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
             <tbody>
               ${items.map((item) => `
                 <tr>
-                  <td>${item.products?.name || item.description || ""}</td>
+                  <td>${item.products?.name || item.description || ""}${item.products?.pack_size ? ` (${item.products.pack_size})` : ""}</td>
                   <td style="text-align: center;">${item.quantity}</td>
                   <td style="text-align: right;">PKR ${item.unit_price.toLocaleString()}</td>
                   <td style="text-align: right;">PKR ${item.total.toLocaleString()}</td>
@@ -480,7 +480,14 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.products?.name || item.description}</TableCell>
+                    <TableCell>
+                      <div>
+                        <span>{item.products?.name || item.description}</span>
+                        {item.products?.pack_size && (
+                          <span className="text-xs text-muted-foreground ml-2">({item.products.pack_size})</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.total)}</TableCell>
