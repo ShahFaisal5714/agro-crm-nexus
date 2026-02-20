@@ -17,7 +17,8 @@ import {
 import { formatCurrency, cn } from "@/lib/utils";
 import { useDealerCredits } from "@/hooks/useDealerCredits";
 import { format } from "date-fns";
-import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Download, FileSpreadsheet, Calendar as CalendarIcon, X, Search, ArrowRight } from "lucide-react";
+import { Loader2, Wallet, TrendingUp, TrendingDown, Users, Download, FileSpreadsheet, Calendar as CalendarIcon, X, Search, ArrowRight, Lightbulb } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ViewDealerCreditsDialog } from "@/components/dealers/ViewDealerCreditsDialog";
 import { AddCreditDialog } from "@/components/dealers/AddCreditDialog";
 import { AddDealerPaymentDialog } from "@/components/dealers/AddDealerPaymentDialog";
@@ -71,6 +72,20 @@ const DealerCredits = () => {
   const totalCreditGiven = dealerSummaries.reduce((sum, s) => sum + s.total_credit, 0);
   const totalCollected = dealerSummaries.reduce((sum, s) => sum + s.total_paid, 0);
 
+  const getNextAction = (summary: typeof dealerSummaries[0]) => {
+    const { remaining, total_credit, total_paid, last_payment_date } = summary;
+    if (remaining <= 0) return { label: "✅ Cleared", color: "text-green-600", tip: "All dues cleared. Consider new credit if needed." };
+    const paidPct = total_credit > 0 ? (total_paid / total_credit) * 100 : 0;
+    const daysSincePayment = last_payment_date
+      ? Math.floor((Date.now() - new Date(last_payment_date).getTime()) / (1000 * 60 * 60 * 24))
+      : Infinity;
+    if (daysSincePayment > 30) return { label: "🚨 Overdue Follow-up", color: "text-destructive", tip: `No payment in ${daysSincePayment === Infinity ? "ever" : daysSincePayment + " days"}. Urgent collection needed.` };
+    if (daysSincePayment > 14) return { label: "📞 Send Reminder", color: "text-orange-600", tip: `${daysSincePayment} days since last payment. Send a payment reminder.` };
+    if (paidPct >= 80) return { label: "💰 Collect Final", color: "text-blue-600", tip: `${paidPct.toFixed(0)}% paid. Collect remaining ${formatCurrency(remaining)}.` };
+    if (paidPct >= 50) return { label: "📊 Review Terms", color: "text-amber-600", tip: `${paidPct.toFixed(0)}% paid. Review payment schedule.` };
+    return { label: "⏳ Monitor", color: "text-muted-foreground", tip: `${paidPct.toFixed(0)}% paid. Continue monitoring.` };
+  };
+
   const handleExportCSV = () => {
     const data = filteredSummaries.map((s) => ({
       dealer_name: s.dealer_name,
@@ -98,6 +113,8 @@ const DealerCredits = () => {
       type: "Credit",
       amount: c.amount,
       product: c.products?.name || "-",
+      batch: c.products?.sku || "-",
+      pack_size: c.products?.pack_size || "-",
       method: "-",
       reference: "-",
       description: c.description || "-",
@@ -110,6 +127,8 @@ const DealerCredits = () => {
       type: "Payment",
       amount: p.amount,
       product: "-",
+      batch: "-",
+      pack_size: "-",
       method: p.payment_method,
       reference: p.reference_number || "-",
       description: "-",
@@ -126,6 +145,8 @@ const DealerCredits = () => {
       "type",
       "amount",
       "product",
+      "batch",
+      "pack_size",
       "method",
       "reference",
       "description",
@@ -134,15 +155,20 @@ const DealerCredits = () => {
   };
 
   const handleExportDetailedPDF = () => {
-    const creditTransactions = filteredCredits.map((c) => ({
-      dealer_name: c.dealers?.dealer_name || "Unknown",
-      date: c.credit_date,
-      type: "Credit",
-      amount: c.amount,
-      product: c.products?.name || "-",
-      method: "-",
-      reference: "-",
-    }));
+    const creditTransactions = filteredCredits.map((c) => {
+      const productParts = [c.products?.name || "-"];
+      if (c.products?.sku) productParts.push(`Batch: ${c.products.sku}`);
+      if (c.products?.pack_size) productParts.push(`Pack: ${c.products.pack_size}`);
+      return {
+        dealer_name: c.dealers?.dealer_name || "Unknown",
+        date: c.credit_date,
+        type: "Credit",
+        amount: c.amount,
+        product: productParts.join(" | "),
+        method: "-",
+        reference: "-",
+      };
+    });
 
     const paymentTransactions = filteredPayments.map((p) => ({
       dealer_name: p.dealers?.dealer_name || "Unknown",
@@ -166,7 +192,7 @@ const DealerCredits = () => {
         { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
         { key: "type", label: "Type" },
         { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
-        { key: "product", label: "Product" },
+        { key: "product", label: "Product Details" },
         { key: "method", label: "Method" },
         { key: "reference", label: "Reference" },
       ],
@@ -358,8 +384,9 @@ const DealerCredits = () => {
                     <TableHead>Total Paid</TableHead>
                     <TableHead>Remaining</TableHead>
                     <TableHead>Last Payment</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[200px]">Actions</TableHead>
+                     <TableHead>Status</TableHead>
+                     <TableHead>Next Action</TableHead>
+                     <TableHead className="w-[200px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -390,6 +417,25 @@ const DealerCredits = () => {
                             Pending
                           </Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const action = getNextAction(summary);
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className={`text-xs font-medium cursor-help ${action.color}`}>
+                                    {action.label}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[250px]">
+                                  <p className="text-xs">{action.tip}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
