@@ -115,6 +115,7 @@ const DealerCredits = () => {
       product: c.products?.name || "-",
       batch: c.products?.sku || "-",
       pack_size: c.products?.pack_size || "-",
+      quantity: c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-",
       method: "-",
       reference: "-",
       description: c.description || "-",
@@ -129,6 +130,7 @@ const DealerCredits = () => {
       product: "-",
       batch: "-",
       pack_size: "-",
+      quantity: "-",
       method: p.payment_method,
       reference: p.reference_number || "-",
       description: "-",
@@ -147,6 +149,7 @@ const DealerCredits = () => {
       "product",
       "batch",
       "pack_size",
+      "quantity",
       "method",
       "reference",
       "description",
@@ -159,11 +162,13 @@ const DealerCredits = () => {
       const productParts = [c.products?.name || "-"];
       if (c.products?.sku) productParts.push(`Batch: ${c.products.sku}`);
       if (c.products?.pack_size) productParts.push(`Pack: ${c.products.pack_size}`);
+      const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-";
       return {
         dealer_name: c.dealers?.dealer_name || "Unknown",
         date: c.credit_date,
         type: "Credit",
         amount: c.amount,
+        quantity: qty,
         product: productParts.join(" | "),
         method: "-",
         reference: "-",
@@ -175,6 +180,7 @@ const DealerCredits = () => {
       date: p.payment_date,
       type: "Payment",
       amount: p.amount,
+      quantity: "-",
       product: "-",
       method: p.payment_method,
       reference: p.reference_number || "-",
@@ -192,6 +198,7 @@ const DealerCredits = () => {
         { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
         { key: "type", label: "Type" },
         { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
+        { key: "quantity", label: "Qty" },
         { key: "product", label: "Product Details" },
         { key: "method", label: "Method" },
         { key: "reference", label: "Reference" },

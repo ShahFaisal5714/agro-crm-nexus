@@ -60,6 +60,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         product: c.products?.name || "-",
         batch: c.products?.sku || "-",
         pack_size: c.products?.pack_size || "-",
+        quantity: c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-",
         method: "-",
         reference: "-",
         description: c.description || "-",
@@ -72,6 +73,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         product: "-",
         batch: "-",
         pack_size: "-",
+        quantity: "-",
         method: p.payment_method,
         reference: p.reference_number || "-",
         description: "-",
@@ -86,6 +88,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
       "product",
       "batch",
       "pack_size",
+      "quantity",
       "method",
       "reference",
       "description",
@@ -95,19 +98,24 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
 
   const handleExportDetailedPDF = () => {
     const transactions = [
-      ...credits.map((c) => ({
-        date: c.credit_date,
-        type: "Credit",
-        amount: c.amount,
-        product: getProductDetails(c),
-        method: "-",
-        reference: "-",
-        description: c.description || "-",
-      })),
+      ...credits.map((c) => {
+        const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-";
+        return {
+          date: c.credit_date,
+          type: "Credit",
+          amount: c.amount,
+          quantity: qty,
+          product: getProductDetails(c),
+          method: "-",
+          reference: "-",
+          description: c.description || "-",
+        };
+      }),
       ...payments.map((p) => ({
         date: p.payment_date,
         type: "Payment",
         amount: p.amount,
+        quantity: "-",
         product: "-",
         method: p.payment_method,
         reference: p.reference_number || "-",
@@ -122,6 +130,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
         { key: "type", label: "Type" },
         { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
+        { key: "quantity", label: "Qty" },
         { key: "product", label: "Product" },
         { key: "method", label: "Method" },
         { key: "reference", label: "Reference" },
@@ -138,19 +147,24 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
 
   const handlePrintPDF = () => {
     const transactions = [
-      ...credits.map((c) => ({
-        date: c.credit_date,
-        type: "Credit",
-        amount: c.amount,
-        product: getProductDetails(c),
-        method: "-",
-        reference: "-",
-        description: c.description || "-",
-      })),
+      ...credits.map((c) => {
+        const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-";
+        return {
+          date: c.credit_date,
+          type: "Credit",
+          amount: c.amount,
+          quantity: qty,
+          product: getProductDetails(c),
+          method: "-",
+          reference: "-",
+          description: c.description || "-",
+        };
+      }),
       ...payments.map((p) => ({
         date: p.payment_date,
         type: "Payment",
         amount: p.amount,
+        quantity: "-",
         product: "-",
         method: p.payment_method,
         reference: p.reference_number || "-",
@@ -165,6 +179,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         { key: "date", label: "Date", format: (v) => format(new Date(String(v)), "MMM dd, yyyy") },
         { key: "type", label: "Type" },
         { key: "amount", label: "Amount", format: (v) => formatCurrency(Number(v)) },
+        { key: "quantity", label: "Qty" },
         { key: "product", label: "Product" },
         { key: "method", label: "Method" },
         { key: "reference", label: "Reference" },
