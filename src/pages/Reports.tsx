@@ -149,20 +149,24 @@ const Reports = () => {
 
   // Territory-wise Sales
   const territoryWiseData = useMemo(() => {
-    const territoryMap = new Map<string, { name: string; revenue: number; orders: number }>();
+    const territoryMap = new Map<string, { name: string; revenue: number; orders: Set<string> }>();
     
     filteredSalesItems.forEach(item => {
       const territoryId = item.sales_orders.dealers?.territory_id;
       const territory = reportData.territories.find(t => t.id === territoryId);
       const territoryName = territory?.name || "Unknown";
       
-      const existing = territoryMap.get(territoryName) || { name: territoryName, revenue: 0, orders: 0 };
+      const existing = territoryMap.get(territoryName) || { name: territoryName, revenue: 0, orders: new Set<string>() };
       existing.revenue += item.total;
-      existing.orders++;
+      existing.orders.add(item.sales_orders.id);
       territoryMap.set(territoryName, existing);
     });
 
-    return Array.from(territoryMap.values()).sort((a, b) => b.revenue - a.revenue);
+    return Array.from(territoryMap.values()).map(t => ({
+      name: t.name,
+      revenue: t.revenue,
+      orders: t.orders.size,
+    })).sort((a, b) => b.revenue - a.revenue);
   }, [filteredSalesItems, reportData.territories]);
 
   // Sales Officer-wise Data
