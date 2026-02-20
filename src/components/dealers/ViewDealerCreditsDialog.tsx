@@ -47,6 +47,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
     if (!credit.products) return "-";
     const parts = [credit.products.name];
     if (credit.products.sku) parts.push(`Batch: ${credit.products.sku}`);
+    if (credit.products.pack_size) parts.push(`Pack: ${credit.products.pack_size}`);
     return parts.join(" | ");
   };
 
@@ -58,6 +59,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         amount: c.amount,
         product: c.products?.name || "-",
         batch: c.products?.sku || "-",
+        pack_size: c.products?.pack_size || "-",
         method: "-",
         reference: "-",
         description: c.description || "-",
@@ -69,6 +71,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         amount: p.amount,
         product: "-",
         batch: "-",
+        pack_size: "-",
         method: p.payment_method,
         reference: p.reference_number || "-",
         description: "-",
@@ -82,6 +85,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
       "amount",
       "product",
       "batch",
+      "pack_size",
       "method",
       "reference",
       "description",
@@ -331,7 +335,15 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
                         </TableCell>
                         <TableCell>
                           {credit.products ? (
-                            <span>{credit.products.name}</span>
+                            <div>
+                              <span>{credit.products.name}</span>
+                              {credit.products.sku && (
+                                <span className="text-xs text-muted-foreground ml-1">({credit.products.sku})</span>
+                              )}
+                              {credit.products.pack_size && (
+                                <div className="text-xs text-muted-foreground">Pack: {credit.products.pack_size}</div>
+                              )}
+                            </div>
                           ) : (
                             "-"
                           )}
