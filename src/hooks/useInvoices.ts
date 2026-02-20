@@ -40,6 +40,7 @@ export interface InvoiceItem {
   products?: {
     name: string;
     sku: string;
+    pack_size?: string;
   };
 }
 
@@ -79,7 +80,7 @@ export const useInvoices = () => {
       .from("invoice_items")
       .select(`
         *,
-        products (name, sku)
+        products (name, sku, pack_size)
       `)
       .eq("invoice_id", invoiceId);
 

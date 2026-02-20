@@ -111,9 +111,14 @@ export const ProductSearchSelect = ({
                       )}
                     />
                     <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
-                      <span className="truncate">
-                        {product.name} — Batch: {product.sku}{product.pack_size ? ` — Pack: ${product.pack_size}` : ""}
-                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate text-sm">
+                          {product.name} — Batch: {product.sku}
+                        </span>
+                        {product.pack_size && (
+                          <span className="text-xs text-muted-foreground">Pack: {product.pack_size}</span>
+                        )}
+                      </div>
                       {showStock && (
                         isOutOfStock ? (
                           <Badge variant="destructive" className="text-xs shrink-0">Out</Badge>

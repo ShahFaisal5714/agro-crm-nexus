@@ -31,6 +31,7 @@ export interface SalesOrderItemWithProduct extends SalesOrderItem {
   products?: {
     name: string;
     sku: string;
+    pack_size?: string;
   };
 }
 
@@ -54,7 +55,7 @@ export const useSalesOrders = () => {
       .from("sales_order_items")
       .select(`
         *,
-        products (name, sku)
+        products (name, sku, pack_size)
       `)
       .eq("sales_order_id", orderId);
 
