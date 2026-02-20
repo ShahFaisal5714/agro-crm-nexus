@@ -112,7 +112,7 @@ export const ProductSearchSelect = ({
                     />
                     <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
                       <span className="truncate">
-                        {product.name} — Batch: {product.sku}
+                        {product.name} — Batch: {product.sku}{product.pack_size ? ` — Pack: ${product.pack_size}` : ""}
                       </span>
                       {showStock && (
                         isOutOfStock ? (
