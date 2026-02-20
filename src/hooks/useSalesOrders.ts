@@ -161,17 +161,20 @@ export const useSalesOrders = () => {
       }
 
       if (paymentType === "credit") {
-        // Auto-add dealer credit for credit sales
+        // Auto-add dealer credits per product item
+        const creditEntries = items.map((item) => ({
+          dealer_id: dealerId,
+          amount: item.total,
+          credit_date: orderDate,
+          product_id: item.product_id,
+          description: `Sales Order ${orderNum}`,
+          notes: `Auto-created from sales order ${orderNum}`,
+          created_by: user.id,
+        }));
+
         const { error: creditError } = await supabase
           .from("dealer_credits")
-          .insert({
-            dealer_id: dealerId,
-            amount: totalAmount,
-            credit_date: orderDate,
-            description: `Sales Order ${orderNum}`,
-            notes: `Auto-created from sales order ${orderNum}`,
-            created_by: user.id,
-          });
+          .insert(creditEntries);
 
         if (creditError) {
           console.error("Failed to add dealer credit:", creditError);
