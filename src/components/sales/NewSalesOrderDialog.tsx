@@ -182,6 +182,7 @@ export const NewSalesOrderDialog = () => {
                         {dealers.map((dealer) => (
                           <SelectItem key={dealer.id} value={dealer.id}>
                             {dealer.dealer_name}
+                            {dealer.territories?.name ? ` (${dealer.territories.name})` : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>

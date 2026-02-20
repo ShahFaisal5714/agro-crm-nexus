@@ -10,6 +10,10 @@ export interface Dealer {
   address?: string;
   gst_number?: string;
   territory_id?: string | null;
+  territories?: {
+    name: string;
+    code: string;
+  } | null;
 }
 
 export const useDealers = () => {
@@ -18,7 +22,7 @@ export const useDealers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dealers")
-        .select("*")
+        .select("*, territories(name, code)")
         .order("dealer_name");
 
       if (error) throw error;
