@@ -43,6 +43,13 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const [deletingPayment, setDeletingPayment] = useState<DealerPayment | null>(null);
   const { credits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
 
+  const getProductDetails = (credit: DealerCredit) => {
+    if (!credit.products) return "-";
+    const parts = [credit.products.name];
+    if (credit.products.sku) parts.push(`Batch: ${credit.products.sku}`);
+    return parts.join(" | ");
+  };
+
   const handleExportDetailedCSV = () => {
     const transactions = [
       ...credits.map((c) => ({
@@ -50,6 +57,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         type: "Credit",
         amount: c.amount,
         product: c.products?.name || "-",
+        batch: c.products?.sku || "-",
         method: "-",
         reference: "-",
         description: c.description || "-",
@@ -60,6 +68,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         type: "Payment",
         amount: p.amount,
         product: "-",
+        batch: "-",
         method: p.payment_method,
         reference: p.reference_number || "-",
         description: "-",
@@ -72,6 +81,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
       "type",
       "amount",
       "product",
+      "batch",
       "method",
       "reference",
       "description",
@@ -85,7 +95,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         date: c.credit_date,
         type: "Credit",
         amount: c.amount,
-        product: c.products?.name || "-",
+        product: getProductDetails(c),
         method: "-",
         reference: "-",
         description: c.description || "-",
@@ -128,7 +138,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         date: c.credit_date,
         type: "Credit",
         amount: c.amount,
-        product: c.products?.name || "-",
+        product: getProductDetails(c),
         method: "-",
         reference: "-",
         description: c.description || "-",
