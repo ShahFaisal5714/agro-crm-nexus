@@ -18,6 +18,7 @@ export interface DealerCredit {
     name: string;
     sku: string;
     pack_size?: string;
+    unit_price?: number;
   } | null;
 }
 
@@ -53,7 +54,7 @@ export const useDealerCredits = () => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku, pack_size),
+          products(name, sku, pack_size, unit_price),
           dealers(dealer_name)
         `)
         .order("credit_date", { ascending: false });
@@ -233,7 +234,7 @@ export const useDealerCreditHistory = (dealerId: string) => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku, pack_size)
+          products(name, sku, pack_size, unit_price)
         `)
         .eq("dealer_id", dealerId)
         .order("credit_date", { ascending: false });
