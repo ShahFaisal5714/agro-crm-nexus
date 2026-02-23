@@ -412,11 +412,11 @@ const Reports = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
-            <p className="text-muted-foreground mt-1">Comprehensive business reports and analysis</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Reports & Analytics</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">Comprehensive business reports and analysis</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-2">

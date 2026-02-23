@@ -146,11 +146,11 @@ const Invoices = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Invoices</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Invoices</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
               Manage invoices and track payments
             </p>
           </div>
