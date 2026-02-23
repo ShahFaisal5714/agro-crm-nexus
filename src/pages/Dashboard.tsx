@@ -71,10 +71,10 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">
             Welcome back! Here's your business overview
           </p>
         </div>

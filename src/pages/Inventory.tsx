@@ -62,15 +62,15 @@ const Inventory = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Inventory Management</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Inventory Management</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
               Track stock levels and product information
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <BulkCostPriceUpdateDialog products={products} />
             <CategoryManagementDialog />
             <AddProductDialog />
