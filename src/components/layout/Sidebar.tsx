@@ -13,8 +13,11 @@ import {
   ChevronLeft,
   ChevronRight,
   CreditCard,
-  UserCircle
+  UserCircle,
+  Moon,
+  Sun
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -57,6 +60,7 @@ const navItems: NavItem[] = [
 export const Sidebar = ({ collapsed, onToggle, onNavigate }: SidebarProps) => {
   const location = useLocation();
   const { signOut, userRole, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -194,6 +198,21 @@ export const Sidebar = ({ collapsed, onToggle, onNavigate }: SidebarProps) => {
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                    onClick={toggleTheme}
+                  >
+                    {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={10}>
+                  {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-sidebar-foreground/60 hover:text-sidebar-foreground"
                     onClick={signOut}
                   >
                     <LogOut className="h-5 w-5" />
@@ -217,6 +236,14 @@ export const Sidebar = ({ collapsed, onToggle, onNavigate }: SidebarProps) => {
                   <p className="text-xs text-sidebar-foreground/60">{formatRole(userRole)}</p>
                 </div>
               </div>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? <Sun className="mr-3 h-5 w-5" /> : <Moon className="mr-3 h-5 w-5" />}
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </Button>
               <Button
                 variant="ghost"
                 className="w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground"
