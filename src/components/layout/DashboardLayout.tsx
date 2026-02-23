@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { RoleIndicator } from "./RoleIndicator";
 import { GlobalSearch } from "./GlobalSearch";
+import { QuickActionsFAB } from "./QuickActionsFAB";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -57,6 +58,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {children}
         </main>
       </div>
+      <QuickActionsFAB />
     </div>
   );
 };
