@@ -8,11 +8,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Eye, Download, FileSpreadsheet, Edit, Trash2 } from "lucide-react";
+import { Eye, Download, FileSpreadsheet, Edit, Trash2, BookOpen, Printer } from "lucide-react";
 import { useDealerCreditHistory, DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { exportToCSV, exportToPDF, printPDF } from "@/lib/exportUtils";
+import { generateDealerLedgerPDF } from "@/lib/ledgerUtils";
 import {
   Table,
   TableBody,
@@ -252,6 +253,14 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
             <Button variant="outline" size="sm" onClick={handlePrintPDF}>
               <Eye className="h-4 w-4 mr-2" />
               Print PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => generateDealerLedgerPDF(dealerName, credits, payments, totalCredit, totalPaid, remaining, "download")}>
+              <BookOpen className="h-4 w-4 mr-2" />
+              Ledger PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => generateDealerLedgerPDF(dealerName, credits, payments, totalCredit, totalPaid, remaining, "print")}>
+              <Printer className="h-4 w-4 mr-2" />
+              Print Ledger
             </Button>
           </div>
 
