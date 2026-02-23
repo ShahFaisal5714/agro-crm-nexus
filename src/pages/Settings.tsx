@@ -69,7 +69,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-4">
-          <TabsList className="flex-wrap">
+          <TabsList className="flex flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               Profile
