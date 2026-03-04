@@ -286,6 +286,65 @@ const Reports = () => {
       }));
   }, [filteredSalesItems]);
 
+  // Monthly breakdown by Officer (Issue #8)
+  const monthlyByOfficer = useMemo(() => {
+    const map = new Map<string, Map<string, { name: string; revenue: number; orders: Set<string>; quantity: number }>>();
+    filteredSalesItems.forEach(item => {
+      const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
+      const monthLabel = format(new Date(item.sales_orders.order_date), "MMM yyyy");
+      const officerId = item.sales_orders.created_by;
+      const officer = reportData.profiles.find(p => p.id === officerId);
+      if (!map.has(monthKey)) map.set(monthKey, new Map());
+      const monthMap = map.get(monthKey)!;
+      const existing = monthMap.get(officerId) || { name: officer?.full_name || "Unknown", revenue: 0, orders: new Set<string>(), quantity: 0 };
+      existing.revenue += item.total;
+      existing.orders.add(item.sales_order_id);
+      existing.quantity += item.quantity;
+      monthMap.set(officerId, existing);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, officers]) => ({
+      month: format(new Date(key + "-01"), "MMM yyyy"),
+      officers: Array.from(officers.values()).map(o => ({ ...o, orders: o.orders.size })).sort((a, b) => b.revenue - a.revenue),
+    }));
+  }, [filteredSalesItems, reportData.profiles]);
+
+  // Monthly breakdown by Product (Issue #8)
+  const monthlyByProduct = useMemo(() => {
+    const map = new Map<string, Map<string, { name: string; revenue: number; quantity: number }>>();
+    filteredSalesItems.forEach(item => {
+      const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
+      if (!map.has(monthKey)) map.set(monthKey, new Map());
+      const monthMap = map.get(monthKey)!;
+      const existing = monthMap.get(item.product_id) || { name: item.products.name, revenue: 0, quantity: 0 };
+      existing.revenue += item.total;
+      existing.quantity += item.quantity;
+      monthMap.set(item.product_id, existing);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, products]) => ({
+      month: format(new Date(key + "-01"), "MMM yyyy"),
+      products: Array.from(products.values()).sort((a, b) => b.revenue - a.revenue),
+    }));
+  }, [filteredSalesItems]);
+
+  // Monthly breakdown by Category (Issue #8)
+  const monthlyByCategory = useMemo(() => {
+    const map = new Map<string, Map<string, { name: string; revenue: number; quantity: number }>>();
+    filteredSalesItems.forEach(item => {
+      const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
+      const catName = item.products.product_categories?.name || "Uncategorized";
+      if (!map.has(monthKey)) map.set(monthKey, new Map());
+      const monthMap = map.get(monthKey)!;
+      const existing = monthMap.get(catName) || { name: catName, revenue: 0, quantity: 0 };
+      existing.revenue += item.total;
+      existing.quantity += item.quantity;
+      monthMap.set(catName, existing);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, cats]) => ({
+      month: format(new Date(key + "-01"), "MMM yyyy"),
+      categories: Array.from(cats.values()).sort((a, b) => b.revenue - a.revenue),
+    }));
+  }, [filteredSalesItems]);
+
   // Policy Collection
   const filteredPolicies = useMemo(() => {
     let pols = safePolicies;
