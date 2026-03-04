@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Edit, Package, Search, Trash2, X } from "lucide-react";
+import { AlertCircle, Edit, Package, Search, Trash2, X, RotateCcw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
@@ -16,6 +16,7 @@ import { DeleteProductDialog } from "@/components/inventory/DeleteProductDialog"
 import { CategoryManagementDialog } from "@/components/inventory/CategoryManagementDialog";
 import { BulkCostPriceUpdateDialog } from "@/components/inventory/BulkCostPriceUpdateDialog";
 import { ProfitabilitySummaryCard } from "@/components/inventory/ProfitabilitySummaryCard";
+import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
 
 const Inventory = () => {
   const { products, isLoading } = useProducts();
@@ -25,6 +26,7 @@ const Inventory = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -226,6 +228,14 @@ const Inventory = () => {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => setAdjustingProduct(product)}
+                              title="Adjust Stock"
+                            >
+                              <RotateCcw className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => setEditingProduct(product)}
                             >
                               <Edit className="h-4 w-4" />
@@ -264,6 +274,12 @@ const Inventory = () => {
           onOpenChange={(open) => !open && setDeletingProduct(null)}
         />
       )}
+
+      <StockAdjustmentDialog
+        product={adjustingProduct}
+        open={!!adjustingProduct}
+        onOpenChange={(open) => !open && setAdjustingProduct(null)}
+      />
     </DashboardLayout>
   );
 };
