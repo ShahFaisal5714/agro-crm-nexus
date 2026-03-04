@@ -254,7 +254,7 @@ export const useInvoices = () => {
 
       if (items) {
         updateData.subtotal = subtotal;
-        updateData.tax_amount = taxAmount;
+        updateData.tax_amount = discountAmount;
         updateData.total_amount = totalAmount;
       }
 
