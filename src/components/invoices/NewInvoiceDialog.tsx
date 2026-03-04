@@ -183,7 +183,7 @@ export const NewInvoiceDialog = () => {
                 name="taxRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tax Rate (%)</FormLabel>
+                    <FormLabel>Discount (%)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
