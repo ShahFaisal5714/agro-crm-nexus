@@ -102,8 +102,8 @@ export const NewInvoiceDialog = () => {
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const taxAmount = subtotal * (form.watch("taxRate") / 100);
-  const total = subtotal + taxAmount;
+  const discountAmount = subtotal * (form.watch("taxRate") / 100);
+  const total = subtotal - discountAmount;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const now = Date.now();
