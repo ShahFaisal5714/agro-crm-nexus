@@ -16,6 +16,7 @@ import { DeleteProductDialog } from "@/components/inventory/DeleteProductDialog"
 import { CategoryManagementDialog } from "@/components/inventory/CategoryManagementDialog";
 import { BulkCostPriceUpdateDialog } from "@/components/inventory/BulkCostPriceUpdateDialog";
 import { ProfitabilitySummaryCard } from "@/components/inventory/ProfitabilitySummaryCard";
+import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
 
 const Inventory = () => {
   const { products, isLoading } = useProducts();
@@ -25,6 +26,7 @@ const Inventory = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
