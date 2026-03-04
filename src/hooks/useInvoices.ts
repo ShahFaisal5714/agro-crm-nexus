@@ -215,13 +215,13 @@ export const useInvoices = () => {
       items?: InvoiceItem[];
     }) => {
       let subtotal = 0;
-      let taxAmount = 0;
+      let discountAmount = 0;
       let totalAmount = 0;
 
       if (items) {
         subtotal = items.reduce((sum, item) => sum + item.total, 0);
-        taxAmount = subtotal * (taxRate / 100);
-        totalAmount = subtotal + taxAmount;
+        discountAmount = subtotal * (taxRate / 100);
+        totalAmount = subtotal - discountAmount;
 
         // Delete existing items
         await supabase.from("invoice_items").delete().eq("invoice_id", id);
