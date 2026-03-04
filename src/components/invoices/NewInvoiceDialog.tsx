@@ -102,8 +102,8 @@ export const NewInvoiceDialog = () => {
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const taxAmount = subtotal * (form.watch("taxRate") / 100);
-  const total = subtotal + taxAmount;
+  const discountAmount = subtotal * (form.watch("taxRate") / 100);
+  const total = subtotal - discountAmount;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const now = Date.now();
@@ -183,7 +183,7 @@ export const NewInvoiceDialog = () => {
                 name="taxRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tax Rate (%)</FormLabel>
+                    <FormLabel>Discount (%)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -323,7 +323,7 @@ export const NewInvoiceDialog = () => {
               {items.length > 0 && (
                 <div className="flex flex-col items-end pt-4 border-t space-y-1">
                   <div className="text-sm text-muted-foreground">Subtotal: {formatCurrency(subtotal)}</div>
-                  <div className="text-sm text-muted-foreground">Tax ({form.watch("taxRate")}%): {formatCurrency(taxAmount)}</div>
+                  <div className="text-sm text-muted-foreground">Discount ({form.watch("taxRate")}%): -{formatCurrency(discountAmount)}</div>
                   <div className="text-lg font-semibold">Total: {formatCurrency(total)}</div>
                 </div>
               )}

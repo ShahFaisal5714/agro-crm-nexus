@@ -37,8 +37,8 @@ export const CreateInvoiceFromPolicyDialog = ({
 
   const taxRateNum = parseFloat(taxRate) || 0;
   const subtotal = policy.total_amount;
-  const taxAmount = subtotal * (taxRateNum / 100);
-  const totalAmount = subtotal + taxAmount;
+  const discountAmount = subtotal * (taxRateNum / 100);
+  const totalAmount = subtotal - discountAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +124,7 @@ export const CreateInvoiceFromPolicyDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tax Rate (%)</Label>
+              <Label>Discount (%)</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -151,8 +151,8 @@ export const CreateInvoiceFromPolicyDialog = ({
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Tax ({taxRateNum}%):</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span>Discount ({taxRateNum}%):</span>
+              <span>-{formatCurrency(discountAmount)}</span>
             </div>
             <div className="flex justify-between font-semibold">
               <span>Total:</span>

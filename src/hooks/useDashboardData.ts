@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, subMonths, format, startOfDay, subDays } from "date-fns";
+import { startOfMonth, subMonths, format, startOfDay, subDays, startOfQuarter, startOfYear } from "date-fns";
 
 interface DailySales {
   date: string;
@@ -37,15 +37,41 @@ interface DashboardData {
   salesVsExpenses: MonthlyComparison[];
 }
 
-export const useDashboardData = () => {
+export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = "month") => {
   return useQuery({
-    queryKey: ["dashboard-data"],
+    queryKey: ["dashboard-data", period],
     queryFn: async (): Promise<DashboardData> => {
       const now = new Date();
       const currentMonthStart = startOfMonth(now);
       const lastMonthStart = startOfMonth(subMonths(now, 1));
       const lastMonthEnd = subDays(currentMonthStart, 1);
       const last30Days = subDays(now, 30);
+
+      // Determine period start based on selected period
+      let periodStart: Date;
+      let prevPeriodStart: Date;
+      let prevPeriodEnd: Date;
+      switch (period) {
+        case "quarter":
+          periodStart = startOfQuarter(now);
+          prevPeriodStart = startOfQuarter(subMonths(now, 3));
+          prevPeriodEnd = subDays(periodStart, 1);
+          break;
+        case "year":
+          periodStart = startOfYear(now);
+          prevPeriodStart = startOfYear(subMonths(now, 12));
+          prevPeriodEnd = subDays(periodStart, 1);
+          break;
+        case "all":
+          periodStart = new Date(2000, 0, 1);
+          prevPeriodStart = new Date(2000, 0, 1);
+          prevPeriodEnd = new Date(2000, 0, 1);
+          break;
+        default: // month
+          periodStart = currentMonthStart;
+          prevPeriodStart = lastMonthStart;
+          prevPeriodEnd = lastMonthEnd;
+      }
 
       // Fetch sales orders with dealer info
       const { data: salesOrders } = await supabase
@@ -81,37 +107,37 @@ export const useDashboardData = () => {
       const safeExpenses = expenses || [];
       const safeDealers = dealers || [];
 
-      // Calculate current month totals (sales orders only - policies NOT included until invoiced)
-      const currentMonthSales = safeOrders
-        .filter(o => new Date(o.order_date) >= currentMonthStart)
+      // Calculate period totals based on selected period
+      const currentPeriodSales = safeOrders
+        .filter(o => new Date(o.order_date) >= periodStart)
         .reduce((sum, o) => sum + o.total_amount, 0);
 
-      const lastMonthSales = safeOrders
+      const lastPeriodSales = period === "all" ? 0 : safeOrders
         .filter(o => {
           const d = new Date(o.order_date);
-          return d >= lastMonthStart && d <= lastMonthEnd;
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
         .reduce((sum, o) => sum + o.total_amount, 0);
 
-      const currentMonthPurchases = safePurchases
-        .filter(p => new Date(p.purchase_date) >= currentMonthStart)
+      const currentPeriodPurchases = safePurchases
+        .filter(p => new Date(p.purchase_date) >= periodStart)
         .reduce((sum, p) => sum + p.total_amount, 0);
 
-      const lastMonthPurchases = safePurchases
+      const lastPeriodPurchases = period === "all" ? 0 : safePurchases
         .filter(p => {
           const d = new Date(p.purchase_date);
-          return d >= lastMonthStart && d <= lastMonthEnd;
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
         .reduce((sum, p) => sum + p.total_amount, 0);
 
-      const currentMonthExpenses = safeExpenses
-        .filter(e => new Date(e.expense_date) >= currentMonthStart)
+      const currentPeriodExpenses = safeExpenses
+        .filter(e => new Date(e.expense_date) >= periodStart)
         .reduce((sum, e) => sum + e.amount, 0);
 
-      const lastMonthExpenses = safeExpenses
+      const lastPeriodExpenses = period === "all" ? 0 : safeExpenses
         .filter(e => {
           const d = new Date(e.expense_date);
-          return d >= lastMonthStart && d <= lastMonthEnd;
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
         .reduce((sum, e) => sum + e.amount, 0);
 
@@ -197,14 +223,14 @@ export const useDashboardData = () => {
       }
 
       return {
-        totalSales: currentMonthSales,
-        salesChange: calcChange(currentMonthSales, lastMonthSales),
-        totalPurchases: currentMonthPurchases,
-        purchasesChange: calcChange(currentMonthPurchases, lastMonthPurchases),
-        totalExpenses: currentMonthExpenses,
-        expensesChange: calcChange(currentMonthExpenses, lastMonthExpenses),
+        totalSales: currentPeriodSales,
+        salesChange: calcChange(currentPeriodSales, lastPeriodSales),
+        totalPurchases: currentPeriodPurchases,
+        purchasesChange: calcChange(currentPeriodPurchases, lastPeriodPurchases),
+        totalExpenses: currentPeriodExpenses,
+        expensesChange: calcChange(currentPeriodExpenses, lastPeriodExpenses),
         activeDealers: safeDealers.length,
-        dealersChange: safeDealers.filter(d => new Date(d.created_at) >= currentMonthStart).length,
+        dealersChange: safeDealers.filter(d => new Date(d.created_at) >= periodStart).length,
         lowStockProducts: (products || []).map(p => ({ name: p.name, sku: p.sku, stock: p.stock_quantity })),
         recentSalesOrders: safeOrders.slice(0, 4).map(o => ({
           id: o.id,

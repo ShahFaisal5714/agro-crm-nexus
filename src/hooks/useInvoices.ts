@@ -117,8 +117,8 @@ export const useInvoices = () => {
       if (invoiceNumError) throw invoiceNumError;
 
       const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-      const taxAmount = subtotal * (taxRate / 100);
-      const totalAmount = subtotal + taxAmount;
+      const discountAmount = subtotal * (taxRate / 100);
+      const totalAmount = subtotal - discountAmount;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -144,7 +144,7 @@ export const useInvoices = () => {
           due_date: dueDate,
           subtotal,
           tax_rate: taxRate,
-          tax_amount: taxAmount,
+          tax_amount: discountAmount,
           total_amount: totalAmount,
           paid_amount: paidAmount,
           status,
@@ -215,13 +215,13 @@ export const useInvoices = () => {
       items?: InvoiceItem[];
     }) => {
       let subtotal = 0;
-      let taxAmount = 0;
+      let discountAmount = 0;
       let totalAmount = 0;
 
       if (items) {
         subtotal = items.reduce((sum, item) => sum + item.total, 0);
-        taxAmount = subtotal * (taxRate / 100);
-        totalAmount = subtotal + taxAmount;
+        discountAmount = subtotal * (taxRate / 100);
+        totalAmount = subtotal - discountAmount;
 
         // Delete existing items
         await supabase.from("invoice_items").delete().eq("invoice_id", id);
@@ -254,7 +254,7 @@ export const useInvoices = () => {
 
       if (items) {
         updateData.subtotal = subtotal;
-        updateData.tax_amount = taxAmount;
+        updateData.tax_amount = discountAmount;
         updateData.total_amount = totalAmount;
       }
 

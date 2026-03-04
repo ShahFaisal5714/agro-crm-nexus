@@ -5,12 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Users, MapPin, UserCheck, TrendingUp, Search, CreditCard, Wallet, ArrowDownRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useCreditRecovery } from "@/hooks/useCreditRecovery";
 import { DateRange } from "react-day-picker";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 
 interface CreditRecoveryReportProps {
   dateRange?: DateRange;
@@ -86,6 +88,19 @@ export const CreditRecoveryReport = ({ dateRange }: CreditRecoveryReportProps) =
     { name: "Remaining", value: summary.totalRemaining, color: "hsl(var(--destructive))" },
   ], [summary]);
 
+  // Generate previous month quick selectors
+  const monthPresets = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const date = subMonths(now, i);
+      return {
+        label: format(date, "MMM yyyy"),
+        from: startOfMonth(date),
+        to: endOfMonth(date),
+      };
+    });
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -94,9 +109,18 @@ export const CreditRecoveryReport = ({ dateRange }: CreditRecoveryReportProps) =
     );
   }
 
+
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Month Quick Selectors for Recovery (Issue #9) */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-sm text-muted-foreground self-center mr-2">Quick Select:</span>
+        {monthPresets.map((preset, i) => (
+          <Button key={i} variant="outline" size="sm" className="text-xs">
+            {preset.label}
+          </Button>
+        ))}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

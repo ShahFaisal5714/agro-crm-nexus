@@ -251,7 +251,7 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
 
           <div class="totals">
             <p>Subtotal: PKR ${invoice.subtotal.toLocaleString()}</p>
-            <p>Tax (${invoice.tax_rate}%): PKR ${invoice.tax_amount.toLocaleString()}</p>
+            <p>Discount (${invoice.tax_rate}%): -PKR ${invoice.tax_amount.toLocaleString()}</p>
             <p class="total-row">Grand Total: PKR ${invoice.total_amount.toLocaleString()}</p>
             <p class="paid-row">Amount Paid: PKR ${paidAmount.toLocaleString()}</p>
             <p class="remaining-row" style="color: ${remainingAmount > 0 ? '#e65100' : '#2d5a27'};">
@@ -505,8 +505,8 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
                 <span>{formatCurrency(invoice.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax ({invoice.tax_rate}%)</span>
-                <span>{formatCurrency(invoice.tax_amount)}</span>
+                <span className="text-muted-foreground">Discount ({invoice.tax_rate}%)</span>
+                <span>-{formatCurrency(invoice.tax_amount)}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold">

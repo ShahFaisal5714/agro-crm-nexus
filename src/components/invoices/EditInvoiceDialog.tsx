@@ -248,7 +248,7 @@ export const EditInvoiceDialog = ({ invoice }: EditInvoiceDialogProps) => {
                 name="taxRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tax Rate (%)</FormLabel>
+                    <FormLabel>Discount (%)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

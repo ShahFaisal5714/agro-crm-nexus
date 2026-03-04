@@ -173,7 +173,7 @@ export const BulkInvoiceDialog = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tax_rate">Tax Rate (%)</Label>
+              <Label htmlFor="tax_rate">Discount (%)</Label>
               <Input
                 id="tax_rate"
                 type="number"

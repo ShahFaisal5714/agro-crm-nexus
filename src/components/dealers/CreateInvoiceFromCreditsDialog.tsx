@@ -56,8 +56,8 @@ export const CreateInvoiceFromCreditsDialog = ({
   });
 
   const subtotal = totalCredit;
-  const taxAmount = (subtotal * formData.tax_rate) / 100;
-  const total = subtotal + taxAmount;
+  const discountAmount = (subtotal * formData.tax_rate) / 100;
+  const total = subtotal - discountAmount;
   const invoiceAmount = total - totalPaid;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,7 +189,7 @@ export const CreateInvoiceFromCreditsDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tax_rate">Tax Rate (%)</Label>
+            <Label htmlFor="tax_rate">Discount (%)</Label>
             <Input
               id="tax_rate"
               type="number"

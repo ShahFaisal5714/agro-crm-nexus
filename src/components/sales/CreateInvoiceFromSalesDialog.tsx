@@ -48,8 +48,8 @@ export const CreateInvoiceFromSalesDialog = ({
   });
 
   const subtotal = order.total_amount;
-  const taxAmount = (subtotal * formData.tax_rate) / 100;
-  const total = subtotal + taxAmount;
+  const discountAmount = (subtotal * formData.tax_rate) / 100;
+  const total = subtotal - discountAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,7 +180,7 @@ export const CreateInvoiceFromSalesDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tax_rate">Tax Rate (%)</Label>
+            <Label htmlFor="tax_rate">Discount (%)</Label>
             <Input
               id="tax_rate"
               type="number"
@@ -199,8 +199,8 @@ export const CreateInvoiceFromSalesDialog = ({
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax ({formData.tax_rate}%)</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span className="text-muted-foreground">Discount ({formData.tax_rate}%)</span>
+              <span>-{formatCurrency(discountAmount)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total</span>

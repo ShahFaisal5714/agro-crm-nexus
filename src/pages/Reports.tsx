@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -284,6 +285,65 @@ const Reports = () => {
         month: v.month, revenue: v.revenue, cost: v.cost, profit: v.revenue - v.cost,
         orders: v.orders.size, dealers: v.dealers.size, quantity: v.quantity,
       }));
+  }, [filteredSalesItems]);
+
+  // Monthly breakdown by Officer (Issue #8)
+  const monthlyByOfficer = useMemo(() => {
+    const map = new Map<string, Map<string, { name: string; revenue: number; orders: Set<string>; quantity: number }>>();
+    filteredSalesItems.forEach(item => {
+      const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
+      const monthLabel = format(new Date(item.sales_orders.order_date), "MMM yyyy");
+      const officerId = item.sales_orders.created_by;
+      const officer = reportData.profiles.find(p => p.id === officerId);
+      if (!map.has(monthKey)) map.set(monthKey, new Map());
+      const monthMap = map.get(monthKey)!;
+      const existing = monthMap.get(officerId) || { name: officer?.full_name || "Unknown", revenue: 0, orders: new Set<string>(), quantity: 0 };
+      existing.revenue += item.total;
+      existing.orders.add(item.sales_order_id);
+      existing.quantity += item.quantity;
+      monthMap.set(officerId, existing);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, officers]) => ({
+      month: format(new Date(key + "-01"), "MMM yyyy"),
+      officers: Array.from(officers.values()).map(o => ({ ...o, orders: o.orders.size })).sort((a, b) => b.revenue - a.revenue),
+    }));
+  }, [filteredSalesItems, reportData.profiles]);
+
+  // Monthly breakdown by Product (Issue #8)
+  const monthlyByProduct = useMemo(() => {
+    const map = new Map<string, Map<string, { name: string; revenue: number; quantity: number }>>();
+    filteredSalesItems.forEach(item => {
+      const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
+      if (!map.has(monthKey)) map.set(monthKey, new Map());
+      const monthMap = map.get(monthKey)!;
+      const existing = monthMap.get(item.product_id) || { name: item.products.name, revenue: 0, quantity: 0 };
+      existing.revenue += item.total;
+      existing.quantity += item.quantity;
+      monthMap.set(item.product_id, existing);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, products]) => ({
+      month: format(new Date(key + "-01"), "MMM yyyy"),
+      products: Array.from(products.values()).sort((a, b) => b.revenue - a.revenue),
+    }));
+  }, [filteredSalesItems]);
+
+  // Monthly breakdown by Category (Issue #8)
+  const monthlyByCategory = useMemo(() => {
+    const map = new Map<string, Map<string, { name: string; revenue: number; quantity: number }>>();
+    filteredSalesItems.forEach(item => {
+      const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
+      const catName = item.products.product_categories?.name || "Uncategorized";
+      if (!map.has(monthKey)) map.set(monthKey, new Map());
+      const monthMap = map.get(monthKey)!;
+      const existing = monthMap.get(catName) || { name: catName, revenue: 0, quantity: 0 };
+      existing.revenue += item.total;
+      existing.quantity += item.quantity;
+      monthMap.set(catName, existing);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, cats]) => ({
+      month: format(new Date(key + "-01"), "MMM yyyy"),
+      categories: Array.from(cats.values()).sort((a, b) => b.revenue - a.revenue),
+    }));
   }, [filteredSalesItems]);
 
   // Policy Collection
@@ -672,6 +732,110 @@ const Reports = () => {
               ]}
               totalColumns={["orders", "quantity", "revenue", "cost", "profit"]}
             />
+
+            {/* Monthly by Territory Officer (Issue #8) */}
+            {monthlyByOfficer.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Monthly Detail by Territory Officer</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {monthlyByOfficer.map((m, mi) => (
+                    <div key={mi}>
+                      <h4 className="font-semibold text-sm text-primary mb-2">{m.month}</h4>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Officer</TableHead>
+                              <TableHead className="text-right">Orders</TableHead>
+                              <TableHead className="text-right">Qty</TableHead>
+                              <TableHead className="text-right">Revenue</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {m.officers.map((o, oi) => (
+                              <TableRow key={oi}>
+                                <TableCell className="font-medium">{o.name}</TableCell>
+                                <TableCell className="text-right">{o.orders}</TableCell>
+                                <TableCell className="text-right">{o.quantity}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(o.revenue)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Monthly by Product (Issue #8) */}
+            {monthlyByProduct.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Monthly Detail by Product</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {monthlyByProduct.map((m, mi) => (
+                    <div key={mi}>
+                      <h4 className="font-semibold text-sm text-primary mb-2">{m.month}</h4>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Product</TableHead>
+                              <TableHead className="text-right">Qty Sold</TableHead>
+                              <TableHead className="text-right">Revenue</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {m.products.map((p, pi) => (
+                              <TableRow key={pi}>
+                                <TableCell className="font-medium">{p.name}</TableCell>
+                                <TableCell className="text-right">{p.quantity}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(p.revenue)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Monthly by Category (Issue #8) */}
+            {monthlyByCategory.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Monthly Detail by Category</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {monthlyByCategory.map((m, mi) => (
+                    <div key={mi}>
+                      <h4 className="font-semibold text-sm text-primary mb-2">{m.month}</h4>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Category</TableHead>
+                              <TableHead className="text-right">Qty Sold</TableHead>
+                              <TableHead className="text-right">Revenue</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {m.categories.map((c, ci) => (
+                              <TableRow key={ci}>
+                                <TableCell className="font-medium">{c.name}</TableCell>
+                                <TableCell className="text-right">{c.quantity}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(c.revenue)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Stock Report */}
