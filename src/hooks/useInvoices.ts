@@ -144,7 +144,7 @@ export const useInvoices = () => {
           due_date: dueDate,
           subtotal,
           tax_rate: taxRate,
-          tax_amount: taxAmount,
+          tax_amount: discountAmount,
           total_amount: totalAmount,
           paid_amount: paidAmount,
           status,
