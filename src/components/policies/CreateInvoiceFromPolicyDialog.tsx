@@ -124,7 +124,7 @@ export const CreateInvoiceFromPolicyDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tax Rate (%)</Label>
+              <Label>Discount (%)</Label>
               <Input
                 type="number"
                 step="0.01"
