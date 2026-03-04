@@ -37,8 +37,8 @@ export const CreateInvoiceFromPolicyDialog = ({
 
   const taxRateNum = parseFloat(taxRate) || 0;
   const subtotal = policy.total_amount;
-  const taxAmount = subtotal * (taxRateNum / 100);
-  const totalAmount = subtotal + taxAmount;
+  const discountAmount = subtotal * (taxRateNum / 100);
+  const totalAmount = subtotal - discountAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
