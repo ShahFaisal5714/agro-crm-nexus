@@ -74,11 +74,24 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">
-            Welcome back! Here's your business overview
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              Welcome back! Here's your business overview
+            </p>
+          </div>
+          <Select value={dashboardPeriod} onValueChange={(v) => setDashboardPeriod(v as typeof dashboardPeriod)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="quarter">This Quarter</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+              <SelectItem value="all">All Time</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
