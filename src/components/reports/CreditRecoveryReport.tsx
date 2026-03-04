@@ -5,12 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Users, MapPin, UserCheck, TrendingUp, Search, CreditCard, Wallet, ArrowDownRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useCreditRecovery } from "@/hooks/useCreditRecovery";
 import { DateRange } from "react-day-picker";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 
 interface CreditRecoveryReportProps {
   dateRange?: DateRange;
