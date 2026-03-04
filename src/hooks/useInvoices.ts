@@ -117,8 +117,8 @@ export const useInvoices = () => {
       if (invoiceNumError) throw invoiceNumError;
 
       const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-      const taxAmount = subtotal * (taxRate / 100);
-      const totalAmount = subtotal + taxAmount;
+      const discountAmount = subtotal * (taxRate / 100);
+      const totalAmount = subtotal - discountAmount;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
