@@ -107,37 +107,37 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
       const safeExpenses = expenses || [];
       const safeDealers = dealers || [];
 
-      // Calculate current month totals (sales orders only - policies NOT included until invoiced)
-      const currentMonthSales = safeOrders
-        .filter(o => new Date(o.order_date) >= currentMonthStart)
+      // Calculate period totals based on selected period
+      const currentPeriodSales = safeOrders
+        .filter(o => new Date(o.order_date) >= periodStart)
         .reduce((sum, o) => sum + o.total_amount, 0);
 
-      const lastMonthSales = safeOrders
+      const lastPeriodSales = period === "all" ? 0 : safeOrders
         .filter(o => {
           const d = new Date(o.order_date);
-          return d >= lastMonthStart && d <= lastMonthEnd;
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
         .reduce((sum, o) => sum + o.total_amount, 0);
 
-      const currentMonthPurchases = safePurchases
-        .filter(p => new Date(p.purchase_date) >= currentMonthStart)
+      const currentPeriodPurchases = safePurchases
+        .filter(p => new Date(p.purchase_date) >= periodStart)
         .reduce((sum, p) => sum + p.total_amount, 0);
 
-      const lastMonthPurchases = safePurchases
+      const lastPeriodPurchases = period === "all" ? 0 : safePurchases
         .filter(p => {
           const d = new Date(p.purchase_date);
-          return d >= lastMonthStart && d <= lastMonthEnd;
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
         .reduce((sum, p) => sum + p.total_amount, 0);
 
-      const currentMonthExpenses = safeExpenses
-        .filter(e => new Date(e.expense_date) >= currentMonthStart)
+      const currentPeriodExpenses = safeExpenses
+        .filter(e => new Date(e.expense_date) >= periodStart)
         .reduce((sum, e) => sum + e.amount, 0);
 
-      const lastMonthExpenses = safeExpenses
+      const lastPeriodExpenses = period === "all" ? 0 : safeExpenses
         .filter(e => {
           const d = new Date(e.expense_date);
-          return d >= lastMonthStart && d <= lastMonthEnd;
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
         .reduce((sum, e) => sum + e.amount, 0);
 
