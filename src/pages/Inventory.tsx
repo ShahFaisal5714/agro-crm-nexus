@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Edit, Package, Search, Trash2, X } from "lucide-react";
+import { AlertCircle, Edit, Package, Search, Trash2, X, RotateCcw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
