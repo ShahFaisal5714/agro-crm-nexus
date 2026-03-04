@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, subMonths, format, startOfDay, subDays } from "date-fns";
+import { startOfMonth, subMonths, format, startOfDay, subDays, startOfQuarter, startOfYear } from "date-fns";
 
 interface DailySales {
   date: string;
@@ -37,15 +37,41 @@ interface DashboardData {
   salesVsExpenses: MonthlyComparison[];
 }
 
-export const useDashboardData = () => {
+export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = "month") => {
   return useQuery({
-    queryKey: ["dashboard-data"],
+    queryKey: ["dashboard-data", period],
     queryFn: async (): Promise<DashboardData> => {
       const now = new Date();
       const currentMonthStart = startOfMonth(now);
       const lastMonthStart = startOfMonth(subMonths(now, 1));
       const lastMonthEnd = subDays(currentMonthStart, 1);
       const last30Days = subDays(now, 30);
+
+      // Determine period start based on selected period
+      let periodStart: Date;
+      let prevPeriodStart: Date;
+      let prevPeriodEnd: Date;
+      switch (period) {
+        case "quarter":
+          periodStart = startOfQuarter(now);
+          prevPeriodStart = startOfQuarter(subMonths(now, 3));
+          prevPeriodEnd = subDays(periodStart, 1);
+          break;
+        case "year":
+          periodStart = startOfYear(now);
+          prevPeriodStart = startOfYear(subMonths(now, 12));
+          prevPeriodEnd = subDays(periodStart, 1);
+          break;
+        case "all":
+          periodStart = new Date(2000, 0, 1);
+          prevPeriodStart = new Date(2000, 0, 1);
+          prevPeriodEnd = new Date(2000, 0, 1);
+          break;
+        default: // month
+          periodStart = currentMonthStart;
+          prevPeriodStart = lastMonthStart;
+          prevPeriodEnd = lastMonthEnd;
+      }
 
       // Fetch sales orders with dealer info
       const { data: salesOrders } = await supabase
