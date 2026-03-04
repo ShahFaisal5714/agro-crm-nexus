@@ -223,14 +223,14 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
       }
 
       return {
-        totalSales: currentMonthSales,
-        salesChange: calcChange(currentMonthSales, lastMonthSales),
-        totalPurchases: currentMonthPurchases,
-        purchasesChange: calcChange(currentMonthPurchases, lastMonthPurchases),
-        totalExpenses: currentMonthExpenses,
-        expensesChange: calcChange(currentMonthExpenses, lastMonthExpenses),
+        totalSales: currentPeriodSales,
+        salesChange: calcChange(currentPeriodSales, lastPeriodSales),
+        totalPurchases: currentPeriodPurchases,
+        purchasesChange: calcChange(currentPeriodPurchases, lastPeriodPurchases),
+        totalExpenses: currentPeriodExpenses,
+        expensesChange: calcChange(currentPeriodExpenses, lastPeriodExpenses),
         activeDealers: safeDealers.length,
-        dealersChange: safeDealers.filter(d => new Date(d.created_at) >= currentMonthStart).length,
+        dealersChange: safeDealers.filter(d => new Date(d.created_at) >= periodStart).length,
         lowStockProducts: (products || []).map(p => ({ name: p.name, sku: p.sku, stock: p.stock_quantity })),
         recentSalesOrders: safeOrders.slice(0, 4).map(o => ({
           id: o.id,
