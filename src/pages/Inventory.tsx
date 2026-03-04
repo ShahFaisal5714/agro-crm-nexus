@@ -274,6 +274,12 @@ const Inventory = () => {
           onOpenChange={(open) => !open && setDeletingProduct(null)}
         />
       )}
+
+      <StockAdjustmentDialog
+        product={adjustingProduct}
+        open={!!adjustingProduct}
+        onOpenChange={(open) => !open && setAdjustingProduct(null)}
+      />
     </DashboardLayout>
   );
 };
