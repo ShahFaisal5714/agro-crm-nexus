@@ -88,6 +88,19 @@ export const CreditRecoveryReport = ({ dateRange }: CreditRecoveryReportProps) =
     { name: "Remaining", value: summary.totalRemaining, color: "hsl(var(--destructive))" },
   ], [summary]);
 
+  // Generate previous month quick selectors
+  const monthPresets = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const date = subMonths(now, i);
+      return {
+        label: format(date, "MMM yyyy"),
+        from: startOfMonth(date),
+        to: endOfMonth(date),
+      };
+    });
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
