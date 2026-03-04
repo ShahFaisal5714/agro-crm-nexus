@@ -96,9 +96,30 @@ export const CreditRecoveryReport = ({ dateRange }: CreditRecoveryReportProps) =
     );
   }
 
+  // Generate previous month quick selectors
+  const monthPresets = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const date = subMonths(now, i);
+      return {
+        label: format(date, "MMM yyyy"),
+        from: startOfMonth(date),
+        to: endOfMonth(date),
+      };
+    });
+  }, []);
+
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Month Quick Selectors for Recovery (Issue #9) */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-sm text-muted-foreground self-center mr-2">Quick Select:</span>
+        {monthPresets.map((preset, i) => (
+          <Button key={i} variant="outline" size="sm" className="text-xs">
+            {preset.label}
+          </Button>
+        ))}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
