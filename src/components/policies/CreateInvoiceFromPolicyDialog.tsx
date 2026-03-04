@@ -151,8 +151,8 @@ export const CreateInvoiceFromPolicyDialog = ({
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Tax ({taxRateNum}%):</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span>Discount ({taxRateNum}%):</span>
+              <span>-{formatCurrency(discountAmount)}</span>
             </div>
             <div className="flex justify-between font-semibold">
               <span>Total:</span>

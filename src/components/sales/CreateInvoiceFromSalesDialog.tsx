@@ -199,8 +199,8 @@ export const CreateInvoiceFromSalesDialog = ({
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax ({formData.tax_rate}%)</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span className="text-muted-foreground">Discount ({formData.tax_rate}%)</span>
+              <span>-{formatCurrency(discountAmount)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total</span>

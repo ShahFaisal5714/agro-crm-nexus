@@ -505,8 +505,8 @@ export const ViewInvoiceDialog = ({ invoice }: ViewInvoiceDialogProps) => {
                 <span>{formatCurrency(invoice.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax ({invoice.tax_rate}%)</span>
-                <span>{formatCurrency(invoice.tax_amount)}</span>
+                <span className="text-muted-foreground">Discount ({invoice.tax_rate}%)</span>
+                <span>-{formatCurrency(invoice.tax_amount)}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold">

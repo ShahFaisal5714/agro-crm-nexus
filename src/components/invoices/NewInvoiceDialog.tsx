@@ -323,7 +323,7 @@ export const NewInvoiceDialog = () => {
               {items.length > 0 && (
                 <div className="flex flex-col items-end pt-4 border-t space-y-1">
                   <div className="text-sm text-muted-foreground">Subtotal: {formatCurrency(subtotal)}</div>
-                  <div className="text-sm text-muted-foreground">Tax ({form.watch("taxRate")}%): {formatCurrency(taxAmount)}</div>
+                  <div className="text-sm text-muted-foreground">Discount ({form.watch("taxRate")}%): -{formatCurrency(discountAmount)}</div>
                   <div className="text-lg font-semibold">Total: {formatCurrency(total)}</div>
                 </div>
               )}
