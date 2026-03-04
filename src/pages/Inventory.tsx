@@ -228,6 +228,14 @@ const Inventory = () => {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => setAdjustingProduct(product)}
+                              title="Adjust Stock"
+                            >
+                              <RotateCcw className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => setEditingProduct(product)}
                             >
                               <Edit className="h-4 w-4" />
