@@ -32,7 +32,8 @@ import { toast } from "sonner";
 
 const Dashboard = () => {
   const { userRole } = useAuth();
-  const { data: dashboardData, isLoading } = useDashboardData();
+  const [dashboardPeriod, setDashboardPeriod] = useState<"month" | "quarter" | "year" | "all">("month");
+  const { data: dashboardData, isLoading } = useDashboardData(dashboardPeriod);
   const { policies, isLoading: policiesLoading } = usePolicies();
   const [isCheckingStock, setIsCheckingStock] = useState(false);
 
