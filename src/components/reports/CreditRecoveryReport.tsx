@@ -109,18 +109,6 @@ export const CreditRecoveryReport = ({ dateRange }: CreditRecoveryReportProps) =
     );
   }
 
-  // Generate previous month quick selectors
-  const monthPresets = useMemo(() => {
-    const now = new Date();
-    return Array.from({ length: 6 }, (_, i) => {
-      const date = subMonths(now, i);
-      return {
-        label: format(date, "MMM yyyy"),
-        from: startOfMonth(date),
-        to: endOfMonth(date),
-      };
-    });
-  }, []);
 
   return (
     <div className="space-y-6">
