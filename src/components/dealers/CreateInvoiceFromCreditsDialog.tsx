@@ -56,8 +56,8 @@ export const CreateInvoiceFromCreditsDialog = ({
   });
 
   const subtotal = totalCredit;
-  const taxAmount = (subtotal * formData.tax_rate) / 100;
-  const total = subtotal + taxAmount;
+  const discountAmount = (subtotal * formData.tax_rate) / 100;
+  const total = subtotal - discountAmount;
   const invoiceAmount = total - totalPaid;
 
   const handleSubmit = async (e: React.FormEvent) => {
