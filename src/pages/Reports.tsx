@@ -175,7 +175,7 @@ const Reports = () => {
     })).sort((a, b) => b.revenue - a.revenue);
   }, [filteredSalesItems, reportData.territories]);
 
-  // Sales Officer-wise (includes all date range, not just current month)
+  // Sales Management-wise - shows data by who created the entries (created_by)
   const salesOfficerData = useMemo(() => {
     const officerMap = new Map<string, { name: string; revenue: number; orders: Set<string>; cost: number }>();
     filteredSalesItems.forEach(item => {
@@ -484,8 +484,8 @@ const Reports = () => {
           { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
         ], "territory_report", summaryItems); break;
       case "officer":
-        exportToPDF("Sales Officer Report", salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) })), [
-          { key: "name", label: "Officer" }, { key: "orders", label: "Orders" },
+        exportToPDF("Sales Management Report", salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) })), [
+          { key: "name", label: "Manager" }, { key: "orders", label: "Orders" },
           { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
           { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
         ], "sales_officer_report", summaryItems); break;
@@ -625,7 +625,7 @@ const Reports = () => {
             <TabsTrigger value="product">Product Analysis</TabsTrigger>
             <TabsTrigger value="category">Category Analysis</TabsTrigger>
             <TabsTrigger value="territory">Territory Sales</TabsTrigger>
-            <TabsTrigger value="officer">Sales Officers</TabsTrigger>
+            <TabsTrigger value="officer">Sales Management</TabsTrigger>
             <TabsTrigger value="policy">Policy Collection</TabsTrigger>
             <TabsTrigger value="aging" className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" />Invoice Aging</TabsTrigger>
             <TabsTrigger value="recovery" className="flex items-center gap-1"><Wallet className="h-3 w-3" />Credit Recovery</TabsTrigger>
@@ -1044,13 +1044,13 @@ const Reports = () => {
               ]} totalColumns={["orders", "revenue", "cost", "profit"]} />
           </TabsContent>
 
-          {/* Sales Officers - now shows full date range, not just current month (Issue #1) */}
+          {/* Sales Management - shows data by who created the entries */}
           <TabsContent value="officer" className="space-y-4">
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Sales Officer Performance</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Sales Management Performance</CardTitle></CardHeader>
               <CardContent>
                 {salesOfficerData.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">No sales officer data available for selected period</div>
+                  <div className="text-center py-12 text-muted-foreground">No sales management data available for selected period</div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ResponsiveContainer width="100%" height={300}>
@@ -1079,10 +1079,10 @@ const Reports = () => {
               </CardContent>
             </Card>
             <ReportDetailTable
-              title="Sales Officer Details"
+              title="Sales Management Details"
               data={salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) }))}
               columns={[
-                { key: "name", label: "Officer Name" }, { key: "orders", label: "Orders", format: "number", align: "right" },
+                { key: "name", label: "Manager Name" }, { key: "orders", label: "Orders", format: "number", align: "right" },
                 { key: "revenue", label: "Revenue", format: "currency", align: "right" }, { key: "cost", label: "COGS", format: "currency", align: "right" },
                 { key: "profit", label: "Profit", format: "currency", align: "right" }, { key: "avgOrder", label: "Avg Order", format: "currency", align: "right" },
               ]} totalColumns={["orders", "revenue", "cost", "profit"]} />
