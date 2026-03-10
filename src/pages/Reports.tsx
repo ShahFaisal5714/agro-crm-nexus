@@ -1021,15 +1021,24 @@ const Reports = () => {
                   <div className="text-center py-12 text-muted-foreground">No territory data available</div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={territoryWiseData}>
-                        <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(value: number, name: string) => name === "revenue" ? formatCurrency(value) : value} />
-                        <Legend />
-                        <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" />
-                        <Bar dataKey="profit" name="Profit" fill="hsl(var(--chart-2))" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {(() => {
+                      const totalRevenue = territoryWiseData.reduce((s, t) => s + t.revenue, 0);
+                      const chartData = territoryWiseData.map(t => ({
+                        ...t,
+                        contributionLabel: totalRevenue > 0 ? `${((t.revenue / totalRevenue) * 100).toFixed(1)}%` : "0%",
+                      }));
+                      return (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                            <Tooltip formatter={(value: number, name: string) => name === "revenue" ? formatCurrency(value) : value} />
+                            <Legend />
+                            <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" label={{ position: 'top', formatter: (_: any, __: any, index: number) => chartData[index]?.contributionLabel || '', fill: 'hsl(var(--foreground))', fontSize: 11 }} />
+                            <Bar dataKey="profit" name="Profit" fill="hsl(var(--chart-2))" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      );
+                    })()}
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie data={territoryWiseData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={80} dataKey="revenue">
