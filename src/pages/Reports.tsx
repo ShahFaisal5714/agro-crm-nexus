@@ -1079,10 +1079,10 @@ const Reports = () => {
               </CardContent>
             </Card>
             <ReportDetailTable
-              title="Sales Officer Details"
+              title="Sales Management Details"
               data={salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) }))}
               columns={[
-                { key: "name", label: "Officer Name" }, { key: "orders", label: "Orders", format: "number", align: "right" },
+                { key: "name", label: "Manager Name" }, { key: "orders", label: "Orders", format: "number", align: "right" },
                 { key: "revenue", label: "Revenue", format: "currency", align: "right" }, { key: "cost", label: "COGS", format: "currency", align: "right" },
                 { key: "profit", label: "Profit", format: "currency", align: "right" }, { key: "avgOrder", label: "Avg Order", format: "currency", align: "right" },
               ]} totalColumns={["orders", "revenue", "cost", "profit"]} />
