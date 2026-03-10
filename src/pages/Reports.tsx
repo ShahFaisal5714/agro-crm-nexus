@@ -754,41 +754,42 @@ const Reports = () => {
               totalColumns={["orders", "quantity", "revenue", "cost", "profit"]}
             />
 
-            {/* Monthly by Territory Officer - grouped by Territory */}
-            {monthlyByOfficer.length > 0 && (
+            {/* Monthly by Territory Sales */}
+            {monthlyByTerritory.length > 0 && (
               <Card>
-                <CardHeader><CardTitle className="text-lg">Monthly Detail by Territory Officer</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">Monthly Detail by Territory Sales</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
-                  {monthlyByOfficer.map((m, mi) => (
+                  {monthlyByTerritory.map((m, mi) => (
                     <div key={mi}>
                       <h4 className="font-semibold text-sm text-primary mb-3">{m.month}</h4>
-                      {m.territories.map((t, ti) => (
-                        <div key={ti} className="mb-4">
-                          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1"><MapPin className="h-3 w-3" />{t.territory}</h5>
-                          <div className="rounded-md border">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Officer</TableHead>
-                                  <TableHead className="text-right">Orders</TableHead>
-                                  <TableHead className="text-right">Qty</TableHead>
-                                  <TableHead className="text-right">Revenue</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {t.officers.map((o, oi) => (
-                                  <TableRow key={oi}>
-                                    <TableCell className="font-medium">{o.name}</TableCell>
-                                    <TableCell className="text-right">{o.orders}</TableCell>
-                                    <TableCell className="text-right">{o.quantity}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(o.revenue)}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      ))}
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Territory</TableHead>
+                              <TableHead className="text-right">Orders</TableHead>
+                              <TableHead className="text-right">Qty</TableHead>
+                              <TableHead className="text-right">Revenue</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {m.territories.map((t, ti) => (
+                              <TableRow key={ti}>
+                                <TableCell className="font-medium flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" />{t.name}{t.code ? ` (${t.code})` : ""}</TableCell>
+                                <TableCell className="text-right">{t.orders}</TableCell>
+                                <TableCell className="text-right">{t.quantity}</TableCell>
+                                <TableCell className="text-right font-semibold">{formatCurrency(t.revenue)}</TableCell>
+                              </TableRow>
+                            ))}
+                            <TableRow className="bg-muted/50 font-bold">
+                              <TableCell>Total</TableCell>
+                              <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.orders, 0)}</TableCell>
+                              <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.quantity, 0)}</TableCell>
+                              <TableCell className="text-right text-primary">{formatCurrency(m.territories.reduce((s, t) => s + t.revenue, 0))}</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
