@@ -625,7 +625,7 @@ const Reports = () => {
             <TabsTrigger value="product">Product Analysis</TabsTrigger>
             <TabsTrigger value="category">Category Analysis</TabsTrigger>
             <TabsTrigger value="territory">Territory Sales</TabsTrigger>
-            <TabsTrigger value="officer">Sales Officers</TabsTrigger>
+            <TabsTrigger value="officer">Sales Management</TabsTrigger>
             <TabsTrigger value="policy">Policy Collection</TabsTrigger>
             <TabsTrigger value="aging" className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" />Invoice Aging</TabsTrigger>
             <TabsTrigger value="recovery" className="flex items-center gap-1"><Wallet className="h-3 w-3" />Credit Recovery</TabsTrigger>
