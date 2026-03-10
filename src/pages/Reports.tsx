@@ -175,7 +175,7 @@ const Reports = () => {
     })).sort((a, b) => b.revenue - a.revenue);
   }, [filteredSalesItems, reportData.territories]);
 
-  // Sales Officer-wise (includes all date range, not just current month)
+  // Sales Management-wise - shows data by who created the entries (created_by)
   const salesOfficerData = useMemo(() => {
     const officerMap = new Map<string, { name: string; revenue: number; orders: Set<string>; cost: number }>();
     filteredSalesItems.forEach(item => {
