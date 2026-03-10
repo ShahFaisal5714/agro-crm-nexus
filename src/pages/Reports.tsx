@@ -287,36 +287,30 @@ const Reports = () => {
       }));
   }, [filteredSalesItems]);
 
-  // Monthly breakdown by Officer - grouped by Territory
-  const monthlyByOfficer = useMemo(() => {
-    // month -> territory -> officer -> data
-    const map = new Map<string, Map<string, Map<string, { name: string; revenue: number; orders: Set<string>; quantity: number }>>>();
+  // Monthly breakdown by Territory Sales
+  const monthlyByTerritory = useMemo(() => {
+    // month -> territory -> aggregated data
+    const map = new Map<string, Map<string, { name: string; code: string; revenue: number; orders: Set<string>; quantity: number }>>();
     filteredSalesItems.forEach(item => {
       const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
-      const officerId = item.sales_orders.created_by;
-      const officer = reportData.profiles.find(p => p.id === officerId);
       const territoryId = item.sales_orders.dealers?.territory_id || "unassigned";
       const territory = reportData.territories.find(t => t.id === territoryId);
-      const territoryName = territory ? `${territory.name} (${territory.code})` : "Unassigned";
+      const territoryName = territory?.name || "Unassigned";
+      const territoryCode = territory?.code || "";
 
       if (!map.has(monthKey)) map.set(monthKey, new Map());
       const terrMap = map.get(monthKey)!;
-      if (!terrMap.has(territoryName)) terrMap.set(territoryName, new Map());
-      const officerMap = terrMap.get(territoryName)!;
-      const existing = officerMap.get(officerId) || { name: officer?.full_name || "Unknown", revenue: 0, orders: new Set<string>(), quantity: 0 };
+      const existing = terrMap.get(territoryId) || { name: territoryName, code: territoryCode, revenue: 0, orders: new Set<string>(), quantity: 0 };
       existing.revenue += item.total;
       existing.orders.add(item.sales_order_id);
       existing.quantity += item.quantity;
-      officerMap.set(officerId, existing);
+      terrMap.set(territoryId, existing);
     });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, territories]) => ({
+    return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a)).map(([key, territories]) => ({
       month: format(new Date(key + "-01"), "MMM yyyy"),
-      territories: Array.from(territories.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([terrName, officers]) => ({
-        territory: terrName,
-        officers: Array.from(officers.values()).map(o => ({ ...o, orders: o.orders.size })).sort((a, b) => b.revenue - a.revenue),
-      })),
+      territories: Array.from(territories.values()).map(t => ({ ...t, orders: t.orders.size })).sort((a, b) => b.revenue - a.revenue),
     }));
-  }, [filteredSalesItems, reportData.profiles, reportData.territories]);
+  }, [filteredSalesItems, reportData.territories]);
 
   // Monthly breakdown by Product - grouped by Territory
   const monthlyByProduct = useMemo(() => {
@@ -760,41 +754,42 @@ const Reports = () => {
               totalColumns={["orders", "quantity", "revenue", "cost", "profit"]}
             />
 
-            {/* Monthly by Territory Officer - grouped by Territory */}
-            {monthlyByOfficer.length > 0 && (
+            {/* Monthly by Territory Sales */}
+            {monthlyByTerritory.length > 0 && (
               <Card>
-                <CardHeader><CardTitle className="text-lg">Monthly Detail by Territory Officer</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">Monthly Detail by Territory Sales</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
-                  {monthlyByOfficer.map((m, mi) => (
+                  {monthlyByTerritory.map((m, mi) => (
                     <div key={mi}>
                       <h4 className="font-semibold text-sm text-primary mb-3">{m.month}</h4>
-                      {m.territories.map((t, ti) => (
-                        <div key={ti} className="mb-4">
-                          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1"><MapPin className="h-3 w-3" />{t.territory}</h5>
-                          <div className="rounded-md border">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Officer</TableHead>
-                                  <TableHead className="text-right">Orders</TableHead>
-                                  <TableHead className="text-right">Qty</TableHead>
-                                  <TableHead className="text-right">Revenue</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {t.officers.map((o, oi) => (
-                                  <TableRow key={oi}>
-                                    <TableCell className="font-medium">{o.name}</TableCell>
-                                    <TableCell className="text-right">{o.orders}</TableCell>
-                                    <TableCell className="text-right">{o.quantity}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(o.revenue)}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      ))}
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Territory</TableHead>
+                              <TableHead className="text-right">Orders</TableHead>
+                              <TableHead className="text-right">Qty</TableHead>
+                              <TableHead className="text-right">Revenue</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {m.territories.map((t, ti) => (
+                              <TableRow key={ti}>
+                                <TableCell className="font-medium flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" />{t.name}{t.code ? ` (${t.code})` : ""}</TableCell>
+                                <TableCell className="text-right">{t.orders}</TableCell>
+                                <TableCell className="text-right">{t.quantity}</TableCell>
+                                <TableCell className="text-right font-semibold">{formatCurrency(t.revenue)}</TableCell>
+                              </TableRow>
+                            ))}
+                            <TableRow className="bg-muted/50 font-bold">
+                              <TableCell>Total</TableCell>
+                              <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.orders, 0)}</TableCell>
+                              <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.quantity, 0)}</TableCell>
+                              <TableCell className="text-right text-primary">{formatCurrency(m.territories.reduce((s, t) => s + t.revenue, 0))}</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
