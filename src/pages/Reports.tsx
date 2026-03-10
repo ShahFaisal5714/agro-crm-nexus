@@ -1044,13 +1044,13 @@ const Reports = () => {
               ]} totalColumns={["orders", "revenue", "cost", "profit"]} />
           </TabsContent>
 
-          {/* Sales Officers - now shows full date range, not just current month (Issue #1) */}
+          {/* Sales Management - shows data by who created the entries */}
           <TabsContent value="officer" className="space-y-4">
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Sales Officer Performance</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Sales Management Performance</CardTitle></CardHeader>
               <CardContent>
                 {salesOfficerData.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">No sales officer data available for selected period</div>
+                  <div className="text-center py-12 text-muted-foreground">No sales management data available for selected period</div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <ResponsiveContainer width="100%" height={300}>
