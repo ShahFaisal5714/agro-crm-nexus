@@ -1042,12 +1042,21 @@ const Reports = () => {
                 )}
               </CardContent>
             </Card>
-            <ReportDetailTable title="Territory-wise Sales Details" data={territoryWiseData}
-              columns={[
-                { key: "name", label: "Territory" }, { key: "orders", label: "Orders", format: "number", align: "right" },
-                { key: "revenue", label: "Revenue", format: "currency", align: "right" }, { key: "cost", label: "COGS", format: "currency", align: "right" },
-                { key: "profit", label: "Profit", format: "currency", align: "right" },
-              ]} totalColumns={["orders", "revenue", "cost", "profit"]} />
+            {(() => {
+              const totalRevenue = territoryWiseData.reduce((s, t) => s + t.revenue, 0);
+              const dataWithContribution = territoryWiseData.map(t => ({
+                ...t,
+                contribution: totalRevenue > 0 ? `${((t.revenue / totalRevenue) * 100).toFixed(1)}%` : "0.0%",
+              }));
+              return (
+                <ReportDetailTable title="Territory-wise Sales Details" data={dataWithContribution}
+                  columns={[
+                    { key: "name", label: "Territory" }, { key: "orders", label: "Orders", format: "number", align: "right" },
+                    { key: "revenue", label: "Revenue", format: "currency", align: "right" }, { key: "cost", label: "COGS", format: "currency", align: "right" },
+                    { key: "profit", label: "Profit", format: "currency", align: "right" }, { key: "contribution", label: "Contribution %", align: "right" },
+                  ]} totalColumns={["orders", "revenue", "cost", "profit"]} />
+              );
+            })()}
           </TabsContent>
 
           {/* Sales Management - shows data by who created the entries */}
