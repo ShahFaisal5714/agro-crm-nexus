@@ -763,29 +763,35 @@ const Reports = () => {
                     <div key={mi}>
                       <h4 className="font-semibold text-sm text-primary mb-3">{m.month}</h4>
                       <div className="rounded-md border">
-                        <Table>
+                         <Table>
                           <TableHeader>
                             <TableRow>
                               <TableHead>Territory</TableHead>
                               <TableHead className="text-right">Orders</TableHead>
                               <TableHead className="text-right">Qty</TableHead>
                               <TableHead className="text-right">Revenue</TableHead>
+                              <TableHead className="text-right">Contribution %</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {m.territories.map((t, ti) => (
-                              <TableRow key={ti}>
-                                <TableCell className="font-medium flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" />{t.name}{t.code ? ` (${t.code})` : ""}</TableCell>
-                                <TableCell className="text-right">{t.orders}</TableCell>
-                                <TableCell className="text-right">{t.quantity}</TableCell>
-                                <TableCell className="text-right font-semibold">{formatCurrency(t.revenue)}</TableCell>
-                              </TableRow>
-                            ))}
+                            {(() => {
+                              const totalRevenue = m.territories.reduce((s, t) => s + t.revenue, 0);
+                              return m.territories.map((t, ti) => (
+                                <TableRow key={ti}>
+                                  <TableCell className="font-medium flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" />{t.name}{t.code ? ` (${t.code})` : ""}</TableCell>
+                                  <TableCell className="text-right">{t.orders}</TableCell>
+                                  <TableCell className="text-right">{t.quantity}</TableCell>
+                                  <TableCell className="text-right font-semibold">{formatCurrency(t.revenue)}</TableCell>
+                                  <TableCell className="text-right font-medium">{totalRevenue > 0 ? ((t.revenue / totalRevenue) * 100).toFixed(1) : "0.0"}%</TableCell>
+                                </TableRow>
+                              ));
+                            })()}
                             <TableRow className="bg-muted/50 font-bold">
                               <TableCell>Total</TableCell>
                               <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.orders, 0)}</TableCell>
                               <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.quantity, 0)}</TableCell>
                               <TableCell className="text-right text-primary">{formatCurrency(m.territories.reduce((s, t) => s + t.revenue, 0))}</TableCell>
+                              <TableCell className="text-right">100%</TableCell>
                             </TableRow>
                           </TableBody>
                         </Table>
