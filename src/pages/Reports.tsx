@@ -287,36 +287,30 @@ const Reports = () => {
       }));
   }, [filteredSalesItems]);
 
-  // Monthly breakdown by Officer - grouped by Territory
-  const monthlyByOfficer = useMemo(() => {
-    // month -> territory -> officer -> data
-    const map = new Map<string, Map<string, Map<string, { name: string; revenue: number; orders: Set<string>; quantity: number }>>>();
+  // Monthly breakdown by Territory Sales
+  const monthlyByTerritory = useMemo(() => {
+    // month -> territory -> aggregated data
+    const map = new Map<string, Map<string, { name: string; code: string; revenue: number; orders: Set<string>; quantity: number }>>();
     filteredSalesItems.forEach(item => {
       const monthKey = format(new Date(item.sales_orders.order_date), "yyyy-MM");
-      const officerId = item.sales_orders.created_by;
-      const officer = reportData.profiles.find(p => p.id === officerId);
       const territoryId = item.sales_orders.dealers?.territory_id || "unassigned";
       const territory = reportData.territories.find(t => t.id === territoryId);
-      const territoryName = territory ? `${territory.name} (${territory.code})` : "Unassigned";
+      const territoryName = territory?.name || "Unassigned";
+      const territoryCode = territory?.code || "";
 
       if (!map.has(monthKey)) map.set(monthKey, new Map());
       const terrMap = map.get(monthKey)!;
-      if (!terrMap.has(territoryName)) terrMap.set(territoryName, new Map());
-      const officerMap = terrMap.get(territoryName)!;
-      const existing = officerMap.get(officerId) || { name: officer?.full_name || "Unknown", revenue: 0, orders: new Set<string>(), quantity: 0 };
+      const existing = terrMap.get(territoryId) || { name: territoryName, code: territoryCode, revenue: 0, orders: new Set<string>(), quantity: 0 };
       existing.revenue += item.total;
       existing.orders.add(item.sales_order_id);
       existing.quantity += item.quantity;
-      officerMap.set(officerId, existing);
+      terrMap.set(territoryId, existing);
     });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, territories]) => ({
+    return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a)).map(([key, territories]) => ({
       month: format(new Date(key + "-01"), "MMM yyyy"),
-      territories: Array.from(territories.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([terrName, officers]) => ({
-        territory: terrName,
-        officers: Array.from(officers.values()).map(o => ({ ...o, orders: o.orders.size })).sort((a, b) => b.revenue - a.revenue),
-      })),
+      territories: Array.from(territories.values()).map(t => ({ ...t, orders: t.orders.size })).sort((a, b) => b.revenue - a.revenue),
     }));
-  }, [filteredSalesItems, reportData.profiles, reportData.territories]);
+  }, [filteredSalesItems, reportData.territories]);
 
   // Monthly breakdown by Product - grouped by Territory
   const monthlyByProduct = useMemo(() => {
