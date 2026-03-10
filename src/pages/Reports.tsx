@@ -484,8 +484,8 @@ const Reports = () => {
           { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
         ], "territory_report", summaryItems); break;
       case "officer":
-        exportToPDF("Sales Officer Report", salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) })), [
-          { key: "name", label: "Officer" }, { key: "orders", label: "Orders" },
+        exportToPDF("Sales Management Report", salesOfficerData.map(o => ({ ...o, avgOrder: o.revenue / (o.orders || 1) })), [
+          { key: "name", label: "Manager" }, { key: "orders", label: "Orders" },
           { key: "revenue", label: "Revenue", format: (v) => formatCurrency(v as number) },
           { key: "profit", label: "Profit", format: (v) => formatCurrency(v as number) },
         ], "sales_officer_report", summaryItems); break;
