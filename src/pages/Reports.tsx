@@ -759,24 +759,42 @@ const Reports = () => {
               <Card>
                 <CardHeader><CardTitle className="text-lg">Monthly Detail by Territory Sales</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
-                  {monthlyByTerritory.map((m, mi) => (
-                    <div key={mi}>
-                      <h4 className="font-semibold text-sm text-primary mb-3">{m.month}</h4>
-                      <div className="rounded-md border">
-                         <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Territory</TableHead>
-                              <TableHead className="text-right">Orders</TableHead>
-                              <TableHead className="text-right">Qty</TableHead>
-                              <TableHead className="text-right">Revenue</TableHead>
-                              <TableHead className="text-right">Contribution %</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(() => {
-                              const totalRevenue = m.territories.reduce((s, t) => s + t.revenue, 0);
-                              return m.territories.map((t, ti) => (
+                  {monthlyByTerritory.map((m, mi) => {
+                    const totalRevenue = m.territories.reduce((s, t) => s + t.revenue, 0);
+                    const chartData = m.territories.map(t => ({
+                      name: t.code || t.name,
+                      revenue: t.revenue,
+                      contributionLabel: totalRevenue > 0 ? `${((t.revenue / totalRevenue) * 100).toFixed(1)}%` : "0%",
+                    }));
+                    return (
+                      <div key={mi}>
+                        <h4 className="font-semibold text-sm text-primary mb-3">{m.month}</h4>
+                        {chartData.length > 1 && (
+                          <div className="mb-4">
+                            <ResponsiveContainer width="100%" height={220}>
+                              <BarChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                                <YAxis tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+                                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: (_: any, __: any, index: number) => chartData[index]?.contributionLabel || '', fill: 'hsl(var(--foreground))', fontSize: 11, fontWeight: 600 }} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                        <div className="rounded-md border">
+                           <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Territory</TableHead>
+                                <TableHead className="text-right">Orders</TableHead>
+                                <TableHead className="text-right">Qty</TableHead>
+                                <TableHead className="text-right">Revenue</TableHead>
+                                <TableHead className="text-right">Contribution %</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {m.territories.map((t, ti) => (
                                 <TableRow key={ti}>
                                   <TableCell className="font-medium flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" />{t.name}{t.code ? ` (${t.code})` : ""}</TableCell>
                                   <TableCell className="text-right">{t.orders}</TableCell>
@@ -784,20 +802,20 @@ const Reports = () => {
                                   <TableCell className="text-right font-semibold">{formatCurrency(t.revenue)}</TableCell>
                                   <TableCell className="text-right font-medium">{totalRevenue > 0 ? ((t.revenue / totalRevenue) * 100).toFixed(1) : "0.0"}%</TableCell>
                                 </TableRow>
-                              ));
-                            })()}
-                            <TableRow className="bg-muted/50 font-bold">
-                              <TableCell>Total</TableCell>
-                              <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.orders, 0)}</TableCell>
-                              <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.quantity, 0)}</TableCell>
-                              <TableCell className="text-right text-primary">{formatCurrency(m.territories.reduce((s, t) => s + t.revenue, 0))}</TableCell>
-                              <TableCell className="text-right">100%</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
+                              ))}
+                              <TableRow className="bg-muted/50 font-bold">
+                                <TableCell>Total</TableCell>
+                                <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.orders, 0)}</TableCell>
+                                <TableCell className="text-right">{m.territories.reduce((s, t) => s + t.quantity, 0)}</TableCell>
+                                <TableCell className="text-right text-primary">{formatCurrency(totalRevenue)}</TableCell>
+                                <TableCell className="text-right">100%</TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
             )}
