@@ -18,6 +18,7 @@ import { NewSalesOrderDialog } from "@/components/sales/NewSalesOrderDialog";
 import { EditSalesOrderDialog } from "@/components/sales/EditSalesOrderDialog";
 import { DeleteSalesOrderDialog } from "@/components/sales/DeleteSalesOrderDialog";
 import { ViewSalesOrderDialog } from "@/components/sales/ViewSalesOrderDialog";
+import { NewSalesReturnDialog } from "@/components/sales/NewSalesReturnDialog";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
 import { useDealers } from "@/hooks/useDealers";
 import { format } from "date-fns";
@@ -68,7 +69,10 @@ const Sales = () => {
               Manage sales orders and invoices
             </p>
           </div>
-          <NewSalesOrderDialog />
+          <div className="flex gap-2">
+            <NewSalesReturnDialog />
+            <NewSalesOrderDialog />
+          </div>
         </div>
 
         <Card>

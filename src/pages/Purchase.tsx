@@ -19,6 +19,7 @@ import { ViewPurchaseDialog } from "@/components/purchase/ViewPurchaseDialog";
 import { EditPurchaseDialog } from "@/components/purchase/EditPurchaseDialog";
 import { SupplierCreditSummaryWidget } from "@/components/purchase/SupplierCreditSummaryWidget";
 import { AddSupplierDialog } from "@/components/suppliers/AddSupplierDialog";
+import { NewPurchaseReturnDialog } from "@/components/purchase/NewPurchaseReturnDialog";
 import { format } from "date-fns";
 
 const PurchasePage = () => {
@@ -84,6 +85,7 @@ const PurchasePage = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <NewPurchaseReturnDialog />
             <AddSupplierDialog />
             <NewPurchaseDialog />
           </div>
