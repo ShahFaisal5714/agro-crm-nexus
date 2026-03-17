@@ -113,6 +113,8 @@ export const useDealerCredits = () => {
       total_paid,
       remaining,
       last_payment_date: lastPayment?.payment_date || null,
+      territory_name: dealer.territories?.name || null,
+      territory_code: dealer.territories?.code || null,
     };
   }).filter((s) => s.total_credit > 0 || s.total_paid > 0);
 
