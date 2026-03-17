@@ -69,7 +69,10 @@ const Sales = () => {
               Manage sales orders and invoices
             </p>
           </div>
-          <NewSalesOrderDialog />
+          <div className="flex gap-2">
+            <NewSalesReturnDialog />
+            <NewSalesOrderDialog />
+          </div>
         </div>
 
         <Card>

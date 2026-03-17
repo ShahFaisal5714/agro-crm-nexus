@@ -85,6 +85,7 @@ const PurchasePage = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <NewPurchaseReturnDialog />
             <AddSupplierDialog />
             <NewPurchaseDialog />
           </div>
