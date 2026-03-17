@@ -41,6 +41,8 @@ export interface DealerCreditSummary {
   total_paid: number;
   remaining: number;
   last_payment_date: string | null;
+  territory_name: string | null;
+  territory_code: string | null;
 }
 
 export const useDealerCredits = () => {
