@@ -85,11 +85,11 @@ export const useDealerCredits = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dealers")
-        .select("id, dealer_name")
+        .select("id, dealer_name, territory_id, territories(name, code)")
         .order("dealer_name");
 
       if (error) throw error;
-      return data;
+      return data as { id: string; dealer_name: string; territory_id: string | null; territories: { name: string; code: string } | null }[];
     },
   });
 

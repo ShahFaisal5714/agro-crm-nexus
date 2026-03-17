@@ -85,19 +85,25 @@ export const NewInvoiceDialog = () => {
     value: string | number
   ) => {
     const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    const currentItem = { ...newItems[index] };
 
     if (field === "product_id") {
       const product = products.find((p) => p.id === value);
       if (product) {
-        newItems[index].unit_price = product.unit_price;
-        newItems[index].total = product.unit_price * newItems[index].quantity;
-        newItems[index].description = product.name;
+        currentItem.product_id = value as string;
+        currentItem.unit_price = product.unit_price;
+        currentItem.total = product.unit_price * currentItem.quantity;
+        currentItem.description = product.name;
       }
-    } else if (field === "quantity" || field === "unit_price") {
-      newItems[index].total = newItems[index].quantity * newItems[index].unit_price;
+    } else if (field === "quantity") {
+      currentItem.quantity = value as number;
+      currentItem.total = currentItem.quantity * currentItem.unit_price;
+    } else if (field === "unit_price") {
+      currentItem.unit_price = value as number;
+      currentItem.total = currentItem.quantity * currentItem.unit_price;
     }
 
+    newItems[index] = currentItem;
     setItems(newItems);
   };
 
