@@ -277,6 +277,21 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
 
           <Separator />
 
+          {availableCategories.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Filter credits by category:</span>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {availableCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <Tabs defaultValue="payments">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="payments">Payments ({payments.length})</TabsTrigger>
