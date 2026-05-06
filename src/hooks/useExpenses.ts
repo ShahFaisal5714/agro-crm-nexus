@@ -10,6 +10,10 @@ export interface Expense {
   expense_date: string;
   description?: string;
   territory?: string;
+  region_id?: string | null;
+  territory_id?: string | null;
+  assigned_to_name?: string | null;
+  notes?: string | null;
   created_at: string;
 }
 
