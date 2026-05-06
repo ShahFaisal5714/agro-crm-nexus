@@ -77,19 +77,7 @@ export const DealerAdvancePaymentDialog = ({
 
       if (error) throw error;
 
-      // Record as cash inflow
-      try {
-        await recordTransaction({
-          transaction_type: "dealer_advance",
-          amount: paymentAmount,
-          reference_id: paymentResult.id,
-          reference_type: "dealer_payment",
-          description: `Advance payment from ${dealerName}`,
-          transaction_date: formData.payment_date,
-        });
-      } catch (cashError) {
-        console.error("Failed to record cash transaction:", cashError);
-      }
+      // Cash in hand is fully manual - auto-recording disabled per user request
 
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });

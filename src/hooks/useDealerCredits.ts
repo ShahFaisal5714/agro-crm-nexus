@@ -19,6 +19,8 @@ export interface DealerCredit {
     sku: string;
     pack_size?: string;
     unit_price?: number;
+    category_id?: string | null;
+    product_categories?: { name: string } | null;
   } | null;
 }
 
@@ -56,7 +58,7 @@ export const useDealerCredits = () => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku, pack_size, unit_price),
+          products(name, sku, pack_size, unit_price, category_id, product_categories(name)),
           dealers(dealer_name)
         `)
         .order("credit_date", { ascending: false });
@@ -140,19 +142,7 @@ export const useDealerCredits = () => {
 
       if (error) throw error;
 
-      // Record cash transaction (deduct from cash in hand)
-      try {
-        await recordTransaction({
-          transaction_type: "dealer_credit",
-          amount: creditData.amount,
-          reference_id: creditResult.id,
-          reference_type: "dealer_credit",
-          description: creditData.description || "Dealer credit",
-          transaction_date: creditData.credit_date,
-        });
-      } catch (cashError) {
-        console.error("Failed to record cash transaction:", cashError);
-      }
+      // Cash in hand is fully manual - auto-recording disabled per user request
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
@@ -188,19 +178,7 @@ export const useDealerCredits = () => {
 
       if (error) throw error;
 
-      // Record cash transaction (add to cash in hand)
-      try {
-        await recordTransaction({
-          transaction_type: "dealer_payment",
-          amount: paymentData.amount,
-          reference_id: paymentResult.id,
-          reference_type: "dealer_payment",
-          description: paymentData.notes || "Dealer payment received",
-          transaction_date: paymentData.payment_date,
-        });
-      } catch (cashError) {
-        console.error("Failed to record cash transaction:", cashError);
-      }
+      // Cash in hand is fully manual - auto-recording disabled per user request
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
@@ -238,7 +216,7 @@ export const useDealerCreditHistory = (dealerId: string) => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku, pack_size, unit_price)
+          products(name, sku, pack_size, unit_price, category_id, product_categories(name))
         `)
         .eq("dealer_id", dealerId)
         .order("credit_date", { ascending: false });

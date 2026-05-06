@@ -10,6 +10,10 @@ export interface Expense {
   expense_date: string;
   description?: string;
   territory?: string;
+  region_id?: string | null;
+  territory_id?: string | null;
+  assigned_to_name?: string | null;
+  notes?: string | null;
   created_at: string;
 }
 
@@ -37,6 +41,10 @@ export const useExpenses = () => {
       expense_date: string;
       description?: string;
       territory?: string;
+      region_id?: string;
+      territory_id?: string;
+      assigned_to_name?: string;
+      notes?: string;
     }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
@@ -52,25 +60,12 @@ export const useExpenses = () => {
 
       if (error) throw error;
 
-      // Record cash transaction (deduct from cash in hand)
-      try {
-        await recordTransaction({
-          transaction_type: "expense",
-          amount: expenseData.amount,
-          reference_id: data.id,
-          reference_type: "expense",
-          description: `${expenseData.category}: ${expenseData.description || "Expense"}`,
-          transaction_date: expenseData.expense_date,
-        });
-      } catch (cashError) {
-        console.error("Failed to record cash transaction:", cashError);
-      }
+      // Cash in hand is now fully manual - automatic deduction disabled per user request
 
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["cash-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
       queryClient.invalidateQueries({ queryKey: ["report-data"] });

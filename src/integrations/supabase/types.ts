@@ -145,6 +145,7 @@ export type Database = {
           credit_date: string
           dealer_id: string
           description: string | null
+          extra_notes: string | null
           id: string
           notes: string | null
           product_id: string | null
@@ -156,6 +157,7 @@ export type Database = {
           credit_date?: string
           dealer_id: string
           description?: string | null
+          extra_notes?: string | null
           id?: string
           notes?: string | null
           product_id?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           credit_date?: string
           dealer_id?: string
           description?: string | null
+          extra_notes?: string | null
           id?: string
           notes?: string | null
           product_id?: string | null
@@ -194,6 +197,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           dealer_id: string
+          extra_notes: string | null
           id: string
           notes: string | null
           payment_date: string
@@ -205,6 +209,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dealer_id: string
+          extra_notes?: string | null
           id?: string
           notes?: string | null
           payment_date?: string
@@ -216,6 +221,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dealer_id?: string
+          extra_notes?: string | null
           id?: string
           notes?: string | null
           payment_date?: string
@@ -282,41 +288,68 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          assigned_to_name: string | null
           category: string
           created_at: string
           created_by: string | null
           description: string | null
           expense_date: string
           id: string
+          notes: string | null
           receipt_url: string | null
+          region_id: string | null
           territory: string | null
+          territory_id: string | null
           updated_at: string
         }
         Insert: {
           amount: number
+          assigned_to_name?: string | null
           category: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           expense_date?: string
           id?: string
+          notes?: string | null
           receipt_url?: string | null
+          region_id?: string | null
           territory?: string | null
+          territory_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          assigned_to_name?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           expense_date?: string
           id?: string
+          notes?: string | null
           receipt_url?: string | null
+          region_id?: string | null
           territory?: string | null
+          territory_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_items: {
         Row: {
@@ -416,6 +449,7 @@ export type Database = {
           created_by: string | null
           dealer_id: string
           due_date: string
+          extra_notes: string | null
           id: string
           invoice_date: string
           invoice_number: string
@@ -435,6 +469,7 @@ export type Database = {
           created_by?: string | null
           dealer_id: string
           due_date?: string
+          extra_notes?: string | null
           id?: string
           invoice_date?: string
           invoice_number: string
@@ -454,6 +489,7 @@ export type Database = {
           created_by?: string | null
           dealer_id?: string
           due_date?: string
+          extra_notes?: string | null
           id?: string
           invoice_date?: string
           invoice_number?: string
@@ -1081,6 +1117,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           dealer_id: string
+          extra_notes: string | null
           id: string
           notes: string | null
           order_date: string
@@ -1093,6 +1130,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dealer_id: string
+          extra_notes?: string | null
           id?: string
           notes?: string | null
           order_date?: string
@@ -1105,6 +1143,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dealer_id?: string
+          extra_notes?: string | null
           id?: string
           notes?: string | null
           order_date?: string
@@ -1238,6 +1277,7 @@ export type Database = {
           id: string
           notes: string | null
           product_id: string | null
+          quantity: number | null
           supplier_id: string
         }
         Insert: {
@@ -1249,6 +1289,7 @@ export type Database = {
           id?: string
           notes?: string | null
           product_id?: string | null
+          quantity?: number | null
           supplier_id: string
         }
         Update: {
@@ -1260,6 +1301,7 @@ export type Database = {
           id?: string
           notes?: string | null
           product_id?: string | null
+          quantity?: number | null
           supplier_id?: string
         }
         Relationships: [

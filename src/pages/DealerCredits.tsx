@@ -275,14 +275,44 @@ const DealerCredits = () => {
         {/* Area Balance Section */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
                 Area Balance (Territory Summary)
               </CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => setShowAreaBalance(!showAreaBalance)}>
-                <ChevronDown className={cn("h-4 w-4 transition-transform", showAreaBalance && "rotate-180")} />
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const data = areaSummaries.map((a) => ({
+                    territory: a.name, code: a.code, dealers: a.dealers.length,
+                    total_credit: a.totalCredit, total_paid: a.totalPaid, remaining: a.remaining,
+                  }));
+                  exportToCSV(data, "area_balance_summary", ["territory", "code", "dealers", "total_credit", "total_paid", "remaining"]);
+                }}>
+                  <FileSpreadsheet className="h-4 w-4 mr-1" />CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const rows: Record<string, unknown>[] = [];
+                  areaSummaries.forEach((a) => {
+                    rows.push({ name: `${a.name} (${a.code})`, dealer_name: `${a.dealers.length} dealers`, total_credit: a.totalCredit, total_paid: a.totalPaid, remaining: a.remaining });
+                    a.dealers.forEach((d) => rows.push({ name: "  ", dealer_name: `  ↳ ${d.dealer_name}`, total_credit: d.total_credit, total_paid: d.total_paid, remaining: d.remaining }));
+                  });
+                  exportToPDF("Area Balance — Territory Summary", rows, [
+                    { key: "name", label: "Territory" },
+                    { key: "dealer_name", label: "Dealer" },
+                    { key: "total_credit", label: "Credit", format: (v) => formatCurrency(Number(v)) },
+                    { key: "total_paid", label: "Paid", format: (v) => formatCurrency(Number(v)) },
+                    { key: "remaining", label: "Remaining", format: (v) => formatCurrency(Number(v)) },
+                  ], "area_balance_summary", [
+                    { label: "Total Areas", value: String(areaSummaries.length) },
+                    { label: "Total Outstanding", value: formatCurrency(areaSummaries.reduce((s, a) => s + a.remaining, 0)) },
+                  ]);
+                }}>
+                  <Download className="h-4 w-4 mr-1" />PDF
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowAreaBalance(!showAreaBalance)}>
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", showAreaBalance && "rotate-180")} />
+                </Button>
+              </div>
             </div>
           </CardHeader>
           {showAreaBalance && (

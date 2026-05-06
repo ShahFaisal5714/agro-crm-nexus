@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddCreditDialog } from "./AddCreditDialog";
 import { AddDealerPaymentDialog } from "./AddDealerPaymentDialog";
 import { CreateInvoiceFromCreditsDialog } from "./CreateInvoiceFromCreditsDialog";
@@ -42,7 +43,17 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const [editingPayment, setEditingPayment] = useState<DealerPayment | null>(null);
   const [deletingCredit, setDeletingCredit] = useState<DealerCredit | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<DealerPayment | null>(null);
-  const { credits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const { credits: allCredits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
+
+  // Filter credits by selected product category
+  const credits = categoryFilter === "all"
+    ? allCredits
+    : allCredits.filter((c) => c.products?.product_categories?.name === categoryFilter);
+
+  const availableCategories = Array.from(
+    new Set(allCredits.map((c) => c.products?.product_categories?.name).filter(Boolean) as string[])
+  );
 
   const getProductDetails = (credit: DealerCredit) => {
     if (!credit.products) return "-";
@@ -265,6 +276,21 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
           </div>
 
           <Separator />
+
+          {availableCategories.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Filter credits by category:</span>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {availableCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <Tabs defaultValue="payments">
             <TabsList className="grid w-full grid-cols-2">
