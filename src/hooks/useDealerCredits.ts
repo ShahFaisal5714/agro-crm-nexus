@@ -58,7 +58,7 @@ export const useDealerCredits = () => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku, pack_size, unit_price),
+          products(name, sku, pack_size, unit_price, category_id, product_categories(name)),
           dealers(dealer_name)
         `)
         .order("credit_date", { ascending: false });
@@ -216,7 +216,7 @@ export const useDealerCreditHistory = (dealerId: string) => {
         .from("dealer_credits")
         .select(`
           *,
-          products(name, sku, pack_size, unit_price)
+          products(name, sku, pack_size, unit_price, category_id, product_categories(name))
         `)
         .eq("dealer_id", dealerId)
         .order("credit_date", { ascending: false });
