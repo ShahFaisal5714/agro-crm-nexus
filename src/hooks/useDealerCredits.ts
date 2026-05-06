@@ -140,19 +140,7 @@ export const useDealerCredits = () => {
 
       if (error) throw error;
 
-      // Record cash transaction (deduct from cash in hand)
-      try {
-        await recordTransaction({
-          transaction_type: "dealer_credit",
-          amount: creditData.amount,
-          reference_id: creditResult.id,
-          reference_type: "dealer_credit",
-          description: creditData.description || "Dealer credit",
-          transaction_date: creditData.credit_date,
-        });
-      } catch (cashError) {
-        console.error("Failed to record cash transaction:", cashError);
-      }
+      // Cash in hand is fully manual - auto-recording disabled per user request
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
