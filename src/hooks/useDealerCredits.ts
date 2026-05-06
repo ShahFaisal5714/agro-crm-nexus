@@ -19,6 +19,8 @@ export interface DealerCredit {
     sku: string;
     pack_size?: string;
     unit_price?: number;
+    category_id?: string | null;
+    product_categories?: { name: string } | null;
   } | null;
 }
 
