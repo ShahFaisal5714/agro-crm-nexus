@@ -42,7 +42,17 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const [editingPayment, setEditingPayment] = useState<DealerPayment | null>(null);
   const [deletingCredit, setDeletingCredit] = useState<DealerCredit | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<DealerPayment | null>(null);
-  const { credits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const { credits: allCredits, payments, totalCredit, totalPaid, remaining, isLoading } = useDealerCreditHistory(dealerId);
+
+  // Filter credits by selected product category
+  const credits = categoryFilter === "all"
+    ? allCredits
+    : allCredits.filter((c) => c.products?.product_categories?.name === categoryFilter);
+
+  const availableCategories = Array.from(
+    new Set(allCredits.map((c) => c.products?.product_categories?.name).filter(Boolean) as string[])
+  );
 
   const getProductDetails = (credit: DealerCredit) => {
     if (!credit.products) return "-";
