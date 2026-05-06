@@ -37,6 +37,10 @@ export const useExpenses = () => {
       expense_date: string;
       description?: string;
       territory?: string;
+      region_id?: string;
+      territory_id?: string;
+      assigned_to_name?: string;
+      notes?: string;
     }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
