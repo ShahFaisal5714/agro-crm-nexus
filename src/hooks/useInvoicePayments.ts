@@ -118,19 +118,7 @@ export const useInvoicePayments = (invoiceId?: string) => {
         // Don't throw - invoice payment was successful
       }
 
-      // Record cash transaction (add to cash in hand)
-      try {
-        await recordTransaction({
-          transaction_type: "dealer_payment",
-          amount,
-          reference_id: payment.id,
-          reference_type: "invoice_payment",
-          description: `Invoice ${invoice.invoice_number} payment`,
-          transaction_date: paymentDate,
-        });
-      } catch (cashError) {
-        console.error("Failed to record cash transaction:", cashError);
-      }
+      // Cash in hand is fully manual - auto-recording disabled per user request
 
       // Send email notification (fire and forget)
       try {
