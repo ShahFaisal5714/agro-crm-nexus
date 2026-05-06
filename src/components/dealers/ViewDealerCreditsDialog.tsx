@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddCreditDialog } from "./AddCreditDialog";
 import { AddDealerPaymentDialog } from "./AddDealerPaymentDialog";
 import { CreateInvoiceFromCreditsDialog } from "./CreateInvoiceFromCreditsDialog";
