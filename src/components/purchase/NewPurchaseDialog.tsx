@@ -31,7 +31,7 @@ export const NewPurchaseDialog = () => {
   const [supplierId, setSupplierId] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<Array<{ productId: string; quantity: number; unitPrice: number }>>([
+  const [items, setItems] = useState<PurchaseItemRow[]>([
     { productId: "", quantity: 1, unitPrice: 0 },
   ]);
   
