@@ -50,11 +50,15 @@ export const NewPurchaseDialog = () => {
     setItems([...items, { productId: "", quantity: 1, unitPrice: 0 }]);
   };
 
+  const handleAddCustomItem = () => {
+    setItems([...items, { productId: "", quantity: 1, unitPrice: 0, isCustom: true, customName: "", customDescription: "" }]);
+  };
+
   const handleRemoveItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, field: string, value: any) => {
+  const handleItemChange = (index: number, field: keyof PurchaseItemRow, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
