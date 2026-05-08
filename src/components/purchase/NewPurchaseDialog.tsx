@@ -233,55 +233,78 @@ export const NewPurchaseDialog = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Items *</Label>
-              <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Item
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Item
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddCustomItem}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Custom
+                </Button>
+              </div>
             </div>
             {items.map((item, index) => (
-              <div key={index} className="flex gap-2 items-end">
-                <div className="flex-1">
-                    <ProductSearchSelect
-                      products={products}
-                      value={item.productId}
-                      onValueChange={(value) => handleProductSelect(index, value)}
-                      placeholder="Select product"
+              <div key={index} className="space-y-2 border rounded-md p-2">
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    {item.isCustom ? (
+                      <Input
+                        placeholder="Custom product name *"
+                        value={item.customName || ""}
+                        onChange={(e) => handleItemChange(index, "customName", e.target.value)}
+                      />
+                    ) : (
+                      <ProductSearchSelect
+                        products={products}
+                        value={item.productId}
+                        onValueChange={(value) => handleProductSelect(index, value)}
+                        placeholder="Select product"
+                      />
+                    )}
+                  </div>
+                  <div className="w-24">
+                    <Input
+                      type="number"
+                      placeholder="Qty"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(index, "quantity", parseInt(e.target.value) || 0)
+                      }
+                      min="1"
                     />
                   </div>
-                <div className="w-24">
+                  <div className="w-32">
+                    <Input
+                      type="number"
+                      placeholder="Price"
+                      value={item.unitPrice}
+                      onChange={(e) =>
+                        handleItemChange(index, "unitPrice", parseFloat(e.target.value) || 0)
+                      }
+                      step="0.01"
+                    />
+                  </div>
+                  <div className="w-32 text-sm font-medium">
+                    {formatCurrency(item.quantity * item.unitPrice)}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveItem(index)}
+                    disabled={items.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                {item.isCustom && (
                   <Input
-                    type="number"
-                    placeholder="Qty"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(index, "quantity", parseInt(e.target.value) || 0)
-                    }
-                    min="1"
+                    placeholder="Description (optional)"
+                    value={item.customDescription || ""}
+                    onChange={(e) => handleItemChange(index, "customDescription", e.target.value)}
                   />
-                </div>
-                <div className="w-32">
-                  <Input
-                    type="number"
-                    placeholder="Price"
-                    value={item.unitPrice}
-                    onChange={(e) =>
-                      handleItemChange(index, "unitPrice", parseFloat(e.target.value) || 0)
-                    }
-                    step="0.01"
-                  />
-                </div>
-                <div className="w-32 text-sm font-medium">
-                  {formatCurrency(item.quantity * item.unitPrice)}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveItem(index)}
-                  disabled={items.length === 1}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                )}
               </div>
             ))}
           </div>
