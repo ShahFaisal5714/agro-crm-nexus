@@ -13,6 +13,16 @@ import { useProducts } from "@/hooks/useProducts";
 import { useSupplierCredits } from "@/hooks/useSupplierCredits";
 import { toast } from "sonner";
 import { ProductSearchSelect } from "@/components/ui/ProductSearchSelect";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PurchaseItemRow {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  isCustom?: boolean;
+  customName?: string;
+  customDescription?: string;
+}
 
 export const NewPurchaseDialog = () => {
   const [open, setOpen] = useState(false);
@@ -21,7 +31,7 @@ export const NewPurchaseDialog = () => {
   const [supplierId, setSupplierId] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<Array<{ productId: string; quantity: number; unitPrice: number }>>([
+  const [items, setItems] = useState<PurchaseItemRow[]>([
     { productId: "", quantity: 1, unitPrice: 0 },
   ]);
   
@@ -40,11 +50,15 @@ export const NewPurchaseDialog = () => {
     setItems([...items, { productId: "", quantity: 1, unitPrice: 0 }]);
   };
 
+  const handleAddCustomItem = () => {
+    setItems([...items, { productId: "", quantity: 1, unitPrice: 0, isCustom: true, customName: "", customDescription: "" }]);
+  };
+
   const handleRemoveItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, field: string, value: any) => {
+  const handleItemChange = (index: number, field: keyof PurchaseItemRow, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -75,7 +89,12 @@ export const NewPurchaseDialog = () => {
     }
     lastSubmitRef.current = now;
 
-    if (!supplierId || items.some((item) => !item.productId || item.quantity <= 0)) {
+    const invalid = items.some((item) => {
+      if (item.quantity <= 0) return true;
+      if (item.isCustom) return !item.customName?.trim();
+      return !item.productId;
+    });
+    if (!supplierId || invalid) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -88,17 +107,41 @@ export const NewPurchaseDialog = () => {
     setIsSubmitting(true);
     try {
       const supplier = suppliers.find((s) => s.id === supplierId);
-      
+
+      // Create products for any custom items first
+      const resolvedItems: Array<{ product_id: string; quantity: number; unit_price: number; total: number }> = [];
+      for (const item of items) {
+        let productId = item.productId;
+        if (item.isCustom) {
+          const sku = `CUSTOM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const { data: newProd, error: prodErr } = await supabase
+            .from("products")
+            .insert({
+              name: item.customName!.trim(),
+              sku,
+              description: item.customDescription?.trim() || null,
+              unit_price: item.unitPrice,
+              cost_price: item.unitPrice,
+              stock_quantity: 0,
+            })
+            .select()
+            .single();
+          if (prodErr) throw prodErr;
+          productId = newProd.id;
+        }
+        resolvedItems.push({
+          product_id: productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total: item.quantity * item.unitPrice,
+        });
+      }
+
       await createPurchase({
         supplier_id: supplierId,
         purchase_date: purchaseDate,
         notes,
-        items: items.map((item) => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          total: item.quantity * item.unitPrice,
-        })),
+        items: resolvedItems,
       });
 
       // Add credit if there's unpaid amount
@@ -190,55 +233,78 @@ export const NewPurchaseDialog = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Items *</Label>
-              <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Item
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Item
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddCustomItem}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Custom
+                </Button>
+              </div>
             </div>
             {items.map((item, index) => (
-              <div key={index} className="flex gap-2 items-end">
-                <div className="flex-1">
-                    <ProductSearchSelect
-                      products={products}
-                      value={item.productId}
-                      onValueChange={(value) => handleProductSelect(index, value)}
-                      placeholder="Select product"
+              <div key={index} className="space-y-2 border rounded-md p-2">
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    {item.isCustom ? (
+                      <Input
+                        placeholder="Custom product name *"
+                        value={item.customName || ""}
+                        onChange={(e) => handleItemChange(index, "customName", e.target.value)}
+                      />
+                    ) : (
+                      <ProductSearchSelect
+                        products={products}
+                        value={item.productId}
+                        onValueChange={(value) => handleProductSelect(index, value)}
+                        placeholder="Select product"
+                      />
+                    )}
+                  </div>
+                  <div className="w-24">
+                    <Input
+                      type="number"
+                      placeholder="Qty"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(index, "quantity", parseInt(e.target.value) || 0)
+                      }
+                      min="1"
                     />
                   </div>
-                <div className="w-24">
+                  <div className="w-32">
+                    <Input
+                      type="number"
+                      placeholder="Price"
+                      value={item.unitPrice}
+                      onChange={(e) =>
+                        handleItemChange(index, "unitPrice", parseFloat(e.target.value) || 0)
+                      }
+                      step="0.01"
+                    />
+                  </div>
+                  <div className="w-32 text-sm font-medium">
+                    {formatCurrency(item.quantity * item.unitPrice)}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveItem(index)}
+                    disabled={items.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                {item.isCustom && (
                   <Input
-                    type="number"
-                    placeholder="Qty"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(index, "quantity", parseInt(e.target.value) || 0)
-                    }
-                    min="1"
+                    placeholder="Description (optional)"
+                    value={item.customDescription || ""}
+                    onChange={(e) => handleItemChange(index, "customDescription", e.target.value)}
                   />
-                </div>
-                <div className="w-32">
-                  <Input
-                    type="number"
-                    placeholder="Price"
-                    value={item.unitPrice}
-                    onChange={(e) =>
-                      handleItemChange(index, "unitPrice", parseFloat(e.target.value) || 0)
-                    }
-                    step="0.01"
-                  />
-                </div>
-                <div className="w-32 text-sm font-medium">
-                  {formatCurrency(item.quantity * item.unitPrice)}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveItem(index)}
-                  disabled={items.length === 1}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                )}
               </div>
             ))}
           </div>
