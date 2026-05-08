@@ -13,6 +13,16 @@ import { useProducts } from "@/hooks/useProducts";
 import { useSupplierCredits } from "@/hooks/useSupplierCredits";
 import { toast } from "sonner";
 import { ProductSearchSelect } from "@/components/ui/ProductSearchSelect";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PurchaseItemRow {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  isCustom?: boolean;
+  customName?: string;
+  customDescription?: string;
+}
 
 export const NewPurchaseDialog = () => {
   const [open, setOpen] = useState(false);
