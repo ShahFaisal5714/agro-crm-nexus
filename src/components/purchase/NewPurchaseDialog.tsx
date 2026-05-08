@@ -89,7 +89,12 @@ export const NewPurchaseDialog = () => {
     }
     lastSubmitRef.current = now;
 
-    if (!supplierId || items.some((item) => !item.productId || item.quantity <= 0)) {
+    const invalid = items.some((item) => {
+      if (item.quantity <= 0) return true;
+      if (item.isCustom) return !item.customName?.trim();
+      return !item.productId;
+    });
+    if (!supplierId || invalid) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -102,17 +107,41 @@ export const NewPurchaseDialog = () => {
     setIsSubmitting(true);
     try {
       const supplier = suppliers.find((s) => s.id === supplierId);
-      
+
+      // Create products for any custom items first
+      const resolvedItems: Array<{ product_id: string; quantity: number; unit_price: number; total: number }> = [];
+      for (const item of items) {
+        let productId = item.productId;
+        if (item.isCustom) {
+          const sku = `CUSTOM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const { data: newProd, error: prodErr } = await supabase
+            .from("products")
+            .insert({
+              name: item.customName!.trim(),
+              sku,
+              description: item.customDescription?.trim() || null,
+              unit_price: item.unitPrice,
+              cost_price: item.unitPrice,
+              stock_quantity: 0,
+            })
+            .select()
+            .single();
+          if (prodErr) throw prodErr;
+          productId = newProd.id;
+        }
+        resolvedItems.push({
+          product_id: productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total: item.quantity * item.unitPrice,
+        });
+      }
+
       await createPurchase({
         supplier_id: supplierId,
         purchase_date: purchaseDate,
         notes,
-        items: items.map((item) => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          total: item.quantity * item.unitPrice,
-        })),
+        items: resolvedItems,
       });
 
       // Add credit if there's unpaid amount
