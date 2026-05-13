@@ -77,6 +77,12 @@ const Sales = () => {
           </div>
         </div>
 
+        <Tabs defaultValue="orders" className="w-full">
+          <TabsList>
+            <TabsTrigger value="orders">Sales Orders</TabsTrigger>
+            <TabsTrigger value="returns">Sales Returns</TabsTrigger>
+          </TabsList>
+          <TabsContent value="orders" className="mt-4">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4">
