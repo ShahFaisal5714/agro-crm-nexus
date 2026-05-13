@@ -195,6 +195,7 @@ const Invoices = () => {
                     <SelectItem value="sales">Sales Invoice</SelectItem>
                     <SelectItem value="purchases">Purchase Invoice</SelectItem>
                     <SelectItem value="expenses">Expense Invoice</SelectItem>
+                    <SelectItem value="sales_return">Sales Return</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
