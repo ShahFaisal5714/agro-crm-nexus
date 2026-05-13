@@ -125,13 +125,62 @@ export const useSalesReturns = () => {
         }
       }
 
+      // Generate a credit-note invoice for the return (status 'cancelled' so it doesn't add to receivables)
+      const { data: invoiceNumber } = await supabase.rpc("generate_invoice_number");
+      const { data: invoiceRecord, error: invoiceError } = await supabase
+        .from("invoices")
+        .insert({
+          dealer_id: returnData.dealerId,
+          invoice_number: invoiceNumber,
+          invoice_date: returnData.returnDate,
+          due_date: returnData.returnDate,
+          subtotal: totalAmount,
+          tax_rate: 0,
+          tax_amount: 0,
+          total_amount: totalAmount,
+          paid_amount: totalAmount,
+          status: "cancelled",
+          source: "sales_return",
+          notes: `[SALES RETURN ${returnNumber}]${returnData.reason ? " - " + returnData.reason : ""}`,
+          extra_notes: returnData.notes || null,
+          created_by: user.user.id,
+        })
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+
+      const invoiceItems = returnData.items.map((item) => ({
+        invoice_id: invoiceRecord.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total: item.total,
+        description: "Sales Return",
+      }));
+      await supabase.from("invoice_items").insert(invoiceItems);
+
+      // Record as a dealer payment so it reduces the dealer's ledger balance
+      await supabase.from("dealer_payments").insert({
+        dealer_id: returnData.dealerId,
+        amount: totalAmount,
+        payment_date: returnData.returnDate,
+        payment_method: "return",
+        reference_number: returnNumber,
+        notes: `Sales Return ${returnNumber}${returnData.reason ? " - " + returnData.reason : ""}`,
+        created_by: user.user.id,
+      });
+
       return returnRecord;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-returns"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
-      toast.success("Sales return recorded successfully");
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      toast.success("Sales return recorded — credit note invoice generated and dealer ledger updated");
     },
     onError: (error: Error) => {
       handleOperationError(error, "Failed to create sales return");
