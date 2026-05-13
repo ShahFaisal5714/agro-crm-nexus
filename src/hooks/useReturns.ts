@@ -59,18 +59,25 @@ export const useSalesReturns = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales_returns")
-        .select("*, dealers(dealer_name), sales_orders(order_number), credit_note_invoice:invoices!sales_returns_credit_note_invoice_id_fkey(id, invoice_number)")
+        .select("*, dealers(dealer_name), sales_orders(order_number)")
         .order("created_at", { ascending: false });
-      if (error) {
-        // Fallback if FK relation isn't recognised by PostgREST cache
-        const { data: data2, error: err2 } = await supabase
-          .from("sales_returns")
-          .select("*, dealers(dealer_name), sales_orders(order_number)")
-          .order("created_at", { ascending: false });
-        if (err2) throw err2;
-        return data2 as SalesReturn[];
+      if (error) throw error;
+
+      // Attach linked credit-note invoice numbers (if any)
+      const rows = (data || []) as Array<Record<string, unknown> & { credit_note_invoice_id?: string | null }>;
+      const invoiceIds = rows.map((r) => r.credit_note_invoice_id).filter((id): id is string => !!id);
+      let invoiceMap: Record<string, { id: string; invoice_number: string }> = {};
+      if (invoiceIds.length > 0) {
+        const { data: invs } = await supabase
+          .from("invoices")
+          .select("id, invoice_number")
+          .in("id", invoiceIds);
+        invoiceMap = Object.fromEntries((invs || []).map((i) => [i.id, i]));
       }
-      return data as SalesReturn[];
+      return rows.map((r) => ({
+        ...r,
+        credit_note_invoice: r.credit_note_invoice_id ? invoiceMap[r.credit_note_invoice_id] || null : null,
+      })) as unknown as SalesReturn[];
     },
   });
 
