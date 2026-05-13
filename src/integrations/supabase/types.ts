@@ -1211,6 +1211,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          credit_note_invoice_id: string | null
           dealer_id: string
           id: string
           notes: string | null
@@ -1225,6 +1226,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          credit_note_invoice_id?: string | null
           dealer_id: string
           id?: string
           notes?: string | null
@@ -1239,6 +1241,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          credit_note_invoice_id?: string | null
           dealer_id?: string
           id?: string
           notes?: string | null
