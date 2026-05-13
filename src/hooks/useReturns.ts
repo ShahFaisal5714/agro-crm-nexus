@@ -13,10 +13,12 @@ export interface SalesReturn {
   reason: string | null;
   notes: string | null;
   status: string;
+  credit_note_invoice_id: string | null;
   created_by: string | null;
   created_at: string;
   dealers?: { dealer_name: string } | null;
   sales_orders?: { order_number: string } | null;
+  credit_note_invoice?: { id: string; invoice_number: string } | null;
 }
 
 export interface SalesReturnItem {
@@ -60,7 +62,22 @@ export const useSalesReturns = () => {
         .select("*, dealers(dealer_name), sales_orders(order_number)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as SalesReturn[];
+
+      // Attach linked credit-note invoice numbers (if any)
+      const rows = (data || []) as Array<Record<string, unknown> & { credit_note_invoice_id?: string | null }>;
+      const invoiceIds = rows.map((r) => r.credit_note_invoice_id).filter((id): id is string => !!id);
+      let invoiceMap: Record<string, { id: string; invoice_number: string }> = {};
+      if (invoiceIds.length > 0) {
+        const { data: invs } = await supabase
+          .from("invoices")
+          .select("id, invoice_number")
+          .in("id", invoiceIds);
+        invoiceMap = Object.fromEntries((invs || []).map((i) => [i.id, i]));
+      }
+      return rows.map((r) => ({
+        ...r,
+        credit_note_invoice: r.credit_note_invoice_id ? invoiceMap[r.credit_note_invoice_id] || null : null,
+      })) as unknown as SalesReturn[];
     },
   });
 
@@ -159,6 +176,12 @@ export const useSalesReturns = () => {
         description: "Sales Return",
       }));
       await supabase.from("invoice_items").insert(invoiceItems);
+
+      // Link credit-note invoice back to the sales return
+      await supabase
+        .from("sales_returns")
+        .update({ credit_note_invoice_id: invoiceRecord.id })
+        .eq("id", returnRecord.id);
 
       // Record as a dealer payment so it reduces the dealer's ledger balance
       await supabase.from("dealer_payments").insert({

@@ -19,6 +19,8 @@ import { EditSalesOrderDialog } from "@/components/sales/EditSalesOrderDialog";
 import { DeleteSalesOrderDialog } from "@/components/sales/DeleteSalesOrderDialog";
 import { ViewSalesOrderDialog } from "@/components/sales/ViewSalesOrderDialog";
 import { NewSalesReturnDialog } from "@/components/sales/NewSalesReturnDialog";
+import { SalesReturnsList } from "@/components/sales/SalesReturnsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSalesOrders } from "@/hooks/useSalesOrders";
 import { useDealers } from "@/hooks/useDealers";
 import { format } from "date-fns";
@@ -75,6 +77,12 @@ const Sales = () => {
           </div>
         </div>
 
+        <Tabs defaultValue="orders" className="w-full">
+          <TabsList>
+            <TabsTrigger value="orders">Sales Orders</TabsTrigger>
+            <TabsTrigger value="returns">Sales Returns</TabsTrigger>
+          </TabsList>
+          <TabsContent value="orders" className="mt-4">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4">
@@ -201,6 +209,11 @@ const Sales = () => {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+          <TabsContent value="returns" className="mt-4">
+            <SalesReturnsList />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

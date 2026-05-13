@@ -29,7 +29,7 @@ import { BulkInvoiceDialog } from "@/components/dealers/BulkInvoiceDialog";
 import { InvoicePaymentHistory } from "@/components/invoices/InvoicePaymentHistory";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO } from "date-fns";
-import { Loader2, X, Filter, ShoppingCart, Users, Package, Receipt, CreditCard } from "lucide-react";
+import { Loader2, X, Filter, ShoppingCart, Users, Package, Receipt, CreditCard, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const statusColors: Record<string, string> = {
@@ -46,6 +46,7 @@ const sourceColors: Record<string, string> = {
   sales: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   purchases: "bg-green-500/10 text-green-500 border-green-500/20",
   expenses: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  sales_return: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
 const sourceLabels: Record<string, string> = {
@@ -54,6 +55,7 @@ const sourceLabels: Record<string, string> = {
   sales: "Sales Invoice",
   purchases: "Purchase Invoice",
   expenses: "Expense Invoice",
+  sales_return: "Sales Return",
 };
 
 const sourceIcons: Record<string, React.ReactNode> = {
@@ -62,6 +64,7 @@ const sourceIcons: Record<string, React.ReactNode> = {
   sales: <ShoppingCart className="h-3 w-3" />,
   purchases: <Package className="h-3 w-3" />,
   expenses: <Receipt className="h-3 w-3" />,
+  sales_return: <RotateCcw className="h-3 w-3" />,
 };
 
 const Invoices = () => {
@@ -192,6 +195,7 @@ const Invoices = () => {
                     <SelectItem value="sales">Sales Invoice</SelectItem>
                     <SelectItem value="purchases">Purchase Invoice</SelectItem>
                     <SelectItem value="expenses">Expense Invoice</SelectItem>
+                    <SelectItem value="sales_return">Sales Return</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

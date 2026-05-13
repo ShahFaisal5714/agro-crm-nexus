@@ -1,0 +1,2 @@
+ALTER TABLE public.sales_returns ADD COLUMN IF NOT EXISTS credit_note_invoice_id uuid;
+CREATE INDEX IF NOT EXISTS idx_sales_returns_credit_note_invoice_id ON public.sales_returns(credit_note_invoice_id);
