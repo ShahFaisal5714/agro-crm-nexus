@@ -13,10 +13,12 @@ export interface SalesReturn {
   reason: string | null;
   notes: string | null;
   status: string;
+  credit_note_invoice_id: string | null;
   created_by: string | null;
   created_at: string;
   dealers?: { dealer_name: string } | null;
   sales_orders?: { order_number: string } | null;
+  credit_note_invoice?: { id: string; invoice_number: string } | null;
 }
 
 export interface SalesReturnItem {
