@@ -632,7 +632,12 @@ const Reports = () => {
             <TabsTrigger value="recovery" className="flex items-center gap-1"><Wallet className="h-3 w-3" />Credit Recovery</TabsTrigger>
             <TabsTrigger value="territory-officers" className="flex items-center gap-1"><Users className="h-3 w-3" />Territory Officers</TabsTrigger>
             <TabsTrigger value="annual" className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" />Annual Sales</TabsTrigger>
+            <TabsTrigger value="returns-recon" className="flex items-center gap-1"><FileCheck className="h-3 w-3" />Returns Reconciliation</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="returns-recon" className="space-y-4">
+            <SalesReturnReconciliationReport dateRange={dateRange} />
+          </TabsContent>
 
           {/* Time Comparison */}
           <TabsContent value="time" className="space-y-4">
