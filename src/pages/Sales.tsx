@@ -209,6 +209,11 @@ const Sales = () => {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+          <TabsContent value="returns" className="mt-4">
+            <SalesReturnsList />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
