@@ -177,6 +177,12 @@ export const useSalesReturns = () => {
       }));
       await supabase.from("invoice_items").insert(invoiceItems);
 
+      // Link credit-note invoice back to the sales return
+      await supabase
+        .from("sales_returns")
+        .update({ credit_note_invoice_id: invoiceRecord.id })
+        .eq("id", returnRecord.id);
+
       // Record as a dealer payment so it reduces the dealer's ledger balance
       await supabase.from("dealer_payments").insert({
         dealer_id: returnData.dealerId,
