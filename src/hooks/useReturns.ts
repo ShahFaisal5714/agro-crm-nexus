@@ -59,9 +59,17 @@ export const useSalesReturns = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales_returns")
-        .select("*, dealers(dealer_name), sales_orders(order_number)")
+        .select("*, dealers(dealer_name), sales_orders(order_number), credit_note_invoice:invoices!sales_returns_credit_note_invoice_id_fkey(id, invoice_number)")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        // Fallback if FK relation isn't recognised by PostgREST cache
+        const { data: data2, error: err2 } = await supabase
+          .from("sales_returns")
+          .select("*, dealers(dealer_name), sales_orders(order_number)")
+          .order("created_at", { ascending: false });
+        if (err2) throw err2;
+        return data2 as SalesReturn[];
+      }
       return data as SalesReturn[];
     },
   });
