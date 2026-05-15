@@ -80,6 +80,17 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     },
   });
 
+  const { data: salesReturns = [] } = useQuery({
+    queryKey: ["report-sales-returns"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sales_returns")
+        .select("id, total_amount, return_date, dealer_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: officerTargets = [] } = useQuery({
     queryKey: ["officer-targets"],
     queryFn: async () => {
