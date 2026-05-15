@@ -203,6 +203,8 @@ export const useSalesReturns = () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-payments"] });
       queryClient.invalidateQueries({ queryKey: ["dealer-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["report-sales-returns"] });
+      queryClient.invalidateQueries({ queryKey: ["report-sales-orders-full"] });
       toast.success("Sales return recorded — credit note invoice generated and dealer ledger updated");
     },
     onError: (error: Error) => {
