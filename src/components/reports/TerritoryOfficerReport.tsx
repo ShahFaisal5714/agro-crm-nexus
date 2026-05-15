@@ -148,6 +148,14 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
           }
         });
 
+        // Subtract sales returns for this territory's dealers
+        salesReturns.forEach(ret => {
+          if (!inRange(ret.return_date)) return;
+          if (dealerIds.has(ret.dealer_id)) {
+            sales -= Number(ret.total_amount);
+          }
+        });
+
         let creditsIssued = 0;
         dealerCredits.forEach(credit => {
           if (!inRange(credit.credit_date)) return;
