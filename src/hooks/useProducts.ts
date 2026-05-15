@@ -13,6 +13,7 @@ export interface Product {
   unit: string;
   pack_size?: string;
   category_id?: string;
+  is_custom?: boolean;
   category?: {
     id: string;
     name: string;

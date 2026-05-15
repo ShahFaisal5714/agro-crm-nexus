@@ -84,6 +84,11 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
         .from("purchases")
         .select("total_amount, purchase_date, created_at");
 
+      // Fetch sales returns to subtract from sales totals
+      const { data: salesReturns } = await supabase
+        .from("sales_returns")
+        .select("total_amount, return_date");
+
       // Fetch expenses
       const { data: expenses } = await supabase
         .from("expenses")
@@ -106,18 +111,30 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
       const safePurchases = purchases || [];
       const safeExpenses = expenses || [];
       const safeDealers = dealers || [];
+      const safeReturns = salesReturns || [];
 
       // Calculate period totals based on selected period
+      const currentPeriodReturns = safeReturns
+        .filter(r => new Date(r.return_date) >= periodStart)
+        .reduce((sum, r) => sum + Number(r.total_amount), 0);
+
+      const lastPeriodReturns = period === "all" ? 0 : safeReturns
+        .filter(r => {
+          const d = new Date(r.return_date);
+          return d >= prevPeriodStart && d <= prevPeriodEnd;
+        })
+        .reduce((sum, r) => sum + Number(r.total_amount), 0);
+
       const currentPeriodSales = safeOrders
         .filter(o => new Date(o.order_date) >= periodStart)
-        .reduce((sum, o) => sum + o.total_amount, 0);
+        .reduce((sum, o) => sum + o.total_amount, 0) - currentPeriodReturns;
 
-      const lastPeriodSales = period === "all" ? 0 : safeOrders
+      const lastPeriodSales = (period === "all" ? 0 : safeOrders
         .filter(o => {
           const d = new Date(o.order_date);
           return d >= prevPeriodStart && d <= prevPeriodEnd;
         })
-        .reduce((sum, o) => sum + o.total_amount, 0);
+        .reduce((sum, o) => sum + o.total_amount, 0)) - lastPeriodReturns;
 
       const currentPeriodPurchases = safePurchases
         .filter(p => new Date(p.purchase_date) >= periodStart)
@@ -168,7 +185,10 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
       };
 
       const salesSparkline = generateDailyData(
-        safeOrders.map(o => ({ date: o.order_date, amount: o.total_amount })),
+        [
+          ...safeOrders.map(o => ({ date: o.order_date, amount: o.total_amount })),
+          ...safeReturns.map(r => ({ date: r.return_date, amount: -Number(r.total_amount) })),
+        ],
         "order_date"
       );
 
@@ -209,7 +229,13 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
             const d = new Date(o.order_date);
             return d >= monthStart && d <= monthEnd;
           })
-          .reduce((sum, o) => sum + o.total_amount, 0);
+          .reduce((sum, o) => sum + o.total_amount, 0)
+          - safeReturns
+          .filter(r => {
+            const d = new Date(r.return_date);
+            return d >= monthStart && d <= monthEnd;
+          })
+          .reduce((sum, r) => sum + Number(r.total_amount), 0);
         
         const monthExpenses = safeExpenses
           .filter(e => {

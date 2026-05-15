@@ -80,6 +80,17 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
     },
   });
 
+  const { data: salesReturns = [] } = useQuery({
+    queryKey: ["report-sales-returns"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sales_returns")
+        .select("id, total_amount, return_date, dealer_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: officerTargets = [] } = useQuery({
     queryKey: ["officer-targets"],
     queryFn: async () => {
@@ -137,6 +148,14 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
           }
         });
 
+        // Subtract sales returns for this territory's dealers
+        salesReturns.forEach(ret => {
+          if (!inRange(ret.return_date)) return;
+          if (dealerIds.has(ret.dealer_id)) {
+            sales -= Number(ret.total_amount);
+          }
+        });
+
         let creditsIssued = 0;
         dealerCredits.forEach(credit => {
           if (!inRange(credit.credit_date)) return;
@@ -170,7 +189,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
       });
 
     return results.sort((a, b) => b.sales - a.sales);
-  }, [officers, territories, dealers, salesOrders, dealerCredits, dealerPayments, dateRange]);
+  }, [officers, territories, dealers, salesOrders, salesReturns, dealerCredits, dealerPayments, dateRange]);
 
   // Filter by selected territory
   const filteredData = useMemo(() => {

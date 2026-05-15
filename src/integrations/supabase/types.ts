@@ -761,6 +761,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_custom: boolean
           name: string
           pack_size: string | null
           sku: string
@@ -775,6 +776,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_custom?: boolean
           name: string
           pack_size?: string | null
           sku: string
@@ -789,6 +791,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_custom?: boolean
           name?: string
           pack_size?: string | null
           sku?: string
