@@ -123,6 +123,7 @@ export const NewPurchaseDialog = () => {
               unit_price: item.unitPrice,
               cost_price: item.unitPrice,
               stock_quantity: 0,
+              is_custom: true,
             })
             .select()
             .single();
