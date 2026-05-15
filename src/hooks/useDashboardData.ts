@@ -229,7 +229,13 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
             const d = new Date(o.order_date);
             return d >= monthStart && d <= monthEnd;
           })
-          .reduce((sum, o) => sum + o.total_amount, 0);
+          .reduce((sum, o) => sum + o.total_amount, 0)
+          - safeReturns
+          .filter(r => {
+            const d = new Date(r.return_date);
+            return d >= monthStart && d <= monthEnd;
+          })
+          .reduce((sum, r) => sum + Number(r.total_amount), 0);
         
         const monthExpenses = safeExpenses
           .filter(e => {
