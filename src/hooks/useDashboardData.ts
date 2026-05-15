@@ -185,7 +185,10 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
       };
 
       const salesSparkline = generateDailyData(
-        safeOrders.map(o => ({ date: o.order_date, amount: o.total_amount })),
+        [
+          ...safeOrders.map(o => ({ date: o.order_date, amount: o.total_amount })),
+          ...safeReturns.map(r => ({ date: r.return_date, amount: -Number(r.total_amount) })),
+        ],
         "order_date"
       );
 
