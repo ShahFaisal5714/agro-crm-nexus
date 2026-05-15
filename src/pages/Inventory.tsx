@@ -19,7 +19,8 @@ import { ProfitabilitySummaryCard } from "@/components/inventory/ProfitabilitySu
 import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
 
 const Inventory = () => {
-  const { products, isLoading } = useProducts();
+  const { products: allProducts, isLoading } = useProducts();
+  const products = useMemo(() => allProducts.filter((p) => !p.is_custom), [allProducts]);
   const { categories } = useProductCategories();
   const [searchTerm, setSearchTerm] = useState("");
   const [stockFilter, setStockFilter] = useState<string>("all");
