@@ -84,6 +84,11 @@ export const useDashboardData = (period: "month" | "quarter" | "year" | "all" = 
         .from("purchases")
         .select("total_amount, purchase_date, created_at");
 
+      // Fetch sales returns to subtract from sales totals
+      const { data: salesReturns } = await supabase
+        .from("sales_returns")
+        .select("total_amount, return_date");
+
       // Fetch expenses
       const { data: expenses } = await supabase
         .from("expenses")
