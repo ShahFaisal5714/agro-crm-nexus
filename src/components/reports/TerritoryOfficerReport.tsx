@@ -189,7 +189,7 @@ export const TerritoryOfficerReport = ({ dateRange }: TerritoryOfficerReportProp
       });
 
     return results.sort((a, b) => b.sales - a.sales);
-  }, [officers, territories, dealers, salesOrders, dealerCredits, dealerPayments, dateRange]);
+  }, [officers, territories, dealers, salesOrders, salesReturns, dealerCredits, dealerPayments, dateRange]);
 
   // Filter by selected territory
   const filteredData = useMemo(() => {
