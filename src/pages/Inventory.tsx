@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Edit, Package, Search, Trash2, X, RotateCcw } from "lucide-react";
+import { AlertCircle, Edit, Package, Search, Trash2, X, RotateCcw, History } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
@@ -17,6 +17,7 @@ import { CategoryManagementDialog } from "@/components/inventory/CategoryManagem
 import { BulkCostPriceUpdateDialog } from "@/components/inventory/BulkCostPriceUpdateDialog";
 import { ProfitabilitySummaryCard } from "@/components/inventory/ProfitabilitySummaryCard";
 import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
+import { ProductSalesHistoryDialog } from "@/components/inventory/ProductSalesHistoryDialog";
 
 const Inventory = () => {
   const { products: allProducts, isLoading } = useProducts();
@@ -28,6 +29,7 @@ const Inventory = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+  const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -198,7 +200,13 @@ const Inventory = () => {
                     return (
                       <TableRow key={product.id}>
                         <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell
+                          className="font-medium cursor-pointer hover:text-primary hover:underline"
+                          onClick={() => setHistoryProduct(product)}
+                          title="View sales history"
+                        >
+                          {product.name}
+                        </TableCell>
                         <TableCell>
                           {product.pack_size ? (
                             <Badge variant="secondary">{product.pack_size}</Badge>
@@ -226,6 +234,14 @@ const Inventory = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setHistoryProduct(product)}
+                              title="Sales History"
+                            >
+                              <History className="h-4 w-4 text-primary" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -280,6 +296,12 @@ const Inventory = () => {
         product={adjustingProduct}
         open={!!adjustingProduct}
         onOpenChange={(open) => !open && setAdjustingProduct(null)}
+      />
+
+      <ProductSalesHistoryDialog
+        product={historyProduct}
+        open={!!historyProduct}
+        onOpenChange={(open) => !open && setHistoryProduct(null)}
       />
     </DashboardLayout>
   );
