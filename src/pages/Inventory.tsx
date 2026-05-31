@@ -29,6 +29,7 @@ const Inventory = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+  const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
