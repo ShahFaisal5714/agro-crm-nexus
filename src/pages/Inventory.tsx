@@ -297,6 +297,12 @@ const Inventory = () => {
         open={!!adjustingProduct}
         onOpenChange={(open) => !open && setAdjustingProduct(null)}
       />
+
+      <ProductSalesHistoryDialog
+        product={historyProduct}
+        open={!!historyProduct}
+        onOpenChange={(open) => !open && setHistoryProduct(null)}
+      />
     </DashboardLayout>
   );
 };
