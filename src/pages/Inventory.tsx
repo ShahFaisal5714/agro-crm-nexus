@@ -237,6 +237,14 @@ const Inventory = () => {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => setHistoryProduct(product)}
+                              title="Sales History"
+                            >
+                              <History className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => setAdjustingProduct(product)}
                               title="Adjust Stock"
                             >
