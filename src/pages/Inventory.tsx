@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Edit, Package, Search, Trash2, X, RotateCcw } from "lucide-react";
+import { AlertCircle, Edit, Package, Search, Trash2, X, RotateCcw, History } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
@@ -17,6 +17,7 @@ import { CategoryManagementDialog } from "@/components/inventory/CategoryManagem
 import { BulkCostPriceUpdateDialog } from "@/components/inventory/BulkCostPriceUpdateDialog";
 import { ProfitabilitySummaryCard } from "@/components/inventory/ProfitabilitySummaryCard";
 import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
+import { ProductSalesHistoryDialog } from "@/components/inventory/ProductSalesHistoryDialog";
 
 const Inventory = () => {
   const { products: allProducts, isLoading } = useProducts();
