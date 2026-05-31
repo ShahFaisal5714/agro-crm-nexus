@@ -200,7 +200,13 @@ const Inventory = () => {
                     return (
                       <TableRow key={product.id}>
                         <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell
+                          className="font-medium cursor-pointer hover:text-primary hover:underline"
+                          onClick={() => setHistoryProduct(product)}
+                          title="View sales history"
+                        >
+                          {product.name}
+                        </TableCell>
                         <TableCell>
                           {product.pack_size ? (
                             <Badge variant="secondary">{product.pack_size}</Badge>
