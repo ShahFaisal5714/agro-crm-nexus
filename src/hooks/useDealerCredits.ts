@@ -12,6 +12,8 @@ export interface DealerCredit {
   credit_date: string;
   description: string | null;
   notes: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
   created_by: string;
   created_at: string;
   products?: {
