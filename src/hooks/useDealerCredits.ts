@@ -128,6 +128,8 @@ export const useDealerCredits = () => {
       dealer_id: string;
       product_id?: string;
       amount: number;
+      quantity?: number;
+      unit_price?: number;
       credit_date?: string;
       description?: string;
       notes?: string;
