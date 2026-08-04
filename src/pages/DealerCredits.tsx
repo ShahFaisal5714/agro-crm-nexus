@@ -166,7 +166,7 @@ const DealerCredits = () => {
     const creditTransactions = filteredCredits.map((c) => ({
       dealer_name: c.dealers?.dealer_name || "Unknown", date: c.credit_date, type: "Credit", amount: c.amount,
       product: c.products?.name || "-", batch: c.products?.sku || "-", pack_size: c.products?.pack_size || "-",
-      quantity: c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-",
+      quantity: c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-"),
       method: "-", reference: "-", description: c.description || "-", notes: c.notes || "-",
     }));
     const paymentTransactions = filteredPayments.map((p) => ({
@@ -183,7 +183,7 @@ const DealerCredits = () => {
       const productParts = [c.products?.name || "-"];
       if (c.products?.sku) productParts.push(`Batch: ${c.products.sku}`);
       if (c.products?.pack_size) productParts.push(`Pack: ${c.products.pack_size}`);
-      const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-";
+      const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-");
       return { dealer_name: c.dealers?.dealer_name || "Unknown", date: c.credit_date, type: "Credit", amount: c.amount, quantity: qty, product: productParts.join(" | "), method: "-", reference: "-" };
     });
     const paymentTransactions = filteredPayments.map((p) => ({
