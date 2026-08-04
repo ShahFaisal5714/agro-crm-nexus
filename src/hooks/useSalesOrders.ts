@@ -165,6 +165,8 @@ export const useSalesOrders = () => {
         const creditEntries = items.map((item) => ({
           dealer_id: dealerId,
           amount: item.total,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
           credit_date: orderDate,
           product_id: item.product_id,
           description: `Sales Order ${orderNum}`,
