@@ -107,6 +107,8 @@ export const AddCreditDialog = ({ dealerId, dealerName }: AddCreditDialogProps) 
           dealer_id: dealerId,
           product_id: item.product_id,
           amount: item.quantity * item.unit_price,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
           credit_date: formData.credit_date,
           description: formData.description || `${products.find(p => p.id === item.product_id)?.name} x ${item.quantity}`,
           notes: formData.notes || undefined,

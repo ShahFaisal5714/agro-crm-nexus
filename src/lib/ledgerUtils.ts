@@ -30,7 +30,7 @@ export const generateDealerLedgerPDF = (
             .filter(Boolean)
             .join(" | ")
         : "";
-      const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : null;
+      const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : null);
       const desc = [
         "Credit",
         productInfo ? `- ${productInfo}` : "",

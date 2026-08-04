@@ -72,7 +72,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         product: c.products?.name || "-",
         batch: c.products?.sku || "-",
         pack_size: c.products?.pack_size || "-",
-        quantity: c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-",
+        quantity: c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-"),
         method: "-",
         reference: "-",
         description: c.description || "-",
@@ -111,7 +111,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const handleExportDetailedPDF = () => {
     const transactions = [
       ...credits.map((c) => {
-        const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-";
+        const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-");
         return {
           date: c.credit_date,
           type: "Credit",
@@ -160,7 +160,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const handlePrintPDF = () => {
     const transactions = [
       ...credits.map((c) => {
-        const qty = c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-";
+        const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-");
         return {
           date: c.credit_date,
           type: "Credit",
