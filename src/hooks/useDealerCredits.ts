@@ -229,36 +229,35 @@ export const useDealerCredits = () => {
 export const useDealerCreditHistory = (dealerId: string) => {
   const { data: credits = [], isLoading: creditsLoading } = useQuery({
     queryKey: ["dealer-credits", dealerId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealer_credits")
-        .select(`
-          *,
-          products(name, sku, pack_size, unit_price, category_id, product_categories(name))
-        `)
-        .eq("dealer_id", dealerId)
-        .order("credit_date", { ascending: false });
-
-      if (error) throw error;
-      return data as DealerCredit[];
-    },
+    queryFn: async () =>
+      fetchAllPages<DealerCredit>((from, to) =>
+        supabase
+          .from("dealer_credits")
+          .select(`
+            *,
+            products(name, sku, pack_size, unit_price, category_id, product_categories(name))
+          `)
+          .eq("dealer_id", dealerId)
+          .order("credit_date", { ascending: false })
+          .range(from, to)
+      ),
     enabled: !!dealerId,
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ["dealer-payments", dealerId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealer_payments")
-        .select("*")
-        .eq("dealer_id", dealerId)
-        .order("payment_date", { ascending: false });
-
-      if (error) throw error;
-      return data as DealerPayment[];
-    },
+    queryFn: async () =>
+      fetchAllPages<DealerPayment>((from, to) =>
+        supabase
+          .from("dealer_payments")
+          .select("*")
+          .eq("dealer_id", dealerId)
+          .order("payment_date", { ascending: false })
+          .range(from, to)
+      ),
     enabled: !!dealerId,
   });
+
 
   const totalCredit = credits.reduce((sum, c) => sum + Number(c.amount), 0);
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
