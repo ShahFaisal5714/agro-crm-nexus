@@ -17,6 +17,8 @@ import { useProducts } from "@/hooks/useProducts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useDealers } from "@/hooks/useDealers";
 import { useInvoices } from "@/hooks/useInvoices";
+import { useSalesReturns } from "@/hooks/useReturns";
+
 import { InvoiceAgingReport } from "@/components/reports/InvoiceAgingReport";
 import { CreditRecoveryReport } from "@/components/reports/CreditRecoveryReport";
 import { ReportDetailTable } from "@/components/reports/ReportDetailTable";
@@ -47,6 +49,8 @@ const Reports = () => {
   const { expenses, isLoading: expensesLoading } = useExpenses();
   const { dealers, isLoading: dealersLoading } = useDealers();
   const { invoices, isLoading: invoicesLoading } = useInvoices();
+  const { salesReturns } = useSalesReturns();
+
   const [timePeriod, setTimePeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
   const [comparisonPeriods, setComparisonPeriods] = useState<number>(6);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -113,8 +117,28 @@ const Reports = () => {
     return items;
   }, [safeExpenses, dateRange, filterTerritory, reportData.territories]);
 
+  // Sales returns within the same filters (matches Dashboard's net sales logic)
+  const filteredReturnsTotal = useMemo(() => {
+    // Officer/category level attribution isn't available on returns, so skip when those filters are on
+    if (filterOfficer !== "all" || filterCategory !== "all") return 0;
+    return (salesReturns || [])
+      .filter(r => {
+        if (dateRange?.from && dateRange?.to) {
+          const d = new Date(r.return_date);
+          if (!isWithinInterval(d, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) return false;
+        }
+        if (filterTerritory !== "all" && getDealerTerritoryId(r.dealer_id) !== filterTerritory) return false;
+        return true;
+      })
+      .reduce((sum, r) => sum + Number(r.total_amount), 0);
+  }, [salesReturns, dateRange, filterTerritory, filterOfficer, filterCategory, safeDealers]);
+
   // P&L
-  const totalRevenue = useMemo(() => filteredSalesItems.reduce((sum, item) => sum + item.total, 0), [filteredSalesItems]);
+  const totalRevenue = useMemo(
+    () => filteredSalesItems.reduce((sum, item) => sum + item.total, 0) - filteredReturnsTotal,
+    [filteredSalesItems, filteredReturnsTotal]
+  );
+
   const totalExpenses = useMemo(() => filteredExpenses.reduce((sum, e) => sum + e.amount, 0), [filteredExpenses]);
   const totalCOGS = useMemo(() => filteredSalesItems.reduce((sum, item) => sum + ((item.products.cost_price || item.products.unit_price * 0.8) * item.quantity), 0), [filteredSalesItems]);
   const grossProfit = totalRevenue - totalCOGS;

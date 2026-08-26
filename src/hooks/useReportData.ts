@@ -47,33 +47,42 @@ export const useReportData = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["report-data"],
     queryFn: async () => {
-      // Fetch sales order items with all related data
-      const { data: salesItems, error: itemsError } = await supabase
-        .from("sales_order_items")
-        .select(`
-          *,
-          sales_orders!inner(
-            id,
-            order_number,
-            order_date,
-            status,
-            total_amount,
-            dealer_id,
-            created_by,
-            dealers(dealer_name, territory_id)
-          ),
-          products!inner(
-            id,
-            name,
-            sku,
-            unit_price,
-            cost_price,
-            category_id,
-            product_categories(id, name)
-          )
-        `);
+      // Fetch sales order items with all related data (paginated: PostgREST caps at 1000 rows)
+      const PAGE_SIZE = 1000;
+      const salesItems: any[] = [];
+      for (let page = 0; ; page++) {
+        const { data: pageData, error: itemsError } = await supabase
+          .from("sales_order_items")
+          .select(`
+            *,
+            sales_orders!inner(
+              id,
+              order_number,
+              order_date,
+              status,
+              total_amount,
+              dealer_id,
+              created_by,
+              dealers(dealer_name, territory_id)
+            ),
+            products!inner(
+              id,
+              name,
+              sku,
+              unit_price,
+              cost_price,
+              category_id,
+              product_categories(id, name)
+            )
+          `)
+          .order("id", { ascending: true })
+          .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (itemsError) throw itemsError;
+        if (itemsError) throw itemsError;
+        salesItems.push(...(pageData || []));
+        if (!pageData || pageData.length < PAGE_SIZE) break;
+      }
+
 
       // Fetch territories
       const { data: territories, error: terrError } = await supabase
