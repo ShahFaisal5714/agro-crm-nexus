@@ -49,42 +49,56 @@ export interface DealerCreditSummary {
   territory_code: string | null;
 }
 
+// PostgREST caps a single request at 1000 rows — fetch everything in pages
+const PAGE_SIZE = 1000;
+const fetchAllPages = async <T,>(
+  build: (from: number, to: number) => any
+): Promise<T[]> => {
+  const all: T[] = [];
+  for (let page = 0; ; page++) {
+    const { data, error } = await build(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    if (error) throw error;
+    all.push(...((data || []) as T[]));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+  return all;
+};
+
 export const useDealerCredits = () => {
   const queryClient = useQueryClient();
   const { recordTransaction } = useCashTransactions();
 
   const { data: credits = [], isLoading: creditsLoading } = useQuery({
     queryKey: ["dealer-credits"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealer_credits")
-        .select(`
-          *,
-          products(name, sku, pack_size, unit_price, category_id, product_categories(name)),
-          dealers(dealer_name)
-        `)
-        .order("credit_date", { ascending: false });
-
-      if (error) throw error;
-      return data as (DealerCredit & { dealers: { dealer_name: string } | null })[];
-    },
+    queryFn: async () =>
+      fetchAllPages<DealerCredit & { dealers: { dealer_name: string } | null }>((from, to) =>
+        supabase
+          .from("dealer_credits")
+          .select(`
+            *,
+            products(name, sku, pack_size, unit_price, category_id, product_categories(name)),
+            dealers(dealer_name)
+          `)
+          .order("credit_date", { ascending: false })
+          .range(from, to)
+      ),
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ["dealer-payments"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealer_payments")
-        .select(`
-          *,
-          dealers(dealer_name)
-        `)
-        .order("payment_date", { ascending: false });
-
-      if (error) throw error;
-      return data as (DealerPayment & { dealers: { dealer_name: string } | null })[];
-    },
+    queryFn: async () =>
+      fetchAllPages<DealerPayment & { dealers: { dealer_name: string } | null }>((from, to) =>
+        supabase
+          .from("dealer_payments")
+          .select(`
+            *,
+            dealers(dealer_name)
+          `)
+          .order("payment_date", { ascending: false })
+          .range(from, to)
+      ),
   });
+
 
   const { data: dealers = [] } = useQuery({
     queryKey: ["dealers"],
@@ -215,36 +229,35 @@ export const useDealerCredits = () => {
 export const useDealerCreditHistory = (dealerId: string) => {
   const { data: credits = [], isLoading: creditsLoading } = useQuery({
     queryKey: ["dealer-credits", dealerId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealer_credits")
-        .select(`
-          *,
-          products(name, sku, pack_size, unit_price, category_id, product_categories(name))
-        `)
-        .eq("dealer_id", dealerId)
-        .order("credit_date", { ascending: false });
-
-      if (error) throw error;
-      return data as DealerCredit[];
-    },
+    queryFn: async () =>
+      fetchAllPages<DealerCredit>((from, to) =>
+        supabase
+          .from("dealer_credits")
+          .select(`
+            *,
+            products(name, sku, pack_size, unit_price, category_id, product_categories(name))
+          `)
+          .eq("dealer_id", dealerId)
+          .order("credit_date", { ascending: false })
+          .range(from, to)
+      ),
     enabled: !!dealerId,
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ["dealer-payments", dealerId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealer_payments")
-        .select("*")
-        .eq("dealer_id", dealerId)
-        .order("payment_date", { ascending: false });
-
-      if (error) throw error;
-      return data as DealerPayment[];
-    },
+    queryFn: async () =>
+      fetchAllPages<DealerPayment>((from, to) =>
+        supabase
+          .from("dealer_payments")
+          .select("*")
+          .eq("dealer_id", dealerId)
+          .order("payment_date", { ascending: false })
+          .range(from, to)
+      ),
     enabled: !!dealerId,
   });
+
 
   const totalCredit = credits.reduce((sum, c) => sum + Number(c.amount), 0);
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
