@@ -17,6 +17,8 @@ import { useProducts } from "@/hooks/useProducts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useDealers } from "@/hooks/useDealers";
 import { useInvoices } from "@/hooks/useInvoices";
+import { useSalesReturns } from "@/hooks/useReturns";
+
 import { InvoiceAgingReport } from "@/components/reports/InvoiceAgingReport";
 import { CreditRecoveryReport } from "@/components/reports/CreditRecoveryReport";
 import { ReportDetailTable } from "@/components/reports/ReportDetailTable";
