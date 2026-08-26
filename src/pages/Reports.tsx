@@ -49,6 +49,8 @@ const Reports = () => {
   const { expenses, isLoading: expensesLoading } = useExpenses();
   const { dealers, isLoading: dealersLoading } = useDealers();
   const { invoices, isLoading: invoicesLoading } = useInvoices();
+  const { salesReturns } = useSalesReturns();
+
   const [timePeriod, setTimePeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
   const [comparisonPeriods, setComparisonPeriods] = useState<number>(6);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
