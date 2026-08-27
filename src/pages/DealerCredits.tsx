@@ -1,3 +1,4 @@
+import { sumTotalCredit, sumTotalPaid } from "@/lib/dealerBalance";
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
