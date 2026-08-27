@@ -51,7 +51,7 @@ export const generateDealerLedgerPDF = (
 
   let runningBalance = 0;
   for (const entry of rawEntries) {
-    runningBalance += entry.debit - entry.credit;
+    runningBalance = roundPKR(runningBalance + entry.debit - entry.credit);
     entries.push({
       date: entry.date,
       description: entry.description,
