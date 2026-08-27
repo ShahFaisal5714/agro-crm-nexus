@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleOperationError } from "@/lib/errorHandler";
 import { useCashTransactions } from "./useCashTransactions";
+import { useDealerBalances } from "./useDealerBalances";
+import { computeDealerBalance, sumRemaining } from "@/lib/dealerBalance";
 
 export interface DealerCredit {
   id: string;
