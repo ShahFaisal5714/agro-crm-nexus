@@ -25,7 +25,8 @@ export const DealerCreditsWidget = () => {
     .sort((a, b) => b.remaining - a.remaining)
     .slice(0, 5);
 
-  const totalOutstanding = dealerSummaries.reduce((sum, d) => sum + Math.max(0, d.remaining), 0);
+  // Same authoritative total as the ledger page and PDF exports (no clamping)
+  const totalOutstanding = totalMarketCredit;
   const dealersWithCredit = dealerSummaries.filter(d => d.remaining > 0).length;
 
   if (isLoading) {

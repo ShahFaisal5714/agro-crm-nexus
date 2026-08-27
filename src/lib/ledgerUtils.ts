@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
+import { roundPKR } from "@/lib/dealerBalance";
 import logo from "@/assets/logo.png";
 
 interface LedgerEntry {
@@ -51,7 +52,7 @@ export const generateDealerLedgerPDF = (
 
   let runningBalance = 0;
   for (const entry of rawEntries) {
-    runningBalance += entry.debit - entry.credit;
+    runningBalance = roundPKR(runningBalance + entry.debit - entry.credit);
     entries.push({
       date: entry.date,
       description: entry.description,

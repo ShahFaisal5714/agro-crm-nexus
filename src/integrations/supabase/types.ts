@@ -1515,6 +1515,19 @@ export type Database = {
       generate_purchase_number: { Args: never; Returns: string }
       generate_purchase_return_number: { Args: never; Returns: string }
       generate_sales_return_number: { Args: never; Returns: string }
+      get_dealer_balances: {
+        Args: { p_dealer_id?: string; p_from?: string; p_to?: string }
+        Returns: {
+          dealer_id: string
+          dealer_name: string
+          last_payment_date: string
+          remaining: number
+          territory_code: string
+          territory_name: string
+          total_credit: number
+          total_paid: number
+        }[]
+      }
       get_user_territory: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
