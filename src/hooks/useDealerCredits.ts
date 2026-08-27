@@ -252,9 +252,8 @@ export const useDealerCreditHistory = (dealerId: string) => {
   });
 
 
-  const totalCredit = credits.reduce((sum, c) => sum + Number(c.amount), 0);
-  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const remaining = totalCredit - totalPaid;
+  // Same aggregation + rounding rules as the backend endpoint
+  const { total_credit: totalCredit, total_paid: totalPaid, remaining } = computeDealerBalance(credits, payments);
 
   return {
     credits,
