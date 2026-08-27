@@ -110,8 +110,8 @@ const DealerCredits = () => {
   const hasActiveFilters = searchTerm || startDate || endDate || territoryFilter !== "all" || statusFilter !== "all" || balanceMin || balanceMax || lastPaymentFilter !== "all";
 
   const dealersWithCredit = dealerSummaries.filter((s) => s.remaining > 0).length;
-  const totalCreditGiven = dealerSummaries.reduce((sum, s) => sum + s.total_credit, 0);
-  const totalCollected = dealerSummaries.reduce((sum, s) => sum + s.total_paid, 0);
+  const totalCreditGiven = sumTotalCredit(dealerSummaries);
+  const totalCollected = sumTotalPaid(dealerSummaries);
 
   // Area Balance - Territory wise summary
   const areaSummaries = useMemo(() => {
