@@ -129,7 +129,7 @@ const DealerCredits = () => {
       area.dealers.push(s);
       area.totalCredit += s.total_credit;
       area.totalPaid += s.total_paid;
-      area.remaining += Math.max(0, s.remaining);
+      area.remaining += s.remaining;
     });
 
     return Array.from(areaMap.values()).sort((a, b) => b.remaining - a.remaining);
