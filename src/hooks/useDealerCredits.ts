@@ -113,31 +113,22 @@ export const useDealerCredits = () => {
     },
   });
 
-  // Calculate summary for each dealer
-  const dealerSummaries: DealerCreditSummary[] = dealers.map((dealer) => {
-    const dealerCredits = credits.filter((c) => c.dealer_id === dealer.id);
-    const dealerPayments = payments.filter((p) => p.dealer_id === dealer.id);
+  // Authoritative per-dealer balances come from the shared backend aggregation
+  const { balances } = useDealerBalances();
 
-    const total_credit = dealerCredits.reduce((sum, c) => sum + Number(c.amount), 0);
-    const total_paid = dealerPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-    const remaining = total_credit - total_paid;
+  const dealerSummaries: DealerCreditSummary[] = balances.map((b) => ({
+    dealer_id: b.dealer_id,
+    dealer_name: b.dealer_name,
+    total_credit: b.total_credit,
+    total_paid: b.total_paid,
+    remaining: b.remaining,
+    last_payment_date: b.last_payment_date,
+    territory_name: b.territory_name,
+    territory_code: b.territory_code,
+  }));
 
-    const lastPayment = dealerPayments[0];
-
-    return {
-      dealer_id: dealer.id,
-      dealer_name: dealer.dealer_name,
-      total_credit,
-      total_paid,
-      remaining,
-      last_payment_date: lastPayment?.payment_date || null,
-      territory_name: dealer.territories?.name || null,
-      territory_code: dealer.territories?.code || null,
-    };
-  }).filter((s) => s.total_credit > 0 || s.total_paid > 0);
-
-  // Total market credit
-  const totalMarketCredit = dealerSummaries.reduce((sum, s) => sum + s.remaining, 0);
+  // Total market credit (never clamped — same rule everywhere)
+  const totalMarketCredit = sumRemaining(dealerSummaries);
 
   const addCredit = useMutation({
     mutationFn: async (creditData: {
