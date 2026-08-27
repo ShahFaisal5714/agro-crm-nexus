@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
+import { roundPKR } from "@/lib/dealerBalance";
 import logo from "@/assets/logo.png";
 
 interface LedgerEntry {
