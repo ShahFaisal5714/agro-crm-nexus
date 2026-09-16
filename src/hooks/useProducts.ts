@@ -21,7 +21,8 @@ export interface Product {
 }
 
 export const useProducts = () => {
-  const queryClient = useQueryClient();
+  // Live refresh when stock, prices, sales or purchases change
+  useOperationsRealtime();
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
