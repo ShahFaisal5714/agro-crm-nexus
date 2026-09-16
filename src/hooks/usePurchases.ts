@@ -44,6 +44,10 @@ export interface PurchaseItemWithProduct extends PurchaseItem {
 export const usePurchases = () => {
   const queryClient = useQueryClient();
 
+  // Live refresh when stock, prices or orders change
+  useOperationsRealtime();
+
+
   const { data: purchases, isLoading } = useQuery({
     queryKey: ["purchases"],
     queryFn: async () => {
