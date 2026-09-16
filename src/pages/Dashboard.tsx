@@ -82,7 +82,7 @@ const Dashboard = () => {
             </p>
           </div>
           <Select value={dashboardPeriod} onValueChange={(v) => setDashboardPeriod(v as typeof dashboardPeriod)}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -94,7 +94,7 @@ const Dashboard = () => {
           </Select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <SparklineCard
             title="Total Sales"
             value={dashboardData.totalSales}
@@ -136,7 +136,7 @@ const Dashboard = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Recent Sales Orders</CardTitle>
@@ -146,12 +146,12 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {dashboardData.recentSalesOrders.length > 0 ? (
                   dashboardData.recentSalesOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{order.order_number}</p>
-                        <p className="text-sm text-muted-foreground">{order.dealer_name}</p>
+                    <div key={order.id} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="min-w-0">
+                        <p className="font-medium break-words">{order.order_number}</p>
+                        <p className="text-sm text-muted-foreground break-words">{order.dealer_name}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="sm:text-right">
                         <p className="font-semibold">{formatCurrency(order.total_amount)}</p>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(order.order_date), "MMM dd, yyyy")}
@@ -167,12 +167,13 @@ const Dashboard = () => {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between space-y-0 pb-2">
               <div>
                 <CardTitle>Low Stock Alerts</CardTitle>
                 <CardDescription>Products requiring restock</CardDescription>
               </div>
               <Button 
+                className="w-full sm:w-auto"
                 variant="outline" 
                 size="sm"
                 onClick={handleCheckLowStock}
@@ -190,12 +191,12 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {dashboardData.lowStockProducts.length > 0 ? (
                   dashboardData.lowStockProducts.map((product, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">Batch: {product.sku}</p>
+                    <div key={i} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
+                      <div className="min-w-0">
+                        <p className="font-medium break-words">{product.name}</p>
+                        <p className="text-sm text-muted-foreground break-words">Batch: {product.sku}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="sm:text-right">
                         <p className="font-semibold text-warning">{product.stock} units</p>
                         <p className="text-xs text-muted-foreground">In stock</p>
                       </div>
@@ -209,23 +210,23 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <SalesPerformanceChart data={dashboardData.monthlyRevenue} />
           <CashFlowChart />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <SalesVsExpensesChart data={dashboardData.salesVsExpenses} />
           {userRole === "admin" && <ProfitLossWidget />}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           <CashInHandWidget />
           <PendingPoliciesWidget policies={policies} />
           <SupplierPaymentsDueWidget />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           <CreditRecoverySummaryWidget />
           <DealerCreditsWidget />
           <TopOfficersWidget />

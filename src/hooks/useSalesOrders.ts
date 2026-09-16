@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOperationsRealtime } from "./useOperationsRealtime";
 
 export interface SalesOrder {
   id: string;
@@ -63,6 +64,9 @@ export const useSalesOrders = () => {
 
     return { order, items: items as SalesOrderItemWithProduct[] };
   };
+
+  // Live refresh when stock, prices or orders change
+  useOperationsRealtime();
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["sales-orders"],
