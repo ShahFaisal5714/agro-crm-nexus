@@ -40,29 +40,6 @@ export const useProducts = () => {
     },
   });
 
-  // Subscribe to realtime updates for products
-  useEffect(() => {
-    const channel = supabase
-      .channel("products-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "products",
-        },
-        () => {
-          // Invalidate the products query to refetch fresh data
-          queryClient.invalidateQueries({ queryKey: ["products"] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   return {
     products: products || [],
     isLoading,
