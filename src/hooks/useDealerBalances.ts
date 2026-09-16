@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerBalance, sumRemaining } from "@/lib/dealerBalance";
+import { useDealerCreditsRealtime } from "./useDealerCreditsRealtime";
 
 export interface DealerBalanceParams {
   dealerId?: string | null;
