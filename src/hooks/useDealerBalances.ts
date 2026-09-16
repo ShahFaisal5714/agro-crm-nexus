@@ -16,6 +16,9 @@ export interface DealerBalanceParams {
 export const useDealerBalances = (params: DealerBalanceParams = {}) => {
   const { dealerId = null, from = null, to = null } = params;
 
+  // Auto-refresh when sales, purchases, expenses or returns change
+  useDealerCreditsRealtime();
+
   const query = useQuery({
     queryKey: ["dealer-balances", dealerId, from, to],
     queryFn: async (): Promise<DealerBalance[]> => {
