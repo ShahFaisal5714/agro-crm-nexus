@@ -47,7 +47,9 @@ export const useDealerCreditsRealtime = () => {
       }, 300);
     };
 
-    const channel = supabase.channel("dealer-credit-changes");
+    const channel = supabase.channel(
+      `dealer-credit-changes-${Math.random().toString(36).slice(2)}`
+    );
 
     WATCHED_TABLES.forEach((table) => {
       channel.on(
