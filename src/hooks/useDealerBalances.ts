@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerBalance, sumRemaining } from "@/lib/dealerBalance";
+import { useDealerCreditsRealtime } from "./useDealerCreditsRealtime";
 
 export interface DealerBalanceParams {
   dealerId?: string | null;
@@ -14,6 +15,9 @@ export interface DealerBalanceParams {
  */
 export const useDealerBalances = (params: DealerBalanceParams = {}) => {
   const { dealerId = null, from = null, to = null } = params;
+
+  // Auto-refresh when sales, purchases, expenses or returns change
+  useDealerCreditsRealtime();
 
   const query = useQuery({
     queryKey: ["dealer-balances", dealerId, from, to],
