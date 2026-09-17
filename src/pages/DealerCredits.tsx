@@ -324,15 +324,15 @@ const DealerCredits = () => {
                 areaSummaries.map((area) => (
                   <Collapsible key={area.code}>
                     <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors">
-                        <div className="flex items-center gap-3">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-semibold">{area.name} <span className="text-xs text-muted-foreground">({area.code})</span></p>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-semibold break-words">{area.name} <span className="text-xs text-muted-foreground">({area.code})</span></p>
                             <p className="text-xs text-muted-foreground">{area.dealers.length} dealer{area.dealers.length !== 1 ? "s" : ""}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6 text-sm">
+                        <div className="flex items-center justify-between gap-3 sm:gap-6 text-sm">
                           <div className="text-right">
                             <p className="text-xs text-muted-foreground">Credit</p>
                             <p className="font-medium">{formatCurrency(area.totalCredit)}</p>
@@ -350,14 +350,14 @@ const DealerCredits = () => {
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="ml-7 mt-1 border-l-2 border-muted pl-4 space-y-1">
+                      <div className="ml-2 sm:ml-7 mt-1 border-l-2 border-muted pl-2 sm:pl-4 space-y-1">
                         {area.dealers.sort((a, b) => b.remaining - a.remaining).map((dealer) => (
-                          <div key={dealer.dealer_id} className="flex items-center justify-between py-2 px-3 text-sm rounded hover:bg-muted/30">
-                            <span className="font-medium">{dealer.dealer_name}</span>
-                            <div className="flex items-center gap-4">
+                          <div key={dealer.dealer_id} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-2 px-3 text-sm rounded hover:bg-muted/30">
+                            <span className="font-medium break-words">{dealer.dealer_name}</span>
+                            <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
                               <span className="text-muted-foreground">{formatCurrency(dealer.total_credit)}</span>
                               <span className="text-green-600">{formatCurrency(dealer.total_paid)}</span>
-                              <span className={cn("font-semibold min-w-[80px] text-right", dealer.remaining > 0 ? "text-orange-600" : "text-green-600")}>
+                              <span className={cn("font-semibold sm:min-w-[80px] sm:text-right", dealer.remaining > 0 ? "text-orange-600" : "text-green-600")}>
                                 {formatCurrency(dealer.remaining)}
                               </span>
                               <div className="flex gap-1">
