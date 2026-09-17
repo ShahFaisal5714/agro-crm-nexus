@@ -226,8 +226,8 @@ const DealerCredits = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dealer Credits</h1>
             <p className="text-muted-foreground mt-1 text-sm md:text-base">Track credit given to dealers and their weekly payments</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:w-auto">
+            <Button variant="outline" asChild className="col-span-2 sm:col-span-1">
               <Link to="/reports" className="gap-2"><ArrowRight className="h-4 w-4" />Credit Recovery Report</Link>
             </Button>
             <BulkPaymentImportDialog />
@@ -239,37 +239,37 @@ const DealerCredits = () => {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Market Credit</CardTitle>
-              <Wallet className="h-4 w-4 text-orange-500" />
+              <Wallet className="h-4 w-4 text-orange-500 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalMarketCredit)}</div>
+              <div className="text-xl sm:text-2xl font-bold text-orange-600 break-words">{formatCurrency(totalMarketCredit)}</div>
               <p className="text-xs text-muted-foreground mt-1">Outstanding amount</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Credit Given</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-500" />
+              <TrendingUp className="h-4 w-4 text-blue-500 shrink-0" />
             </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{formatCurrency(totalCreditGiven)}</div></CardContent>
+            <CardContent><div className="text-xl sm:text-2xl font-bold break-words">{formatCurrency(totalCreditGiven)}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
-              <TrendingDown className="h-4 w-4 text-green-500" />
+              <TrendingDown className="h-4 w-4 text-green-500 shrink-0" />
             </CardHeader>
-            <CardContent><div className="text-2xl font-bold text-green-600">{formatCurrency(totalCollected)}</div></CardContent>
+            <CardContent><div className="text-xl sm:text-2xl font-bold text-green-600 break-words">{formatCurrency(totalCollected)}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Dealers with Credit</CardTitle>
-              <Users className="h-4 w-4 text-purple-500" />
+              <Users className="h-4 w-4 text-purple-500 shrink-0" />
             </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{dealersWithCredit}</div></CardContent>
+            <CardContent><div className="text-xl sm:text-2xl font-bold">{dealersWithCredit}</div></CardContent>
           </Card>
         </div>
 
@@ -324,40 +324,40 @@ const DealerCredits = () => {
                 areaSummaries.map((area) => (
                   <Collapsible key={area.code}>
                     <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors">
-                        <div className="flex items-center gap-3">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-semibold">{area.name} <span className="text-xs text-muted-foreground">({area.code})</span></p>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-semibold break-words">{area.name} <span className="text-xs text-muted-foreground">({area.code})</span></p>
                             <p className="text-xs text-muted-foreground">{area.dealers.length} dealer{area.dealers.length !== 1 ? "s" : ""}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6 text-sm">
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Credit</p>
-                            <p className="font-medium">{formatCurrency(area.totalCredit)}</p>
+                        <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6 text-xs sm:text-sm">
+                          <div className="min-w-0 sm:text-right">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground">Credit</p>
+                            <p className="font-medium break-words">{formatCurrency(area.totalCredit)}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Paid</p>
-                            <p className="font-medium text-green-600">{formatCurrency(area.totalPaid)}</p>
+                          <div className="min-w-0 sm:text-right">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground">Paid</p>
+                            <p className="font-medium text-green-600 break-words">{formatCurrency(area.totalPaid)}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Remaining</p>
-                            <p className={cn("font-bold", area.remaining > 0 ? "text-orange-600" : "text-green-600")}>{formatCurrency(area.remaining)}</p>
+                          <div className="min-w-0 sm:text-right">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground">Remaining</p>
+                            <p className={cn("font-bold break-words", area.remaining > 0 ? "text-orange-600" : "text-green-600")}>{formatCurrency(area.remaining)}</p>
                           </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          <ChevronDown className="hidden sm:block h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="ml-7 mt-1 border-l-2 border-muted pl-4 space-y-1">
+                      <div className="ml-2 sm:ml-7 mt-1 border-l-2 border-muted pl-2 sm:pl-4 space-y-1">
                         {area.dealers.sort((a, b) => b.remaining - a.remaining).map((dealer) => (
-                          <div key={dealer.dealer_id} className="flex items-center justify-between py-2 px-3 text-sm rounded hover:bg-muted/30">
-                            <span className="font-medium">{dealer.dealer_name}</span>
-                            <div className="flex items-center gap-4">
+                          <div key={dealer.dealer_id} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-2 px-3 text-sm rounded hover:bg-muted/30">
+                            <span className="font-medium break-words">{dealer.dealer_name}</span>
+                            <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
                               <span className="text-muted-foreground">{formatCurrency(dealer.total_credit)}</span>
                               <span className="text-green-600">{formatCurrency(dealer.total_paid)}</span>
-                              <span className={cn("font-semibold min-w-[80px] text-right", dealer.remaining > 0 ? "text-orange-600" : "text-green-600")}>
+                              <span className={cn("font-semibold sm:min-w-[80px] sm:text-right", dealer.remaining > 0 ? "text-orange-600" : "text-green-600")}>
                                 {formatCurrency(dealer.remaining)}
                               </span>
                               <div className="flex gap-1">
@@ -393,7 +393,7 @@ const DealerCredits = () => {
                 </div>
 
                 <Select value={territoryFilter} onValueChange={setTerritoryFilter}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Territory" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder="Territory" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Territories</SelectItem>
                     {territories.map((t) => (
@@ -403,7 +403,7 @@ const DealerCredits = () => {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -412,7 +412,7 @@ const DealerCredits = () => {
                 </Select>
 
                 <Select value={lastPaymentFilter} onValueChange={setLastPaymentFilter}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Last Payment" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder="Last Payment" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
                     <SelectItem value="7days">Last 7 Days</SelectItem>
@@ -425,15 +425,15 @@ const DealerCredits = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Input placeholder="Min Balance" type="number" value={balanceMin} onChange={(e) => setBalanceMin(e.target.value)} className="w-[120px]" />
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Input placeholder="Min Balance" type="number" value={balanceMin} onChange={(e) => setBalanceMin(e.target.value)} className="flex-1 sm:flex-none sm:w-[120px]" />
                   <span className="text-muted-foreground text-sm">to</span>
-                  <Input placeholder="Max Balance" type="number" value={balanceMax} onChange={(e) => setBalanceMax(e.target.value)} className="w-[120px]" />
+                  <Input placeholder="Max Balance" type="number" value={balanceMax} onChange={(e) => setBalanceMax(e.target.value)} className="flex-1 sm:flex-none sm:w-[120px]" />
                 </div>
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full sm:w-[140px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {startDate ? format(startDate, "MMM dd") : "Start Date"}
                     </Button>
@@ -445,7 +445,7 @@ const DealerCredits = () => {
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full sm:w-[140px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {endDate ? format(endDate, "MMM dd") : "End Date"}
                     </Button>
