@@ -393,7 +393,7 @@ const DealerCredits = () => {
                 </div>
 
                 <Select value={territoryFilter} onValueChange={setTerritoryFilter}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Territory" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder="Territory" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Territories</SelectItem>
                     {territories.map((t) => (
@@ -403,7 +403,7 @@ const DealerCredits = () => {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -412,7 +412,7 @@ const DealerCredits = () => {
                 </Select>
 
                 <Select value={lastPaymentFilter} onValueChange={setLastPaymentFilter}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Last Payment" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder="Last Payment" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
                     <SelectItem value="7days">Last 7 Days</SelectItem>
@@ -425,15 +425,15 @@ const DealerCredits = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Input placeholder="Min Balance" type="number" value={balanceMin} onChange={(e) => setBalanceMin(e.target.value)} className="w-[120px]" />
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Input placeholder="Min Balance" type="number" value={balanceMin} onChange={(e) => setBalanceMin(e.target.value)} className="flex-1 sm:flex-none sm:w-[120px]" />
                   <span className="text-muted-foreground text-sm">to</span>
-                  <Input placeholder="Max Balance" type="number" value={balanceMax} onChange={(e) => setBalanceMax(e.target.value)} className="w-[120px]" />
+                  <Input placeholder="Max Balance" type="number" value={balanceMax} onChange={(e) => setBalanceMax(e.target.value)} className="flex-1 sm:flex-none sm:w-[120px]" />
                 </div>
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full sm:w-[140px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {startDate ? format(startDate, "MMM dd") : "Start Date"}
                     </Button>
@@ -445,7 +445,7 @@ const DealerCredits = () => {
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full sm:w-[140px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {endDate ? format(endDate, "MMM dd") : "End Date"}
                     </Button>
