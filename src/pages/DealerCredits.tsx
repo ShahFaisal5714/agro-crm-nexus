@@ -226,8 +226,8 @@ const DealerCredits = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dealer Credits</h1>
             <p className="text-muted-foreground mt-1 text-sm md:text-base">Track credit given to dealers and their weekly payments</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:w-auto">
+            <Button variant="outline" asChild className="col-span-2 sm:col-span-1">
               <Link to="/reports" className="gap-2"><ArrowRight className="h-4 w-4" />Credit Recovery Report</Link>
             </Button>
             <BulkPaymentImportDialog />
@@ -239,37 +239,37 @@ const DealerCredits = () => {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Market Credit</CardTitle>
-              <Wallet className="h-4 w-4 text-orange-500" />
+              <Wallet className="h-4 w-4 text-orange-500 shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalMarketCredit)}</div>
+              <div className="text-xl sm:text-2xl font-bold text-orange-600 break-words">{formatCurrency(totalMarketCredit)}</div>
               <p className="text-xs text-muted-foreground mt-1">Outstanding amount</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Credit Given</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-500" />
+              <TrendingUp className="h-4 w-4 text-blue-500 shrink-0" />
             </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{formatCurrency(totalCreditGiven)}</div></CardContent>
+            <CardContent><div className="text-xl sm:text-2xl font-bold break-words">{formatCurrency(totalCreditGiven)}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
-              <TrendingDown className="h-4 w-4 text-green-500" />
+              <TrendingDown className="h-4 w-4 text-green-500 shrink-0" />
             </CardHeader>
-            <CardContent><div className="text-2xl font-bold text-green-600">{formatCurrency(totalCollected)}</div></CardContent>
+            <CardContent><div className="text-xl sm:text-2xl font-bold text-green-600 break-words">{formatCurrency(totalCollected)}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Dealers with Credit</CardTitle>
-              <Users className="h-4 w-4 text-purple-500" />
+              <Users className="h-4 w-4 text-purple-500 shrink-0" />
             </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{dealersWithCredit}</div></CardContent>
+            <CardContent><div className="text-xl sm:text-2xl font-bold">{dealersWithCredit}</div></CardContent>
           </Card>
         </div>
 
