@@ -332,20 +332,20 @@ const DealerCredits = () => {
                             <p className="text-xs text-muted-foreground">{area.dealers.length} dealer{area.dealers.length !== 1 ? "s" : ""}</p>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between gap-3 sm:gap-6 text-sm">
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Credit</p>
-                            <p className="font-medium">{formatCurrency(area.totalCredit)}</p>
+                        <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6 text-xs sm:text-sm">
+                          <div className="min-w-0 sm:text-right">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground">Credit</p>
+                            <p className="font-medium break-words">{formatCurrency(area.totalCredit)}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Paid</p>
-                            <p className="font-medium text-green-600">{formatCurrency(area.totalPaid)}</p>
+                          <div className="min-w-0 sm:text-right">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground">Paid</p>
+                            <p className="font-medium text-green-600 break-words">{formatCurrency(area.totalPaid)}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Remaining</p>
-                            <p className={cn("font-bold", area.remaining > 0 ? "text-orange-600" : "text-green-600")}>{formatCurrency(area.remaining)}</p>
+                          <div className="min-w-0 sm:text-right">
+                            <p className="text-[11px] sm:text-xs text-muted-foreground">Remaining</p>
+                            <p className={cn("font-bold break-words", area.remaining > 0 ? "text-orange-600" : "text-green-600")}>{formatCurrency(area.remaining)}</p>
                           </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          <ChevronDown className="hidden sm:block h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                     </CollapsibleTrigger>
