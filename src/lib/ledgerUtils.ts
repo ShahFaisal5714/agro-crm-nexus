@@ -107,6 +107,11 @@ export const generateDealerLedgerPDF = (
       .header { page-break-after: avoid; }
       table { page-break-inside: auto; }
       tr { page-break-inside: avoid; }
+      .debit-cell, .credit-cell {
+        color: #111 !important;
+        font-size: 14px;
+        font-weight: 700;
+      }
     }
   </style>
 </head>
