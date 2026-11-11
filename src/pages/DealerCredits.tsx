@@ -1,4 +1,4 @@
-import { sumTotalCredit, sumTotalPaid } from "@/lib/dealerBalance";
+import { getDealerCreditQuantity, sumTotalCredit, sumTotalPaid } from "@/lib/dealerBalance";
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,7 +167,7 @@ const DealerCredits = () => {
     const creditTransactions = filteredCredits.map((c) => ({
       dealer_name: c.dealers?.dealer_name || "Unknown", date: c.credit_date, type: "Credit", amount: c.amount,
       product: c.products?.name || "-", batch: c.products?.sku || "-", pack_size: c.products?.pack_size || "-",
-      quantity: c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-"),
+      quantity: getDealerCreditQuantity(c.quantity) ?? "-",
       method: "-", reference: "-", description: c.description || "-", notes: c.notes || "-",
     }));
     const paymentTransactions = filteredPayments.map((p) => ({
@@ -184,7 +184,7 @@ const DealerCredits = () => {
       const productParts = [c.products?.name || "-"];
       if (c.products?.sku) productParts.push(`Batch: ${c.products.sku}`);
       if (c.products?.pack_size) productParts.push(`Pack: ${c.products.pack_size}`);
-      const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-");
+      const qty = getDealerCreditQuantity(c.quantity) ?? "-";
       return { dealer_name: c.dealers?.dealer_name || "Unknown", date: c.credit_date, type: "Credit", amount: c.amount, quantity: qty, product: productParts.join(" | "), method: "-", reference: "-" };
     });
     const paymentTransactions = filteredPayments.map((p) => ({

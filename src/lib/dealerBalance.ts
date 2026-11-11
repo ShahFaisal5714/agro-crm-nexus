@@ -15,6 +15,10 @@ export const roundPKR = (value: number): number => {
   return (sign * Math.round((Math.abs(value) + Number.EPSILON) * 100)) / 100;
 };
 
+/** Only display quantities that were explicitly saved; price changes must not alter quantity. */
+export const getDealerCreditQuantity = (quantity: number | null | undefined): number | null =>
+  quantity ?? null;
+
 export interface DealerBalance {
   dealer_id: string;
   dealer_name: string;

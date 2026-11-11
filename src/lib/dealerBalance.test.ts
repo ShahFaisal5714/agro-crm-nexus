@@ -3,6 +3,7 @@ import {
   roundPKR,
   computeDealerBalance,
   computeLedgerClosingBalance,
+  getDealerCreditQuantity,
   sumRemaining,
   sumTotalCredit,
   sumTotalPaid,
@@ -35,6 +36,13 @@ describe("PKR rounding utility", () => {
 
   it("is used by formatCurrency", () => {
     expect(formatCurrency(1234.567)).toBe(formatCurrency(roundPKR(1234.567)));
+  });
+});
+
+describe("dealer credit quantity", () => {
+  it("uses saved quantity and does not infer it from discounted amounts or product prices", () => {
+    expect(getDealerCreditQuantity(20)).toBe(20);
+    expect(getDealerCreditQuantity(null)).toBeNull();
   });
 });
 

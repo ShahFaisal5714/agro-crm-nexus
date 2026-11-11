@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
-import { roundPKR } from "@/lib/dealerBalance";
+import { getDealerCreditQuantity, roundPKR } from "@/lib/dealerBalance";
 import logo from "@/assets/logo.png";
 
 interface LedgerEntry {
@@ -31,7 +31,7 @@ export const generateDealerLedgerPDF = (
             .filter(Boolean)
             .join(" | ")
         : "";
-      const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : null);
+      const qty = getDealerCreditQuantity(c.quantity);
       const desc = [
         "Credit",
         productInfo ? `- ${productInfo}` : "",

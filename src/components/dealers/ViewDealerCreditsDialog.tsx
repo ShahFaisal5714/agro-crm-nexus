@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Eye, Download, FileSpreadsheet, Edit, Trash2, BookOpen, Printer } from "lucide-react";
 import { useDealerCreditHistory, DealerCredit, DealerPayment } from "@/hooks/useDealerCredits";
 import { formatCurrency } from "@/lib/utils";
+import { getDealerCreditQuantity } from "@/lib/dealerBalance";
 import { format } from "date-fns";
 import { exportToCSV, exportToPDF, printPDF } from "@/lib/exportUtils";
 import { generateDealerLedgerPDF } from "@/lib/ledgerUtils";
@@ -72,7 +73,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
         product: c.products?.name || "-",
         batch: c.products?.sku || "-",
         pack_size: c.products?.pack_size || "-",
-        quantity: c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-"),
+        quantity: getDealerCreditQuantity(c.quantity) ?? "-",
         method: "-",
         reference: "-",
         description: c.description || "-",
@@ -111,7 +112,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const handleExportDetailedPDF = () => {
     const transactions = [
       ...credits.map((c) => {
-        const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-");
+        const qty = getDealerCreditQuantity(c.quantity) ?? "-";
         return {
           date: c.credit_date,
           type: "Credit",
@@ -160,7 +161,7 @@ export const ViewDealerCreditsDialog = ({ dealerId, dealerName }: ViewDealerCred
   const handlePrintPDF = () => {
     const transactions = [
       ...credits.map((c) => {
-        const qty = c.quantity ?? (c.products?.unit_price ? Math.round(c.amount / c.products.unit_price) : "-");
+        const qty = getDealerCreditQuantity(c.quantity) ?? "-";
         return {
           date: c.credit_date,
           type: "Credit",
